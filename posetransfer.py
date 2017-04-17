@@ -37,6 +37,11 @@ def train():
 	train_feed = preprocess.transferExampleGenerator(ex_train,batch_size,params)
 	test_feed = preprocess.transferExampleGenerator(ex_test,batch_size,params)
 	
+	#im_tf = tf.placeholder(tf.float32, shape=(batch_size,256,256,3))
+	#x_tf = tf.placeholder(tf.float32, shape=(batch_size,256,256))
+	#y_tf = tf.placeholder(tf.float32, shape=(batch_size,256,256))
+	#out_tf = networks.interpolate([im_tf,x_tf,y_tf])
+
 	with tf.Session(config=config) as sess:
 
 		sess.run(tf.global_variables_initializer())
@@ -44,38 +49,29 @@ def train():
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			generator = networks.network1(params)
-			discriminator = networks.discriminator(params)
-			gan = networks.gan(generator,discriminator,params)
+			model = networks.network1(params)
+
+		'''	
+		X_img,X_pose,X_tgt = next(train_feed)			
+		#out_val = sess.run(out_tf, feed_dict={im_tf:X_img, x_tf: V[:,:,:,0], y_tf: V[:,:,:,1]}) 
+		sio.savemat('test.mat', {'X_img': X_img, 'X_tgt': X_tgt, 'X_pose': X_pose})
+		return
+	
+		'''
 	
 		step = 0	
 		while(True):
 			X_img,X_pose,X_tgt = next(train_feed)			
+			#p = model.predict([X_img,X_pose,V],batch_size=batch_size)
+			#sio.savemat('test.mat', {'X_img': X_img,'X_tgt': X_tgt, 'p': p, 'V': V})
+			#return
 
 			with tf.device(gpu):
-				X_gen = generator.predict([X_img,X_pose])
+				train_loss = model.train_on_batch([X_img,X_pose],[X_tgt])
+
+			print "0," + str(train_loss)
+			sys.stdout.flush()
 	
-			networks.make_trainable(discriminator,True)
-
-			X_img_disc = np.concatenate((X_img,X_gen))
-			X_pose_disc = np.concatenate((X_pose[:,:,:,0:n_joints],X_pose[:,:,:,n_joints:]))
-			y1 = np.zeros([2*batch_size,2])
-			y1[0:batch_size,1] = 1
-			y1[batch_size:,0] = 1		
-
-			with tf.device(gpu):
-				d_loss = discriminator.train_on_batch([X_img_disc, X_pose_disc],y1])
-
-			networks.make_trainable(discriminator,False)
-
-			X_img,X_pose,X_tgt = next(train_feed)			
-	
-			y2 = np.zeros([batch_size,2])
-			y2[:,1] = 1
-
-			gan_loss = gan.train_on_batch([X_img,X_pose],[X_tgt,y2])
-	
-			'''
 			if(step % test_interval == 0):
 				n_batches = 8
 	
@@ -96,7 +92,7 @@ def train():
 				model.save('../results/networks/network1_small/' + str(step) + '.h5')			
 
 			step += 1	
-			'''
+
 if __name__ == "__main__":
 	train()
 

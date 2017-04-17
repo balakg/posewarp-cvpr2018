@@ -7,8 +7,10 @@ import datareader
 import preprocess
 import networks
 import scipy.io as sio
+import param
 from keras.models import load_model,Model
 from keras.optimizers import Adam
+from keras.applications.resnet50 import ResNet50
 
 batch_size = 8
 gpu = '/gpu:0'
@@ -16,22 +18,14 @@ test_interval = 200
 test_save_interval = 200
 model_save_interval = 5000
 
-param = {}
-param['IMG_HEIGHT'] = 256
-param['IMG_WIDTH'] = 256
-param['target_dist'] = 1.171
-param['scale_max'] = 1.05
-param['scale_min'] = 0.95
-param['posemap_downsample'] = 4
-param['sigma'] = 7
-param['n_joints'] = 14
+params = param.getParam()
 
 n_test_vids = 13
 vid_pth = '../../datasets/golfswinghd/videos/'
 info_pth = '../../datasets/golfswinghd/videoinfo/'
 n_end_remove = 5
 img_sfx = '.jpg'
-n_train_examples = 100000
+n_train_examples = 1000
 n_test_examples = 1000
 
 def train():	
@@ -42,9 +36,14 @@ def train():
 	ex_train,ex_test = datareader.makeTransferExampleList(
 		vid_pth,info_pth,n_test_vids,n_end_remove,img_sfx,n_train_examples,n_test_examples)
 
-	train_feed = preprocess.transferExampleGenerator(ex_train,batch_size,param)
-	test_feed = preprocess.transferExampleGenerator(ex_test,batch_size,param)
+	train_feed = preprocess.transferExampleGenerator(ex_train,batch_size,params)
+	test_feed = preprocess.transferExampleGenerator(ex_test,batch_size,params)
 
+	model = ResNet50(weights='imagenet',include_top=False)
+	model.summary()
+
+	'''
+	
 	with tf.Session(config=config) as sess:
 
 		sess.run(tf.global_variables_initializer())
@@ -52,10 +51,11 @@ def train():
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			model_gen = networks.network1(param)
-			model_pose = load_model('../poseresults/networks/network2/20000.h5') 
-			model_pose_feat = Model(model_pose.input, model_pose.get_layer('dense2').output)
-			model = networks.poseDiscriminatorNet(model_gen,model_pose_feat,param,0.005)
+			model_gen = networks.network1(params)
+			model_feat = 
+			#model_pose = load_model('../poseresults/networks/network2/20000.h5') 
+			#model_pose_feat = Model(model_pose.input, model_pose.get_layer('dense2').output)
+			model = networks.poseDiscriminatorNet(model_gen,model_pose_feat,params,0.005)
 
 		step = 0	
 		while(True):
@@ -78,7 +78,7 @@ def train():
 					test_loss_j = model.test_on_batch([X_img,X_pose], [X_tgt,X_feat_tgt])
 					test_loss += np.array(test_loss_j)
 	
-				test_loss /= (n_batches) #*param['IMG_HEIGHT']*param['IMG_WIDTH']*3)
+				test_loss /= (n_batches*params['IMG_HEIGHT']*params['IMG_WIDTH']*3)
 				print "1," + str(test_loss[0]) + "," + str(test_loss[1]) + "," + str(test_loss[2])
 				sys.stdout.flush()
 
@@ -97,7 +97,7 @@ def train():
 				model.save('../results/networks/network_pose2/' + str(step) + '.h5')			
 
 			step += 1	
-
+	'''
 
 if __name__ == "__main__":
 	train()

@@ -23,10 +23,19 @@ def randScale( param ):
 def randRot( param ):
 	return (np.random.rand()-0.5)*2 * param['max_rotate_degree']
 
-def randShift( shift_px ):
+def randShift( param ):
+	shift_px = param['max_px_shift']
+
 	x_shift = int(shift_px * (np.random.rand()-0.5))
 	y_shift = int(shift_px * (np.random.rand()-0.5))
 	return x_shift, y_shift
+
+def randSat(param):
+
+	min_sat = 1 - param['max_sat_factor']
+	max_sat = 1 + param['max_sat_factor']
+
+	return np.random.rand()*(max_sat-min_sat) + min_sat
 
 def makeMask(ctr,sigma_x,sigma_y,crop_size_x,crop_size_y):
 	x = np.array(range(crop_size_x))
@@ -54,34 +63,37 @@ def augmentJoints(joints,f,limbs):
 
 	return joints
 
-'''
+
 def makeInitialWarpField(joints0,joints1,sigma,crop_size_x,crop_size_y):
 	limbs = np.array([[1,2],[3,4],[4,5],[6,7],[7,8],[9,10],[10,11],[12,13],[13,14],[3,9],[6,12],[3,6],[9,12]])	
 
-	joints0 = augmentJoints(joints0,5,limbs)
-	joints1 = augmentJoints(joints1,5,limbs)
-
-	#add center of body
-	#x = np.append(x,(x[2]+x[5]+x[8]+x[11])/4)
-	#y = np.append(y,(y[2]+y[5]+y[8]+y[11])/4)
+	joints0 = augmentJoints(joints0,15,limbs)
+	joints1 = augmentJoints(joints1,15,limbs)
 
 	xv,yv = np.meshgrid(np.array(range(crop_size_x)),np.array(range(crop_size_y)),sparse=False,indexing='xy')
 
-	H = np.zeros((crop_size_y,crop_size_x,3))
+	V = np.zeros((crop_size_y,crop_size_x,2))
+	M = np.zeros((crop_size_y,crop_size_x))
 
 	for i in xrange(joints0.shape[0]):	
-		vx = joints1[i,0] - joints0[i,0]
-		vy = joints1[i,1] - joints0[i,1]
+		vx = joints0[i,0] - joints1[i,0]
+		vy = joints0[i,1] - joints1[i,1]
 
-		d = (xv - joints0[i,0]) * (xv - joints0[i,0]) + (yv - joints0[i,1]) * (yv - joints0[i,1])
+		d = (xv - joints1[i,0]) * (xv - joints1[i,0]) + (yv - joints1[i,1]) * (yv - joints1[i,1])
 		
 		exponent = np.exp(-d/(2*sigma*sigma))
-		H[:,:,0] += vx * exponent
-		H[:,:,1] += vy * exponent
-		H[:,:,2] += exponent
+		V[:,:,0] += vx * exponent
+		V[:,:,1] += vy * exponent
+		M += exponent
 
-	return H
-'''
+	M += 1e-5
+
+	V[:,:,0] /= M
+	V[:,:,1] /= M
+
+	M = np.reshape(M,(crop_size_y,crop_size_x,1))
+
+	return V
 
 
 def makeJointWeightMask(joints,sigma,crop_size_x,crop_size_y):
@@ -101,7 +113,6 @@ def makeJointWeightMask(joints,sigma,crop_size_x,crop_size_y):
 		H = np.maximum(H,exponent)
 
 	H = np.reshape(H,(crop_size_y,crop_size_x,1))
-	H = np.tile(H, (1,1,3))
 
 	return H
 
@@ -112,11 +123,13 @@ def transferExampleGenerator(examples,batch_size,param):
 	stride = param['posemap_downsample']
 	sigma = param['sigma']
 	n_joints = param['n_joints']
-	
+	target_dist = param['target_dist']	
+
 	X_img = np.zeros((batch_size,crop_size_y,crop_size_x,3))
 	X_pose = np.zeros((batch_size,crop_size_y/stride,crop_size_x/stride,n_joints*2))
 	Y = np.zeros((batch_size,crop_size_y,crop_size_x,3))
-	W = np.zeros((batch_size,crop_size_y,crop_size_x,3))
+	#V = np.zeros((batch_size,crop_size_y,crop_size_x,2))
+	#M = np.zeros((batch_size,crop_size_y,crop_size_x,1))
 
 	while True:
 		for i in xrange(batch_size):
@@ -132,16 +145,28 @@ def transferExampleGenerator(examples,batch_size,param):
 			pos0 = np.array([example[58] + example[60]/2.0, example[59] + example[61]/2.0])
 			pos1 = np.array([example[62] + example[64]/2.0, example[63] + example[65]/2.0])
 
-			rshift = randShift(10)
+			rshift = randShift(param)
 			rscale = randScale(param)
+			rdegree = randRot(param)
+			rsat = randSat(param)
 
-			I0,joints0,pos0 = augScale(I0,scale,param,rscale,joints0,pos0)
-			I1,joints1,_ = augScale(I1,scale,param,rscale,joints1)
-			I0,joints0 = augCrop(I0,param,rshift,joints0,pos0)	
-			I1,joints1 = augCrop(I1,param,rshift,joints1,pos0)	
+			I0 = I0/255.0
+			I1 = I1/255.0
 
-			I0 = (I0-128.0)/255.0
-			I1 = (I1-128.0)/255.0
+			I0,joints0,pos0 = augScale(I0,scale,target_dist,rscale,joints0,pos0)
+			I1,joints1,_ = augScale(I1,scale,target_dist,rscale,joints1)	
+
+			I0,joints0,_ = augCrop(I0,crop_size_x,crop_size_y,rshift,joints0,pos0)
+			I1,joints1,_ = augCrop(I1,crop_size_x,crop_size_y,rshift,joints1,pos0)	
+
+			I0,joints0,_ = augRotate(I0,crop_size_x,crop_size_y,rdegree,joints0)
+			I1,joints1,_ = augRotate(I1,crop_size_x,crop_size_y,rdegree,joints1)
+
+			I0 = augSaturation(I0,rsat)
+			I1 = augSaturation(I1,rsat)
+
+			I0 = I0 - 0.5
+			I1 = I1 - 0.5
 
 			H0 = np.zeros((crop_size_y/stride, crop_size_x/stride,n_joints))
 			putGaussianMaps(H0,joints0,sigma,stride)
@@ -149,7 +174,7 @@ def transferExampleGenerator(examples,batch_size,param):
 			H1 = np.zeros((crop_size_y/stride, crop_size_x/stride,n_joints))
 			putGaussianMaps(H1,joints1,sigma,stride)
 
-			'''
+			'''		
 			#Make obj output heatmap
 			max_vals = np.amax(joints1,axis=0)
 			min_vals = np.amin(joints1,axis=0) 
@@ -157,77 +182,76 @@ def transferExampleGenerator(examples,batch_size,param):
 			sigma_x = (max_vals[0]-min_vals[0])/2
 			sigma_y = (max_vals[1]-min_vals[1])/2 
 	
-			M = makeMask(obj_ctr,sigma_x,sigma_y,crop_size_x,crop_size_y)
-			M = cv2.resize(M,(0,0), fx=1.0/stride, fy=1.0/stride)
-			M = M*2 - 1
-			M = np.reshape(M, (crop_size_y/stride,crop_size_x/stride,1))	
+			mask = makeMask(obj_ctr,sigma_x,sigma_y,crop_size_x,crop_size_y)
+			#M = cv2.resize(M,(0,0), fx=1.0/stride, fy=1.0/stride)
+			M[i,:,:,:] = np.reshape(mask,(crop_size_y,crop_size_x,1))*2 - 1
+			#M = np.reshape(M, (crop_size_y/stride,crop_size_x/stride,1))	
 			'''
 
-			#W[i,:,:,:] = makeInitialWarpField(joints0,joints1,sigma,crop_size_x,crop_size_y)
-			W[i,:,:,:] = 1.0+makeJointWeightMask(joints1,sigma,crop_size_x,crop_size_y)
+			#V[i,:,:,:] = makeInitialWarpField(joints0,joints1,2,crop_size_x,crop_size_y)
+
 			X_img[i,:,:,:] = I0
 			Y[i,:,:,:] = I1
 			X_pose[i,:,:,:] = np.concatenate((H0,H1),axis=2)
 
-		yield (X_img,X_pose,Y,W)
+		yield (X_img,X_pose,Y)
 
-'''
-def makeInputOutputPair_pose(example,param):
-	I = cv2.imread(example[0])
 
-	joints = np.reshape(np.array(example[1:29]), (14,2))
-	scale = example[32]/200.0
-	pos = np.array([example[29] + example[31]/2.0, example[30] + example[32]/2.0])
-
-	rshift = randShift(10)
-	rscale = randScale(param)
-
-	I,joints,pos = augScale(I,scale,param,rscale,joints,pos)
-	I,joints = augCrop(I,param,rshift,joints,pos)	
-
-	I = (I-128.0)/255.0
-
-	crop_size_x = param['crop_size_x']
-	crop_size_y = param['crop_size_y']
-	stride = param['stride']
+def poseExampleGenerator(examples,batch_size,param):
+    
+	crop_size_x = param['IMG_WIDTH']
+	crop_size_y = param['IMG_HEIGHT']
+	stride = param['posemap_downsample']
 	sigma = param['sigma']
-
-	H = np.zeros((crop_size_y/stride, crop_size_x/stride,n_joints))
-	putGaussianMaps(H,joints,sigma,crop_size_x,crop_size_y,stride)
-
-	max_vals = np.amax(joints,axis=0)
-	min_vals = np.amin(joints,axis=0) 
-	obj_ctr = (min_vals + max_vals)/2.0
-	sigma_x = (max_vals[0]-min_vals[0])/2
-	sigma_y = (max_vals[1]-min_vals[1])/2 
-	M = makeMask(obj_ctr,sigma_x,sigma_y,crop_size_x,crop_size_y)
-	M = cv2.resize(M,(0,0), fx=1.0/stride, fy=1.0/stride)
-	M = np.reshape(M, (crop_size_y/stride,crop_size_x/stride,1))	
-	#M = M*2-1
+	n_joints = param['n_joints']
 	
-	return I,H,M
-'''
+	X_img = np.zeros((batch_size,crop_size_y,crop_size_x,3))
+	#X_pose = np.zeros((batch_size,crop_size_y/stride,crop_size_x/stride,n_joints*2))
+	X_pose = np.zeros((batch_size, n_joints*2))
 
-def augScale(I,obj_scale, param, scale_rand, joints, obj_pos = None):
-	target_dist = param['target_dist']
+	while True:
+		for i in xrange(batch_size):
+			example = examples[np.random.randint(0,len(examples))] 
 
+			I = cv2.imread(example[0])
+
+			joints = np.reshape(np.array(example[1:29]), (14,2))
+			scale = example[32]/200.0
+			pos = np.array([example[29] + example[31]/2.0, example[30] + example[32]/2.0])
+
+			rshift = randShift(10)
+			rscale = randScale(param)
+
+			I,joints,pos = augScale(I,scale,param,rscale,joints,pos)
+			I,joints = augCrop(I,param,rshift,joints,pos)	
+
+			I = (I-128.0)/255.0
+
+			#H0 = np.zeros((crop_size_y/stride, crop_size_x/stride,n_joints))
+			#putGaussianMaps(H0,joints0,sigma,stride)
+
+			X_img[i,:,:,:] = I
+			X_pose[i,:] = joints.flatten()
+
+		yield (X_img,X_pose)
+
+
+
+def augScale(I,obj_scale, target_dist, scale_rand, joints, obj_pos = None):
 	scale_multiplier = scale_rand
 	scale_abs = target_dist/obj_scale
 	scale = scale_abs * scale_multiplier
 	I = cv2.resize(I,(0,0),fx=scale,fy=scale)
-
-	joints = joints * scale
+	
+	joints = np.copy(joints * scale)
 	
 	if(obj_pos is not None):
-		obj_pos = obj_pos * scale
+		obj_pos = np.copy(obj_pos * scale)
 
 	return I,joints,obj_pos
 
-'''
-def augRotate(I,joints,obj_pos,param, degree_rand=None):
-	max_rotate_degree = param['max_rotate_degree']
-	crop_size_x = param['crop_size_x']
-	crop_size_y = param['crop_size_y']
+
+def augRotate(I,crop_size_x,crop_size_y,degree_rand,joints,obj_pos=None):
 
 	if degree_rand is not None:
 		degree = degree_rand
@@ -242,7 +266,10 @@ def augRotate(I,joints,obj_pos,param, degree_rand=None):
 	R = cv2.getRotationMatrix2D(center,degree,1)	
 	I = cv2.warpAffine(I,R,(crop_size_x,crop_size_y))
 
-	obj_pos = rotatePoint(obj_pos,R)
+	if(obj_pos is not None): 
+		obj_pos = rotatePoint(obj_pos,R)
+
+	joints = np.copy(joints)
 	for i in xrange(joints.shape[0]):
 		joints[i,:] = rotatePoint(joints[i,:],R)
 
@@ -252,12 +279,8 @@ def rotatePoint(p,R):
 	x_new = R[0,0] * p[0] + R[0,1] * p[1] + R[0,2]
 	y_new = R[1,0] * p[0] + R[1,1] * p[1] + R[1,2]	
 	return np.array((x_new,y_new))
-'''
 
-def augCrop(I,param,rand_shift,joints,obj_pos):
-	crop_size_x = param['IMG_WIDTH']
-	crop_size_y = param['IMG_HEIGHT']
-
+def augCrop(I,crop_size_x,crop_size_y,rand_shift,joints,obj_pos):
 	x_shift = rand_shift[0]
 	y_shift = rand_shift[1]
 
@@ -267,11 +290,22 @@ def augCrop(I,param,rand_shift,joints,obj_pos):
 	T = np.float32([[1,0,x_offset],[0,1,y_offset]])	
 	I = cv2.warpAffine(I,T,(crop_size_x,crop_size_y))
 
+	joints = np.copy(joints)
+	obj_pos = np.copy(obj_pos)
+
 	joints[:,0] += x_offset
 	joints[:,1] += y_offset
 
-	return I,joints
+	obj_pos[0] += x_offset
+	obj_pos[1] += y_offset
 
+	return I,joints,obj_pos
+
+
+def augSaturation(I,rsat):
+	I  *= rsat
+	I[I > 1] = 1
+	return I
 
 '''
 	limbs = np.array([[1,2],[3,4],[4,5],[6,7],[7,8],[9,10],[10,11],[12,13],[13,14],[3,9],[6,12],[3,6],[9,12]])	
@@ -305,47 +339,6 @@ def augCrop(I,param,rand_shift,joints,obj_pos):
 '''
 
 
-'''
-def makeFlowField(joints0,joints1,crop_size_x,crop_size_y,sigma):
-	
-	x1 = joints0[:,0]
-	y1 = joints0[:,1]
-	x2 = joints1[:,0]
-	y2 = joints1[:,1]
-
-	dx = x1-x2
-	dy = y1-y2
-
-	xv,yv = np.meshgrid(np.arange(0,crop_size_x,1),np.arange(0,crop_size_y,1),sparse=False,indexing='xy')
-	
-	vx = np.zeros((crop_size_y, crop_size_x))
-	vy = np.zeros((crop_size_y, crop_size_x))
-	S = np.zeros((crop_size_y, crop_size_x))
-
-	for i in xrange(x1.shape[0]):	
-		d = (xv - x2[i]) * (xv - x2[i]) + (yv - y2[i]) * (yv - y2[i])
-		exponent = d/(2*sigma*sigma)
-		w = np.exp(-exponent)
-		vx += w * dx[i]
-		vy += w * dy[i]
-		S += w
-
-	vx = vx/S
-	vy = vy/S
-
-	fx = interpolate.interp2d(x,y,dx,kind='linear')
-	fy = interpolate.interp2d(x,y,dy,kind='linear')	
-	vx = fx(np.arange(0,crop_size_x,1),np.arange(0,crop_size_y,1))	
-	vy = fy(np.arange(0,crop_size_x,1),np.arange(0,crop_size_y,1))
-
-	vx = np.reshape(vx,(crop_size_y,crop_size_x,1))
-	vy = np.reshape(vy,(crop_size_y,crop_size_x,1))
-
-	v = np.concatenate((vx,vy),axis=2)
-	
-
-	return v
-'''
 
 '''
 def makeLimbHeatmaps(joints,crop_size_x,crop_size_y,stride):
