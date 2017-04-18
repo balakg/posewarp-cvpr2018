@@ -14,6 +14,7 @@ from keras.optimizers import Adam
 batch_size = 8
 gpu = '/gpu:3'
 test_interval = 200
+test_save_interval = 200
 save_interval = 5000
 
 n_test_vids = 13
@@ -37,11 +38,6 @@ def train():
 	train_feed = preprocess.transferExampleGenerator(ex_train,batch_size,params)
 	test_feed = preprocess.transferExampleGenerator(ex_test,batch_size,params)
 	
-	#im_tf = tf.placeholder(tf.float32, shape=(batch_size,256,256,3))
-	#x_tf = tf.placeholder(tf.float32, shape=(batch_size,256,256))
-	#y_tf = tf.placeholder(tf.float32, shape=(batch_size,256,256))
-	#out_tf = networks.interpolate([im_tf,x_tf,y_tf])
-
 	with tf.Session(config=config) as sess:
 
 		sess.run(tf.global_variables_initializer())
@@ -50,7 +46,7 @@ def train():
 
 		with tf.device(gpu):
 			model = networks.network1(params)
-
+			model.compile(optimizer=Adam(lr=1e-4), loss='mse')
 		'''	
 		X_img,X_pose,X_tgt = next(train_feed)			
 		#out_val = sess.run(out_tf, feed_dict={im_tf:X_img, x_tf: V[:,:,:,0], y_tf: V[:,:,:,1]}) 
@@ -70,23 +66,27 @@ def train():
 				train_loss = model.train_on_batch([X_img,X_pose],[X_tgt])
 
 			print "0," + str(train_loss)
-			sys.stdout.flush()
-	
+			sys.stdout.flush()	
+
 			if(step % test_interval == 0):
 				n_batches = 8
-	
-				test_loss = 0		
+
+				test_loss = 0	
 				for j in xrange(n_batches):	
 					X_img,X_pose,X_tgt = next(test_feed)
-					pred_val = model.predict([X_img,X_pose,V],batch_size=batch_size)
-					test_loss += np.sum((pred_val-X_tgt)**2)/(batch_size)
-	
-				test_loss /= (n_batches*params['IMG_HEIGHT']*params['IMG_WIDTH']*3)
+					test_loss += model.test_on_batch([X_img,X_pose], [X_tgt])
+
+				test_loss /= (n_batches) #*param['IMG_HEIGHT']*param['IMG_WIDTH']*3)
 				print "1," + str(test_loss)
 				sys.stdout.flush()
 
+			if(step % test_save_interval==0):
+				X_img,X_pose,X_tgt = next(test_feed)
+				pred_val = model.predict([X_img,X_pose])
+				X_pred = pred_val[0]
+		
 				sio.savemat('../results/outputs/network1_small/' + str(step) + '.mat',
-         		{'X_img': X_img,'X_tgt': X_tgt, 'pred': pred_val})	
+         		{'X_img': X_img,'X_tgt': X_tgt, 'pred': X_pred})	
 	
 			if(step % save_interval==0): # and step > 0):
 				model.save('../results/networks/network1_small/' + str(step) + '.h5')			
@@ -96,3 +96,9 @@ def train():
 if __name__ == "__main__":
 	train()
 
+'''
+	#im_tf = tf.placeholder(tf.float32, shape=(batch_size,256,256,3))
+	#x_tf = tf.placeholder(tf.float32, shape=(batch_size,256,256))
+	#y_tf = tf.placeholder(tf.float32, shape=(batch_size,256,256))
+	#out_tf = networks.interpolate([im_tf,x_tf,y_tf])
+'''

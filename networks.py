@@ -104,7 +104,6 @@ def network1(param):
 	y = myConv(x,3,activation='linear')#256x256x3	
 
 	model = Model(inputs=[x_img,x_pose],outputs=y,name='model_gen')
-	model.compile(optimizer=Adam(lr=1e-4), loss='mse')
 	return model	
 
 '''
@@ -235,9 +234,15 @@ def poseDiscriminatorNet(model_gen, model_pose,param,feat_loss_weight):
 	model_combined.compile(optimizer=adam,loss=['mse','mse'],loss_weights=[1.0,feat_loss_weight])
 	return model_combined
 
-def discriminator(n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride):
-	x_img = Input(shape=(IMG_HEIGHT,IMG_WIDTH,IMG_CHAN))
-	x_pose = Input(shape=(IMG_HEIGHT/stride, IMG_WIDTH/stride, n_joints))
+def discriminator(param):
+
+	IMG_HEIGHT = param['IMG_HEIGHT']
+	IMG_WIDTH = param['IMG_WIDTH']
+	n_joints = param['n_joints']
+	pose_dn = param['posemap_downsample']
+
+	x_img = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
+	x_pose = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints))
 
 	x = myConv(x_img,64,strides=2) #128x128x64
 	x = myConv(x,128,strides=2) #64x64x128
@@ -252,15 +257,18 @@ def discriminator(n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride):
 	y = myDense(x,2,activation='softmax')
 
 	model = Model(inputs=[x_img,x_pose],outputs=y, name='discriminator')
-	adam = Adam(lr=5e-5)
-	model.compile(loss='categorical_crossentropy', optimizer=adam)
 	return model
 	
 
-def gan(generator,discriminator,n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride):
+def gan(generator,discriminator,param):
 
-	x_img = Input(shape=(IMG_HEIGHT,IMG_WIDTH,IMG_CHAN))
-	x_pose = Input(shape=(IMG_HEIGHT/stride, IMG_WIDTH/stride, n_joints*2))
+	IMG_HEIGHT = param['IMG_HEIGHT']
+	IMG_WIDTH = param['IMG_WIDTH']
+	n_joints = param['n_joints']
+	pose_dn = param['posemap_downsample']
+
+	x_img = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
+	x_pose = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints*2))
 
 	make_trainable(discriminator, False)
 	y_gen = generator([x_img,x_pose])
@@ -269,8 +277,6 @@ def gan(generator,discriminator,n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride):
 	y_class = discriminator([y_gen,x_pose0])
 
 	gan = Model(inputs=[x_img,x_pose], outputs=[y_gen,y_class], name='gan')
-	adam = Adam(lr=5e-5)
-	gan.compile(optimizer=adam,loss=['mse','categorical_crossentropy'],loss_weights=[1.0,1.0])
 	return gan
 
 
