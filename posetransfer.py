@@ -13,8 +13,8 @@ from keras.optimizers import Adam
 
 batch_size = 8
 gpu = '/gpu:3'
-test_interval = 200
-test_save_interval = 200
+test_interval = 100
+test_save_interval = 100
 save_interval = 5000
 
 n_test_vids = 13
@@ -45,25 +45,23 @@ def train():
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			model = networks.network1(params)
-			model.compile(optimizer=Adam(lr=1e-4), loss='mse')
-		'''	
-		X_img,X_pose,X_tgt = next(train_feed)			
-		#out_val = sess.run(out_tf, feed_dict={im_tf:X_img, x_tf: V[:,:,:,0], y_tf: V[:,:,:,1]}) 
-		sio.savemat('test.mat', {'X_img': X_img, 'X_tgt': X_tgt, 'X_pose': X_pose})
-		return
-	
-		'''
-	
+			model = networks.network_warp(params)
+			model_mask = Model(model.input, model.get_layer('mask').output)
+			model.compile(optimizer=Adam(lr=1e-4), loss='mae')
+		
+		#X_src,X_tgt,X_pose,X_warp,X_mask = next(train_feed)			
+		#train_loss = model.train_on_batch([X_src,X_pose,X_warp,X_mask],X_tgt)
+		#pred = model.predict([X_src,X_pose,X_warp,X_mask])
+		#sio.savemat('test.mat', {'X_src': X_src, 'X_tgt': X_tgt, 'X_pose': X_pose, 'X_warp': X_warp, 'X_mask': X_mask,'pred': pred})
+		#return
+		#print train_loss
+
 		step = 0	
 		while(True):
-			X_img,X_pose,X_tgt = next(train_feed)			
-			#p = model.predict([X_img,X_pose,V],batch_size=batch_size)
-			#sio.savemat('test.mat', {'X_img': X_img,'X_tgt': X_tgt, 'p': p, 'V': V})
-			#return
+			X_src,X_tgt,X_pose,X_warp,X_mask = next(train_feed)			
 
 			with tf.device(gpu):
-				train_loss = model.train_on_batch([X_img,X_pose],[X_tgt])
+				train_loss = model.train_on_batch([X_src,X_pose,X_warp,X_mask],[X_tgt])
 
 			print "0," + str(train_loss)
 			sys.stdout.flush()	
@@ -73,24 +71,25 @@ def train():
 
 				test_loss = 0	
 				for j in xrange(n_batches):	
-					X_img,X_pose,X_tgt = next(test_feed)
-					test_loss += model.test_on_batch([X_img,X_pose], [X_tgt])
+					X_src,X_tgt,X_pose,X_warp,X_mask = next(test_feed)			
+					test_loss += model.test_on_batch([X_src,X_pose,X_warp,X_mask], [X_tgt])
 
-				test_loss /= (n_batches) #*param['IMG_HEIGHT']*param['IMG_WIDTH']*3)
+				test_loss /= (n_batches)
 				print "1," + str(test_loss)
 				sys.stdout.flush()
 
 			if(step % test_save_interval==0):
-				X_img,X_pose,X_tgt = next(test_feed)
-				pred_val = model.predict([X_img,X_pose])
-				X_pred = pred_val[0]
+				X_src,X_tgt,X_pose,X_warp,X_mask = next(test_feed)			
+				pred_val = model.predict([X_src,X_pose,X_warp,X_mask])
+				mask = model_mask.predict([X_src,X_pose,X_warp,X_mask])
+				#X_pred = pred_val
 		
-				sio.savemat('../results/outputs/network1_small/' + str(step) + '.mat',
-         		{'X_img': X_img,'X_tgt': X_tgt, 'pred': X_pred})	
+				sio.savemat('../results/outputs/warp/' + str(step) + '.mat',
+         		{'X_src': X_src,'X_tgt': X_tgt, 'X_warp': X_warp, 'pred': pred_val, 'mask': mask})	
 	
-			if(step % save_interval==0): # and step > 0):
-				model.save('../results/networks/network1_small/' + str(step) + '.h5')			
-
+			#if(step % save_interval==0): # and step > 0):
+			#	model.save('../results/networks/warp/' + str(step) + '.h5')			
+			
 			step += 1	
 
 if __name__ == "__main__":

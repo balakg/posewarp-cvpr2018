@@ -106,45 +106,58 @@ def network1(param):
 	model = Model(inputs=[x_img,x_pose],outputs=y,name='model_gen')
 	return model	
 
-'''
-def network1_weights(param):
+
+def network_warp(param):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
 	IMG_WIDTH = param['IMG_WIDTH']
 	n_joints = param['n_joints']
 	pose_dn = param['posemap_downsample']
 
-	x_img = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3),name='img_input')
-	x_pose = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints*2),name='pose_input')
+	x_src0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3),name='src0')
+	x_pose0 = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints*2),name='pose0')
+	x_warp0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,30),name='warp0')
+	x_mask0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11),name='mask0')	
 
-	x0 = myConv(x_img,64,ks=7,strides=2) #128x128x64
-	x1 = myConv(x0,64,strides=2) #64x64x64
-	x2 = concatenate([x1,x_pose]) #64x64x92
-	x3 = myConv(x2,128) #64x64x128
-	x4 = myConv(x3,256,strides=2) #32x32x256
-	x5 = myConv(x4,256,strides=2) #16x16x256
-	x6 = myConv(x5,256,ks=3,strides=2) #8x8x256
-	x7 = myConv(x6,256,ks=3) #8x8x256
+	def warpFunction(x):
+		x_warps = x[0]
+		x_mask = x[1]
+		x_src = x[2]
+		
+		x_out = tf.multiply(x_src,tf.tile(tf.expand_dims(x_mask[:,:,:,-1],3),[1,1,1,3]))
+		for i in xrange(10):
+			xi = tf.multiply(x_warps[:,:,:,i*3:i*3+3],tf.tile(tf.expand_dims(x_mask[:,:,:,i],3),[1,1,1,3]))
+			x_out = tf.add(x_out,xi)
+		return x_out
 
-	x = UpSampling2D()(x7) #16x16x256
-	x = myConv(x,256,ks=3) #16x16x256
-	x = UpSampling2D()(x) #32x32x256
-	x = myConv(x,256) #32x32x256
-	x = UpSampling2D()(x) #64x64x256
-	x = concatenate([x,x2]) #64x64x384
-	x = myConv(x,128) #64x64x128
-	x = UpSampling2D()(x) #128x128x128
-	x = concatenate([x,x0]) #128x128x192
-	x = myConv(x,64) #128x128x64
-	x = UpSampling2D()(x) #256x256x64
+	#x_pose_tgt = Lambda(lambda x: x[:,:,:,14:])(x_pose0)
 
-	y = myConv(x,3,activation='linear')#256x256x3	
-	y_aux = myConv(x,1,activation='linear') #dummy)
+	x = concatenate([x_src0,x_warp0,x_mask0])
+	x = myConv(x,64,strides=2)#64
+	x = concatenate([x,x_pose0])
+	x = myConv(x,64)
+	x = myConv(x,64,strides=2)#32
+	x = myConv(x,64,strides=2)#16
+	x = myConv(x,64,strides=2)#8
+	x = UpSampling2D()(x) #16
+	x = myConv(x,64)
+	x = UpSampling2D()(x) #32 
+	x = myConv(x,64)
+	x = UpSampling2D()(x) #64 
+	x = myConv(x,64)
+	x = UpSampling2D()(x) #128 
+	x = myConv(x,32)
+	y = myConv(x,11,activation='linear',ki='zeros')
 
-	model = Model(inputs=[x_img,x_pose],outputs=[y,y_aux],name='model_gen')
-	model.compile(optimizer=Adam(lr=1e-4), loss=losstest)
-	return model	
-'''
+	mask = Lambda(lambda x: tf.add(x[0],x[1]))([y,x_mask0])	
+	mask = Lambda(lambda x: tf.div(x,tf.tile(tf.expand_dims(tf.reduce_sum(x,axis=3),3),[1,1,1,11])),name='mask')(mask)
+	#mask = Activation('softmax',name='mask')(mask)
+
+	y = Lambda(warpFunction)([x_warp0,mask,x_src0])
+
+	model = Model(inputs=[x_src0,x_pose0,x_warp0,x_mask0],outputs=y)
+	return model
+	
 
 def posePredictor(n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride):
 
@@ -206,8 +219,6 @@ def posePredictor2(param):
 	model.compile(optimizer=adam,loss='mse')
 
 	return model
-
-
 
 def make_trainable(net,val):
 	net.trainable = val
@@ -373,6 +384,7 @@ def interpolate(inputs):
 	output = tf.reshape(output, tf.stack([-1,height,width,channels]))
 	return output
 
+'''
 def network_warp(param):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
@@ -416,6 +428,7 @@ def network_warp(param):
 	model = Model(inputs=[x_img,x_pose,x_flow],outputs=y,name='model_gen')
 	model.compile(optimizer=Adam(lr=1e-4), loss='mse')
 	return model	
+'''
 
 '''
 def network_matching(param):
@@ -472,6 +485,7 @@ def network_matching(param):
 
 	return model
 '''
+
 '''
 def motionNet(n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride,batch_size):
 	x_img0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,IMG_CHAN),name='img_input')
@@ -479,30 +493,23 @@ def motionNet(n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride,batch_size):
  
 	x_mot = myConv(x_pose0,64) #64x64x64
 	x_mot = myConv(x_mot,64,strides=2) #32x32x64
-	x_mot = myConv(x_mot,64,strides=2) #16x16x128
-	x_mot = myConv(x_mot,64,strides=2) #8x8x192
-	x_mot = myConv(x_mot,192) #8x8x6
+	x_mot = myConv(x_mot,128,strides=2) #16x16x128
+	x_mot = myConv(x_mot,192,strides=2) #8x8x192
 
 
-	img_pyr = []
+	#img_i = x_img_pyr[4]
 
-	cur_img = x_img0
-	for i in xrange(6):
-		img_pyr.append(cur_img)
-		cur_img = AveragePooling2D()(cur_img)
-	
+	img_i = x_img0
+	x_feats = []
+	for i in xrange(0,5,1):
+		xi = myConv(img_i,32)
+		xi = myConv(xi,32)
+		xi = myConv(xi,32)
 
-	img_i = x_img_pyr[5]
-
-	for i in xrange(5,0,-1):
-		#xi = myConv(x_img_pyr[i],32)
-		#xi = myConv(xi,32)
-		#xi = myConv(xi,32)
-
-		kerni = Lambda(lambda x: x[:,:,:,i])(x_mot) #batch_sizex8x8x6
+		kerni = Lambda(lambda x: x[:,:,:,i*32:(i+1)*32])(x_mot) #batch_sizex8x8x6
 
 		for j in xrange(batch_size):
-			xij = Lambda(lambda x: tf.expand_dims(x[j,:,:,:],0))(img_i) #1xhxwx3
+			xij = Lambda(lambda x: tf.expand_dims(x[j,:,:,:],0))(xi) #1xhxwx3
 			kernij = Lambda(lambda x: tf.expand_dims(x[j,:,:,:],axis=3))(kerni)
 
 			xij_feat = Lambda(lambda x: tf.nn.depthwise_conv2d(x[0],x[1],
@@ -515,16 +522,14 @@ def motionNet(n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride,batch_size):
 				xi_feat = Lambda(lambda x: K.concatenate([x[0],x[1]],axis=0))([xi_feat,xij_feat])	
 
 		x_feats.append(xi_feat)
-		x_img = AveragePooling2D()(x_img)
+		img_i = AveragePooling2D()(img_i)
 
-	x_enc = concatenate([x_feats[0],x_feats[1],x_feats[2],x_feats[3],x_feats[4],x_feats[5]])	
+	x_enc = concatenate([x_feats[0],x_feats[1],x_feats[2],x_feats[3],x_feats[4]])	
 	x_enc = myConv(x_enc,128)
 	x_enc = myConv(x_enc,64)
 	x_enc = myConv(x_enc,32)
 	y = myConv(x_enc,3,activation='linear')	
 	
 	model = Model(inputs=[x_img0,x_pose0],outputs=y)
-	adam = Adam(lr=5e-5)
-	model.compile(optimizer=adam,loss='mse')
 	return model
 '''

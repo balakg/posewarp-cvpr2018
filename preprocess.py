@@ -3,7 +3,7 @@ import json
 import cv2
 import scipy.io as sio
 from scipy import interpolate
-#import transformations
+import transformations
 
 def putGaussianMaps(H,joints,sigma,stride):
 	x = np.array(range(H.shape[1]))*stride
@@ -67,8 +67,8 @@ def augmentJoints(joints,f,limbs):
 def makeInitialWarpField(joints0,joints1,sigma,crop_size_x,crop_size_y):
 	limbs = np.array([[1,2],[3,4],[4,5],[6,7],[7,8],[9,10],[10,11],[12,13],[13,14],[3,9],[6,12],[3,6],[9,12]])	
 
-	joints0 = augmentJoints(joints0,15,limbs)
-	joints1 = augmentJoints(joints1,15,limbs)
+	joints0 = augmentJoints(joints0,20,limbs)
+	joints1 = augmentJoints(joints1,20,limbs)
 
 	xv,yv = np.meshgrid(np.array(range(crop_size_x)),np.array(range(crop_size_y)),sparse=False,indexing='xy')
 
@@ -125,11 +125,11 @@ def transferExampleGenerator(examples,batch_size,param):
 	n_joints = param['n_joints']
 	target_dist = param['target_dist']	
 
-	X_img = np.zeros((batch_size,crop_size_y,crop_size_x,3))
+	X_src = np.zeros((batch_size,crop_size_y,crop_size_x,3))
 	X_pose = np.zeros((batch_size,crop_size_y/stride,crop_size_x/stride,n_joints*2))
-	Y = np.zeros((batch_size,crop_size_y,crop_size_x,3))
-	#V = np.zeros((batch_size,crop_size_y,crop_size_x,2))
-	#M = np.zeros((batch_size,crop_size_y,crop_size_x,1))
+	X_tgt = np.zeros((batch_size,crop_size_y,crop_size_x,3))
+	X_mask = np.zeros((batch_size,crop_size_y,crop_size_x,11))
+	X_warp = np.zeros((batch_size,crop_size_y,crop_size_x,3*10))
 
 	while True:
 		for i in xrange(batch_size):
@@ -173,28 +173,29 @@ def transferExampleGenerator(examples,batch_size,param):
 	
 			H1 = np.zeros((crop_size_y/stride, crop_size_x/stride,n_joints))
 			putGaussianMaps(H1,joints1,sigma,stride)
-
-			'''		
+				
 			#Make obj output heatmap
 			max_vals = np.amax(joints1,axis=0)
 			min_vals = np.amin(joints1,axis=0) 
 			obj_ctr = (min_vals + max_vals)/2.0
 			sigma_x = (max_vals[0]-min_vals[0])/2
-			sigma_y = (max_vals[1]-min_vals[1])/2 
-	
-			mask = makeMask(obj_ctr,sigma_x,sigma_y,crop_size_x,crop_size_y)
+			sigma_y = (max_vals[1]-min_vals[1])/2 	
+			fg_mask = makeMask(obj_ctr,sigma_x,sigma_y,crop_size_x,crop_size_y)
 			#M = cv2.resize(M,(0,0), fx=1.0/stride, fy=1.0/stride)
-			M[i,:,:,:] = np.reshape(mask,(crop_size_y,crop_size_x,1))*2 - 1
+			#M[i,:,:,:] = np.reshape(mask,(crop_size_y,crop_size_x,1))*2 - 1
 			#M = np.reshape(M, (crop_size_y/stride,crop_size_x/stride,1))	
-			'''
 
-			#V[i,:,:,:] = makeInitialWarpField(joints0,joints1,2,crop_size_x,crop_size_y)
-
-			X_img[i,:,:,:] = I0
-			Y[i,:,:,:] = I1
+			Hlimb = makeLimbHeatmaps(joints1,crop_size_x,crop_size_y) #,stride)
+			Ilimb = makeWarpedImageStack(I0,joints0,joints1,crop_size_x,crop_size_y) #,stride)
+			
+			X_src[i,:,:,:] = I0
+			X_tgt[i,:,:,:] = I1
 			X_pose[i,:,:,:] = np.concatenate((H0,H1),axis=2)
-
-		yield (X_img,X_pose,Y)
+			X_mask[i,:,:,0:10] = Hlimb
+			X_mask[i,:,:,-1] = 1-fg_mask
+			X_warp[i,:,:,:] = Ilimb
+			
+		yield (X_src,X_tgt,X_pose,X_warp,X_mask)
 
 
 def poseExampleGenerator(examples,batch_size,param):
@@ -340,18 +341,16 @@ def augSaturation(I,rsat):
 
 
 
-'''
-def makeLimbHeatmaps(joints,crop_size_x,crop_size_y,stride):
+def makeLimbHeatmaps(joints,crop_size_x,crop_size_y):
 
 	limbs = np.array([[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13], [2,5,8,11]])	
-	#sigma_ys = np.array([11,11,11,11,11,11,11,11,11])	 
+	sigma_ys = np.array([11,5,5,5,5,5,5,5,5,11])**2	 
 
-	H = np.zeros((crop_size_y/stride,crop_size_x/stride,limbs.shape[0]))
+	H = np.zeros((crop_size_y,crop_size_x,limbs.shape[0]))
 
-	x = np.array(range(H.shape[1]))*stride
-	y = np.array(range(H.shape[0]))*stride
+	x = np.array(range(H.shape[1])) #*stride
+	y = np.array(range(H.shape[0])) #*stride
 	xv,yv = np.meshgrid(x,y,sparse=False,indexing='xy')
-
 
 	for i in xrange(limbs.shape[0]):		
 		if(i < limbs.shape[0]-1):
@@ -359,33 +358,36 @@ def makeLimbHeatmaps(joints,crop_size_x,crop_size_y,stride):
 			l2 = limbs[i][1]
 			cx = (joints[l1,0] + joints[l2,0])/(2.0)
 			cy = (joints[l1,1] + joints[l2,1])/(2.0)
-			sigma_x = np.sqrt((joints[l1,0] - joints[l2,0])**2 + (joints[l1,1] - joints[l2,1])**2)/2
-			sigma_y = 15
+			sigma_x2 = ((joints[l1,0] - joints[l2,0])**2 + (joints[l1,1] - joints[l2,1])**2)/4
+			sigma_y2 = sigma_ys[i]
 			theta = np.arctan2(joints[l2,1] - joints[l1,1], joints[l1,0] - joints[l2,0])
+		
 		else:
 			cx = (joints[2,0] + joints[5,0] + joints[8,0] + joints[11,0])/4.0
 			cy = (joints[2,1] + joints[5,1] + joints[8,1] + joints[11,1])/4.0
-			sigma_x = 15			
-			sigma_y = 15
+			sigma_x2 = sigma_ys[i]
+			sigma_y2 = sigma_ys[i]
 			theta = 0
 
-		a = np.cos(theta)**2/(2*sigma_x**2) + np.sin(theta)**2/(2*sigma_y**2)
-		b = -np.sin(2*theta)/(4*sigma_x**2) + np.sin(2*theta)/(4*sigma_y**2)
-		c = np.sin(theta)**2/(2*sigma_x**2) + np.cos(theta)**2/(2*sigma_y**2)
+		a = np.cos(theta)**2/(2*sigma_x2) + np.sin(theta)**2/(2*sigma_y2)
+		b = -np.sin(2*theta)/(4*sigma_x2) + np.sin(2*theta)/(4*sigma_y2)
+		c = np.sin(theta)**2/(2*sigma_x2) + np.cos(theta)**2/(2*sigma_y2)
 
-		H[:,:,i]  = np.exp(-(a*(xv-cx)*(xv-cx) + 2*b*(xv-cx)*(yv-cy) + c*(yv-cy)*(yv-cy)))
+		h = np.exp(-(a*(xv-cx)*(xv-cx) + 2*b*(xv-cx)*(yv-cy) + c*(yv-cy)*(yv-cy)))
+		H[:,:,i] = h/np.amax(h)
+
 
 	return H 
 
 
-def makeWarpedImageStack(I,j1,j2,crop_size_x,crop_size_y,stride):
+def makeWarpedImageStack(I,j1,j2,crop_size_x,crop_size_y):
 
 	limbs = np.array([[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13], [2,5,8,11]])	
 
-	Istack = np.zeros((crop_size_y/stride,crop_size_x/stride,3*limbs.shape[0]))
+	Istack = np.zeros((crop_size_y,crop_size_x,3*limbs.shape[0]))
 
-	x = np.array(range(Istack.shape[1]))*stride
-	y = np.array(range(Istack.shape[0]))*stride
+	x = np.array(range(Istack.shape[1])) #*stride
+	y = np.array(range(Istack.shape[0])) #*stride
 	xv,yv = np.meshgrid(x,y,sparse=False,indexing='xy')
 
 	for i in xrange(limbs.shape[0]):	
@@ -402,11 +404,12 @@ def makeWarpedImageStack(I,j1,j2,crop_size_x,crop_size_y,stride):
 		tform,_ = transformations.make_similarity(p1,p2)
 		M = np.array([[tform[1],-tform[3],tform[0]],[tform[3],tform[1],tform[2]]])
 		Iw = cv2.warpAffine(I,M,(crop_size_x,crop_size_y))
-		Istack[:,:,i*3:i*3+3] = cv2.resize(Iw,(0,0),fx=(1.0/stride), fy=(1.0/stride))
+		Istack[:,:,i*3:i*3+3] = Iw #cv2.resize(Iw,(0,0),fx=(1.0/stride), fy=(1.0/stride))
 		
 	return Istack
 
 
+'''
 def makeInputOutputPair_spattransf(example,param):
 	I0 = cv2.imread(example[0]) #,cv2.COLOR_BGR2HSV)
 	I1 = cv2.imread(example[1]) #,cv2.COLOR_BGR2HSV)
@@ -440,8 +443,8 @@ def makeInputOutputPair_spattransf(example,param):
 	H1 = np.zeros((crop_size_y/stride, crop_size_x/stride,n_joints))
 	putGaussianMaps(H1,joints1,sigma,crop_size_x,crop_size_y,stride)
 
-	Hlimb = makeLimbHeatmaps(joints1,crop_size_x,crop_size_y,stride)
-	Ilimb = makeWarpedImageStack(I0,joints0,joints1,crop_size_x,crop_size_y,stride)
+	Hlimb = makeLimbHeatmaps(joints1,crop_size_x,crop_size_y) #,stride)
+	Ilimb = makeWarpedImageStack(I0,joints0,joints1,crop_size_x,crop_size_y) #,stride)
 
 	return I0,I1,H0,H1,Hlimb,Ilimb
 '''
