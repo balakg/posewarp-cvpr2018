@@ -85,9 +85,11 @@ def transferExampleGenerator(examples,batch_size,param):
 
 	X_src = np.zeros((batch_size,img_height,img_width,11*3)) #source image + 10 warped ones
 	X_tgt = np.zeros((batch_size,img_height,img_width,3))
-	X_mask = np.zeros((batch_size,img_height,img_width,11*3))
+	X_mask = np.zeros((batch_size,img_height,img_width,11))
 	X_pose = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints*2))
 
+	#limbs: head, right upper arm, right lower arm, left upper arm, left lower arm,
+	#right upper leg, right lower leg, left upper leg, left lower leg, chest
 	limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
 
 	while True:
@@ -106,38 +108,46 @@ def transferExampleGenerator(examples,batch_size,param):
 			pos0 = np.array([example[58] + example[60]/2.0, example[59] + example[61]/2.0])
 			pos1 = np.array([example[62] + example[64]/2.0, example[63] + example[65]/2.0])
 
-			rshift = randShift(param)
+			I0,joints0 = centerImage(I0,img_width,img_height,pos0,joints0)
+
+			#Center second image using position of first image so whole scene isn't moving.
+			I1,joints1 = centerImage(I1,img_width,img_height,pos0,joints1) 
+
+			#Data augmentation.			
 			rscale = randScale(param)
+			rshift = randShift(param)
 			rdegree = randRot(param)
 			rsat = randSat(param)
 
-			I0,joints0,pos0 = augScale(I0,scale,rscale,joints0,pos0)
-			I1,joints1,_ = augScale(I1,scale,rscale,joints1)	
+			I0,joints0 = augScale(I0,scale,rscale,joints0)
+			I1,joints1 = augScale(I1,scale,rscale,joints1)	
 
-			I0,joints0,_ = augShift(I0,img_width,img_height,rshift,joints0,pos0)
-			I1,joints1,pos0 = augShift(I1,img_width,img_height,rshift,joints1,pos0)	
+			I0,joints0 = augShift(I0,img_width,img_height,rshift,joints0)
+			I1,joints1 = augShift(I1,img_width,img_height,rshift,joints1)	
 
-			I0,joints0,pos0 = augRotate(I0,img_width,img_height,rdegree,joints0,pos0)
-			I1,joints1,_ = augRotate(I1,img_width,img_height,rdegree,joints1)
+			I0,joints0 = augRotate(I0,img_width,img_height,rdegree,joints0)
+			I1,joints1 = augRotate(I1,img_width,img_height,rdegree,joints1)
 
 			I0 = augSaturation(I0,rsat)
 			I1 = augSaturation(I1,rsat)
 
+			#Construct heatmaps for joints
 			posemap0 = makeJointHeatmaps(img_height,img_width,joints0,sigma_joint,pose_dn)
 			posemap1 = makeJointHeatmaps(img_height,img_width,joints1,sigma_joint,pose_dn)
 
+			#Warp the source image once for each limb
+			I0_warps = makeWarpedImageStack(I0,joints0,joints1,img_width,img_height,limbs)
+
+			#Make masks for the limbs in the warped images. Also make a background mask.
 			fg_sigmas = (np.ptp(joints1,axis=0)/2.0)**2
 			bg_mask = 1.0 - makeGaussianMap(img_width,img_height,pos0,fg_sigmas[0],fg_sigmas[1],0.0)
-			limb_mask = makeLimbMasks(joints1,img_width,img_height,limbs)
-
-			I0_warps = makeWarpedImageStack(I0,joints0,joints1,img_width,img_height,limbs)
-			
+			limb_masks = makeLimbMasks(joints1,img_width,img_height,limbs)
+	
 			X_src[i,:,:,0:3] = I0
 			X_src[i,:,:,3:] = I0_warps
 
-
-			X_mask[i,:,:,0:3] = np.tile(np.expand_dims(bg_mask,2),[1,1,3])
-			X_mask[i,:,:,3:] = np.repeat(limb_mask,3,axis=2) 
+			X_mask[i,:,:,0] = bg_mask
+			X_mask[i,:,:,1:] = limb_masks 
 
 			X_tgt[i,:,:,:] = I1
 			X_pose[i,:,:,:] = np.concatenate((posemap0,posemap1),axis=2)	
@@ -185,68 +195,60 @@ def poseExampleGenerator(examples,batch_size,param):
 '''
 
 
-def augScale(I,obj_scale,scale_rand, joints, obj_pos = None):
+def augScale(I,obj_scale,scale_rand, joints):
 	scale_multiplier = scale_rand
 	scale = obj_scale * scale_multiplier
 	I = cv2.resize(I,(0,0),fx=scale,fy=scale)
 	
-	joints = np.copy(joints * scale)
-	
-	if(obj_pos is not None):
-		obj_pos = np.copy(obj_pos * scale)
+	joints = joints * scale
 
-	return I,joints,obj_pos
+	return I,joints
 
 
-def augRotate(I,img_width,img_height,degree_rand,joints,obj_pos=None):
-
-	if degree_rand is not None:
-		degree = degree_rand
-	else:
-		degree = randRot( param )
-		print('Rot: {}'.format(degree))
+def augRotate(I,img_width,img_height,degree_rand,joints):
 
 	h = I.shape[0]
 	w = I.shape[1]	
 
 	center = ( (w-1.0)/2.0, (h-1.0)/2.0 )
-	R = cv2.getRotationMatrix2D(center,degree,1)	
+	R = cv2.getRotationMatrix2D(center,degree_rand,1)	
 	I = cv2.warpAffine(I,R,(img_width,img_height))
 
-	if(obj_pos is not None): 
-		obj_pos = rotatePoint(obj_pos,R)
-
-	joints = np.copy(joints)
 	for i in xrange(joints.shape[0]):
 		joints[i,:] = rotatePoint(joints[i,:],R)
 
-	return I,joints,obj_pos
+	return I,joints
 
 def rotatePoint(p,R):
 	x_new = R[0,0] * p[0] + R[0,1] * p[1] + R[0,2]
 	y_new = R[1,0] * p[0] + R[1,1] * p[1] + R[1,2]	
 	return np.array((x_new,y_new))
 
-def augShift(I,img_width,img_height,rand_shift,joints,obj_pos):
-	x_shift = rand_shift[0]
-	y_shift = rand_shift[1]
 
-	x_offset = (img_width-1.0)/2.0 - (obj_pos[0] + x_shift)
-	y_offset = (img_height-1.0)/2.0 - (obj_pos[1] + y_shift)
+def centerImage(I,img_width,img_height,pos,joints):
+	x_offset = (img_width-1.0)/2.0 - pos[0]
+	y_offset = (img_height-1.0)/2.0 - pos[1]
 
 	T = np.float32([[1,0,x_offset],[0,1,y_offset]])	
 	I = cv2.warpAffine(I,T,(img_width,img_height))
 
-	joints = np.copy(joints)
-	obj_pos = np.copy(obj_pos)
-
 	joints[:,0] += x_offset
 	joints[:,1] += y_offset
 
-	obj_pos[0] += x_offset
-	obj_pos[1] += y_offset
+	return I,joints
 
-	return I,joints,obj_pos
+
+def augShift(I,img_width,img_height,rand_shift,joints):
+	x_shift = rand_shift[0]
+	y_shift = rand_shift[1]
+
+	T = np.float32([[1,0,x_shift],[0,1,y_shift]])	
+	I = cv2.warpAffine(I,T,(img_width,img_height))
+
+	joints[:,0] += x_shift
+	joints[:,1] += y_shift
+
+	return I,joints
 
 
 def augSaturation(I,rsat):
@@ -288,7 +290,8 @@ def makeLimbMasks(joints,img_width,img_height,limbs):
 
 	mask = np.zeros((img_height,img_width,n_limbs))
 
-	#Gaussian sigma perpendicular to the limb axis
+	#Gaussian sigma perpendicular to the limb axis. I hardcoded
+	#reasonable sigmas for now.
 	sigma_perp = np.array([11,5,5,5,5,5,5,5,5,11])**2	 
 
 	for i in xrange(n_limbs):	
@@ -314,8 +317,6 @@ def makeLimbMasks(joints,img_width,img_height,limbs):
 	return mask
 
 def makeWarpedImageStack(I,joints1,joints2,img_width,img_height,limbs):
-
-	sigma_perp = np.array([11,5,5,5,5,5,5,5,5,11])**2	 
 	
 	n_limbs = len(limbs)
 	n_joints = joints1.shape[0]

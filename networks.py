@@ -2,17 +2,21 @@ import tensorflow as tf
 from keras import backend as K
 from keras.models import Model
 from keras.layers import Conv2D,Dense,Activation,Input,UpSampling2D,concatenate,Flatten,Reshape,Lambda,AveragePooling2D
+from keras.layers import BatchNormalization
 from keras.optimizers import Adam
 import keras
 
 def myConv(x_in,nf,ks=5,strides=1,activation='relu',ki='he_normal',name=None):
 
 	if(name is None):
-		x_out = Conv2D(nf,kernel_size=ks, padding='same',activation=activation,
+		x_out = Conv2D(nf,kernel_size=ks, padding='same',
 			kernel_initializer=ki,strides=strides)(x_in)
 	else:
-		x_out = Conv2D(nf,kernel_size=ks, padding='same',activation=activation,
+		x_out = Conv2D(nf,kernel_size=ks, padding='same',
 			kernel_initializer=ki,strides=strides,name=name)(x_in)
+
+	#x_out = BatchNormalization(axis=3)(x_out)
+	x_out = Activation(activation)(x_out)
 
 	return x_out
 
@@ -68,7 +72,6 @@ def network_fgbg(n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride):
 	model.compile(optimizer=adam,loss='mse')
 
 	return model	
-'''
 
 def network1(param):
 
@@ -105,6 +108,7 @@ def network1(param):
 
 	model = Model(inputs=[x_img,x_pose],outputs=y,name='model_gen')
 	return model	
+'''
 
 def network_warp(param):
 
@@ -115,53 +119,49 @@ def network_warp(param):
 
 	x_stack0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,33))
 	x_pose0 = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints*2))
-	x_mask0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,33))	
+	x_mask0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
 
+	#First, refine the input mask
 	x = concatenate([x_stack0,x_mask0])
 	x = myConv(x,64,strides=2)#64
 	x = concatenate([x,x_pose0])
 	x = myConv(x,128)
 	x = myConv(x,128,strides=2)#32
 	x = myConv(x,128,strides=2)#16
+	x = myConv(x,128)#16
 	x = UpSampling2D()(x) #32 
 	x = myConv(x,128)
 	x = UpSampling2D()(x) #64 
 	x = myConv(x,128)
-	x = UpSampling2D()(x) #128 
-	mask_delta = myConv(x,33,activation='linear',ki='zeros')
+	x = UpSampling2D()(x) #128
+	mask_delta = myConv(x,11,activation='linear',ki='zeros')
+	mask = keras.layers.add([mask_delta,x_mask0],name='mask')
 
-	mask = Lambda(lambda x: tf.add(x[0],x[1]),name='mask')([mask_delta,x_mask0])	
+	def RGBMask(arg):
+		from keras import backend as K
+		return K.repeat_elements(arg,3,3)
 
-	#mask = Lambda(lambda x: tf.div(x,tf.tile(tf.expand_dims(tf.reduce_sum(x,axis=3),3),[1,1,1,33])),name='mask')(mask)
-	'''
-	def sumWarpedStack(x):
-		x_src = x[0]
-		x_mask = x[1]	
-		x_out = tf.multiply(x_src[:,:,:,0:3],tf.tile(tf.expand_dims(x_mask[:,:,:,0],3),[1,1,1,3]))
-		for i in xrange(1,10,1):
-			xi = tf.multiply(x_src[:,:,:,i*3:i*3+3],tf.tile(tf.expand_dims(x_mask[:,:,:,i],3),[1,1,1,3]))
-			x_out = tf.add(x_out,xi)
-		return x_out
-	'''
-	#y_warp = Lambda(sumWarpedStack)([x_stack0,mask])
-	
-	x_stack = Lambda(lambda x: tf.multiply(x[0],x[1]))([x_stack0,mask])
+	mask = Lambda(RGBMask)(mask)
 
-	#x_src = Lambda(lambda x: x[:,:,:,0:3])(x_stack0)
-	x1 = myConv(x_stack,64,strides=2) #64x64x64
+	masked_stack = keras.layers.multiply([mask,x_stack0],name='masked_stack')
+
+	#Now, operate on masked stack to output the final image
+	x1 = myConv(masked_stack,64,strides=2) #64x64x64
 	x2 = concatenate([x1,x_pose0]) #64x64x92
 	x3 = myConv(x2,128) #64x64x128
 	x4 = myConv(x3,256,strides=2) #32x32x256
-	x5 = myConv(x4,256,strides=2) #16x16x256
+	x5 = myConv(x4,256,ks=3,strides=2) #16x16x256
 	x6 = myConv(x5,256,ks=3,strides=2) #8x8x256
 	x7 = myConv(x6,256,ks=3) #8x8x256
 
 	x = UpSampling2D()(x7) #16x16x256
+	x = concatenate([x,x5])
 	x = myConv(x,256,ks=3) #16x16x256
 	x = UpSampling2D()(x) #32x32x256
+	x = concatenate([x,x4])
 	x = myConv(x,256) #32x32x256
 	x = UpSampling2D()(x) #64x64x256
-	x = concatenate([x,x2]) #64x64x384
+	x = concatenate([x,x3]) #64x64x384
 	x = myConv(x,128) #64x64x128
 	x = UpSampling2D()(x) #128x128x128
 	y = myConv(x,3,activation='linear')#128x128x3	
@@ -544,4 +544,17 @@ def motionNet(n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride,batch_size):
 	
 	model = Model(inputs=[x_img0,x_pose0],outputs=y)
 	return model
+'''
+
+'''
+	#mask = Lambda(lambda x: tf.div(x,tf.tile(tf.expand_dims(tf.reduce_sum(x,axis=3),3),[1,1,1,33])),name='mask')(mask)
+	def sumWarpedStack(x):
+		x_src = x[0]
+		x_mask = x[1]	
+		x_out = tf.multiply(x_src[:,:,:,0:3],tf.tile(tf.expand_dims(x_mask[:,:,:,0],3),[1,1,1,3]))
+		for i in xrange(1,10,1):
+			xi = tf.multiply(x_src[:,:,:,i*3:i*3+3],tf.tile(tf.expand_dims(x_mask[:,:,:,i],3),[1,1,1,3]))
+			x_out = tf.add(x_out,xi)
+		return x_out
+	#y_warp = Lambda(sumWarpedStack)([x_stack0,mask])
 '''

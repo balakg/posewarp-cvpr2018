@@ -12,7 +12,7 @@ from keras.models import load_model,Model
 from keras.optimizers import Adam
 
 batch_size = 8
-gpu = '/gpu:4'
+gpu = '/gpu:3'
 test_interval = 100
 test_save_interval = 500
 model_save_interval = 5000
@@ -43,40 +43,42 @@ def train():
 		coord = tf.train.Coordinator()
 		threads = tf.train.start_queue_runners(coord=coord)
 
+
 		with tf.device(gpu):
 			model = networks.network_warp(params)
+			#model = load_model('../results/networks/warp2/30000.h5')
 			model.compile(optimizer=Adam(lr=1e-4), loss='mse')
-
-		
+	
 		#X_src,X_tgt,X_pose,X_mask = next(train_feed)			
-		#train_loss = model.train_on_batch([X_src,X_pose,X_warp,X_mask],X_tgt)
+		#return
+		#train_loss = model.train_on_batch([X_src,X_pose,X_mask],X_tgt)
 		#pred = model.predict([X_src,X_pose,X_warp])
 		#sio.savemat('test.mat', {'X_src': X_src, 'X_tgt': X_tgt, 'X_pose': X_pose, 'X_mask': X_mask})
 		#return
-		#print train_loss
 
 		step = 0	
 		while(True):
+			if(step == 30000):
+				model.compile(optimizer=Adam(lr=1e-5),loss='mse')
+
 			X_src,X_tgt,X_pose,X_mask = next(train_feed)			
 
 			with tf.device(gpu):
 				train_loss = model.train_on_batch([X_src,X_pose,X_mask],[X_tgt])
 
 			print "0," + str(train_loss)
-			#print "0," + str(train_loss[0]) + "," + str(train_loss[1]) + "," + str(train_loss[2])
 			sys.stdout.flush()	
 
+			'''
 			if(step % test_interval == 0):
 				n_batches = 8
 
-				#test_loss = np.array([0.0,0.0,0.0])	
 				test_loss = 0
 				for j in xrange(n_batches):	
 					X_src,X_tgt,X_pose,X_mask = next(test_feed)			
 					test_loss += model.test_on_batch([X_src,X_pose,X_mask], [X_tgt])
 
 				test_loss /= (n_batches)
-				#print "1," + str(test_loss[0]) + "," + str(test_loss[1]) + "," + str(test_loss[2])
 				print "1," + str(test_loss)
 				sys.stdout.flush()
 
@@ -84,13 +86,13 @@ def train():
 				X_src,X_tgt,X_pose,X_mask = next(test_feed)			
 				pred_val = model.predict([X_src,X_pose,X_mask])
 		
-				sio.savemat('../results/outputs/warp2/' + str(step) + '.mat',
+				sio.savemat('../results/outputs/warp3/' + str(step) + '.mat',
          		{'X_src': X_src,'X_tgt': X_tgt, 'X_mask': X_mask, 'pred': pred_val})	
 
 				
-			if(step % model_save_interval==0): # and step > 0):
-				model.save('../results/networks/warp2/' + str(step) + '.h5')			
-			
+			if(step % model_save_interval==0):
+				model.save('../results/networks/warp3/' + str(step) + '.h5')			
+			'''	
 			step += 1	
 
 if __name__ == "__main__":
