@@ -36,7 +36,7 @@ def makeTransferExampleList(vid_pth,info_pth,n_test_vids,n_end_remove,img_sfx,n_
 		#choose frames
 		frame0 = np.random.randint(0,n_frames)
  		frame1 = np.random.randint(0,n_frames)
-		while(frame1 < 0.85*frame0 or frame1 > 1.15*frame0):
+		while(frame1 == frame0): #frame1 < 0.85*frame0 or frame1 > 1.15*frame0):
 			frame1 = np.random.randint(0,n_frames)
 
 		I0_name = os.path.join(vid_pth,vid_name,str(frame0+1)+img_sfx)

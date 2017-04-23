@@ -106,7 +106,6 @@ def network1(param):
 	model = Model(inputs=[x_img,x_pose],outputs=y,name='model_gen')
 	return model	
 
-
 def network_warp(param):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
@@ -157,7 +156,6 @@ def network_warp(param):
 
 	model = Model(inputs=[x_src0,x_pose0,x_warp0,x_mask0],outputs=y)
 	return model
-	
 
 def posePredictor(n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride):
 
@@ -384,7 +382,6 @@ def interpolate(inputs):
 	output = tf.reshape(output, tf.stack([-1,height,width,channels]))
 	return output
 
-'''
 def network_warp(param):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
@@ -394,15 +391,19 @@ def network_warp(param):
 
 	x_img = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3),name='img_input')
 	x_pose = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints*2),name='pose_input')
-	x_flow = Input(shape=(IMG_HEIGHT, IMG_WIDTH,2),name='flow_input')
+	x_warp = Input(shape=(IMG_HEIGHT,IMG_WIDTH,30), name='warp_input')
+	#x_flow = Input(shape=(IMG_HEIGHT, IMG_WIDTH,2),name='flow_input')
 	
-	fx = Lambda(lambda x: x[:,:,:,0],name='flowx')(x_flow)
-	fy = Lambda(lambda x: x[:,:,:,1],name='flowy')(x_flow)	
-	x_warp = Lambda(interpolate,output_shape=(IMG_HEIGHT,IMG_WIDTH,3))([x_img,fx,fy])
+	#fx = Lambda(lambda x: x[:,:,:,0],name='flowx')(x_flow)
+	#fy = Lambda(lambda x: x[:,:,:,1],name='flowy')(x_flow)	
+	#x_warp = Lambda(interpolate,output_shape=(IMG_HEIGHT,IMG_WIDTH,3))([x_img,fx,fy])
+
+	#model = Model(inputs=[x_img,x_pose,x_flow],outputs=x_warp,name='warp')
+	#return model
 
 	x0 = concatenate([x_img,x_warp])
-	x0 = myConv(x0,64,ks=7,strides=2) #128x128x64
-	x1 = myConv(x0,64,strides=2) #64x64x64
+	x1 = myConv(x0,64,ks=7,strides=2) #128x128x64
+	#x1 = myConv(x0,64,strides=2) #64x64x64
 	x2 = concatenate([x1,x_pose]) #64x64x92
 	x3 = myConv(x2,128) #64x64x128
 	x4 = myConv(x3,256,strides=2) #32x32x256
@@ -418,17 +419,15 @@ def network_warp(param):
 	x = concatenate([x,x2]) #64x64x384
 	x = myConv(x,128) #64x64x128
 	x = UpSampling2D()(x) #128x128x128
-	x = concatenate([x,x0]) #128x128x192
+	#x = concatenate([x,x0]) #128x128x192
 	x = myConv(x,64) #128x128x64
-	x = UpSampling2D()(x) #256x256x64
+	#x = UpSampling2D()(x) #256x256x64
 
-	y = myConv(x,3,activation='linear',ki='zeros')#256x256x3	
-	y = keras.layers.add([y,x_warp])
+	y = myConv(x,3,activation='linear')#256x256x3	
+	#y = keras.layers.add([y,x_warp])
 
-	model = Model(inputs=[x_img,x_pose,x_flow],outputs=y,name='model_gen')
-	model.compile(optimizer=Adam(lr=1e-4), loss='mse')
+	model = Model(inputs=[x_img,x_pose,x_warp],outputs=y,name='model_warp')
 	return model	
-'''
 
 '''
 def network_matching(param):
