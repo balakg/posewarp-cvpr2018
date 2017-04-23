@@ -113,48 +113,60 @@ def network_warp(param):
 	n_joints = param['n_joints']
 	pose_dn = param['posemap_downsample']
 
-	x_src0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3),name='src0')
-	x_pose0 = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints*2),name='pose0')
-	x_warp0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,30),name='warp0')
-	x_mask0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11),name='mask0')	
+	x_stack0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,33))
+	x_pose0 = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints*2))
+	x_mask0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,33))	
 
-	def warpFunction(x):
-		x_warps = x[0]
-		x_mask = x[1]
-		x_src = x[2]
-		
-		x_out = tf.multiply(x_src,tf.tile(tf.expand_dims(x_mask[:,:,:,-1],3),[1,1,1,3]))
-		for i in xrange(10):
-			xi = tf.multiply(x_warps[:,:,:,i*3:i*3+3],tf.tile(tf.expand_dims(x_mask[:,:,:,i],3),[1,1,1,3]))
-			x_out = tf.add(x_out,xi)
-		return x_out
-
-	#x_pose_tgt = Lambda(lambda x: x[:,:,:,14:])(x_pose0)
-
-	x = concatenate([x_src0,x_warp0,x_mask0])
+	x = concatenate([x_stack0,x_mask0])
 	x = myConv(x,64,strides=2)#64
 	x = concatenate([x,x_pose0])
-	x = myConv(x,64)
-	x = myConv(x,64,strides=2)#32
-	x = myConv(x,64,strides=2)#16
-	x = myConv(x,64,strides=2)#8
-	x = UpSampling2D()(x) #16
-	x = myConv(x,64)
+	x = myConv(x,128)
+	x = myConv(x,128,strides=2)#32
+	x = myConv(x,128,strides=2)#16
 	x = UpSampling2D()(x) #32 
-	x = myConv(x,64)
+	x = myConv(x,128)
 	x = UpSampling2D()(x) #64 
-	x = myConv(x,64)
+	x = myConv(x,128)
 	x = UpSampling2D()(x) #128 
-	x = myConv(x,32)
-	y = myConv(x,11,activation='linear',ki='zeros')
+	mask_delta = myConv(x,33,activation='linear',ki='zeros')
 
-	mask = Lambda(lambda x: tf.add(x[0],x[1]))([y,x_mask0])	
-	mask = Lambda(lambda x: tf.div(x,tf.tile(tf.expand_dims(tf.reduce_sum(x,axis=3),3),[1,1,1,11])),name='mask')(mask)
-	#mask = Activation('softmax',name='mask')(mask)
+	mask = Lambda(lambda x: tf.add(x[0],x[1]),name='mask')([mask_delta,x_mask0])	
 
-	y = Lambda(warpFunction)([x_warp0,mask,x_src0])
+	#mask = Lambda(lambda x: tf.div(x,tf.tile(tf.expand_dims(tf.reduce_sum(x,axis=3),3),[1,1,1,33])),name='mask')(mask)
+	'''
+	def sumWarpedStack(x):
+		x_src = x[0]
+		x_mask = x[1]	
+		x_out = tf.multiply(x_src[:,:,:,0:3],tf.tile(tf.expand_dims(x_mask[:,:,:,0],3),[1,1,1,3]))
+		for i in xrange(1,10,1):
+			xi = tf.multiply(x_src[:,:,:,i*3:i*3+3],tf.tile(tf.expand_dims(x_mask[:,:,:,i],3),[1,1,1,3]))
+			x_out = tf.add(x_out,xi)
+		return x_out
+	'''
+	#y_warp = Lambda(sumWarpedStack)([x_stack0,mask])
+	
+	x_stack = Lambda(lambda x: tf.multiply(x[0],x[1]))([x_stack0,mask])
 
-	model = Model(inputs=[x_src0,x_pose0,x_warp0,x_mask0],outputs=y)
+	#x_src = Lambda(lambda x: x[:,:,:,0:3])(x_stack0)
+	x1 = myConv(x_stack,64,strides=2) #64x64x64
+	x2 = concatenate([x1,x_pose0]) #64x64x92
+	x3 = myConv(x2,128) #64x64x128
+	x4 = myConv(x3,256,strides=2) #32x32x256
+	x5 = myConv(x4,256,strides=2) #16x16x256
+	x6 = myConv(x5,256,ks=3,strides=2) #8x8x256
+	x7 = myConv(x6,256,ks=3) #8x8x256
+
+	x = UpSampling2D()(x7) #16x16x256
+	x = myConv(x,256,ks=3) #16x16x256
+	x = UpSampling2D()(x) #32x32x256
+	x = myConv(x,256) #32x32x256
+	x = UpSampling2D()(x) #64x64x256
+	x = concatenate([x,x2]) #64x64x384
+	x = myConv(x,128) #64x64x128
+	x = UpSampling2D()(x) #128x128x128
+	y = myConv(x,3,activation='linear')#128x128x3	
+	
+	model = Model(inputs=[x_stack0,x_pose0,x_mask0],outputs=y)
 	return model
 
 def posePredictor(n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride):
@@ -382,6 +394,7 @@ def interpolate(inputs):
 	output = tf.reshape(output, tf.stack([-1,height,width,channels]))
 	return output
 
+'''
 def network_warp(param):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
@@ -428,7 +441,7 @@ def network_warp(param):
 
 	model = Model(inputs=[x_img,x_pose,x_warp],outputs=y,name='model_warp')
 	return model	
-
+'''
 '''
 def network_matching(param):
 

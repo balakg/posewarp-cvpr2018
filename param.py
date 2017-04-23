@@ -10,7 +10,7 @@ def getParam():
 	param['max_sat_factor'] = 0.05
 	param['max_px_shift'] = 10/dn
 	param['posemap_downsample'] = 4/dn 
-	param['sigma_joint'] = 7/dn
+	param['sigma_joint'] = 7.0/dn
 	param['n_joints'] = 14
 
 	return param
