@@ -21,7 +21,7 @@ n_test_vids = 13
 vid_pth = '../../datasets/golfswinghd/videos/'
 info_pth = '../../datasets/golfswinghd/videoinfo/'
 img_sfx = '.jpg'
-n_train_examples = 100000
+n_train_examples = 1000
 n_test_examples = 1000
 
 params = param.getParam()
@@ -49,12 +49,11 @@ def train():
 			#model = load_model('../results/networks/warp2/30000.h5')
 			model.compile(optimizer=Adam(lr=1e-4), loss='mse')
 	
-		#X_src,X_tgt,X_pose,X_mask = next(train_feed)			
-		#return
+		X_src,X_tgt,X_pose,X_mask = next(train_feed)			
 		#train_loss = model.train_on_batch([X_src,X_pose,X_mask],X_tgt)
 		#pred = model.predict([X_src,X_pose,X_warp])
-		#sio.savemat('test.mat', {'X_src': X_src, 'X_tgt': X_tgt, 'X_pose': X_pose, 'X_mask': X_mask})
-		#return
+		sio.savemat('test.mat', {'X_src': X_src, 'X_tgt': X_tgt, 'X_pose': X_pose, 'X_mask': X_mask})
+		return
 
 		step = 0	
 		while(True):

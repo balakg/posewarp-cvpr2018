@@ -108,10 +108,11 @@ def transferExampleGenerator(examples,batch_size,param):
 			pos0 = np.array([example[58] + example[60]/2.0, example[59] + example[61]/2.0])
 			pos1 = np.array([example[62] + example[64]/2.0, example[63] + example[65]/2.0])
 
-			I0,joints0 = centerImage(I0,img_width,img_height,pos0,joints0)
 
-			#Center second image using position of first image so whole scene isn't moving.
-			I1,joints1 = centerImage(I1,img_width,img_height,pos0,joints1) 
+			#Center and scale images. Center second image using position of first image so that
+			#the whole scene doesn't translate.
+			I0,joints0 = centerAndScaleImage(I0,img_width,img_height,pos0,scale,joints0)
+			I1,joints1 = centerAndScaleImage(I1,img_width,img_height,pos0,scale,joints1) 
 
 			#Data augmentation.			
 			rscale = randScale(param)
@@ -138,11 +139,13 @@ def transferExampleGenerator(examples,batch_size,param):
 			#Warp the source image once for each limb
 			I0_warps = makeWarpedImageStack(I0,joints0,joints1,img_width,img_height,limbs)
 
-			#Make masks for the limbs in the warped images. Also make a background mask.
+			#Make gaussian masks for the limbs in the warped images. Also make a background mask,
+			#to be applied to the original image in the neural network.
+			limb_masks = makeLimbMasks(joints1,img_width,img_height,limbs)	
 			fg_sigmas = (np.ptp(joints1,axis=0)/2.0)**2
-			bg_mask = 1.0 - makeGaussianMap(img_width,img_height,pos0,fg_sigmas[0],fg_sigmas[1],0.0)
-			limb_masks = makeLimbMasks(joints1,img_width,img_height,limbs)
-	
+
+			bg_mask = 1.0 - makeGaussianMap(img_width,img_height,np.mean(joints1,axis=0),fg_sigmas[0],fg_sigmas[1],0.0)
+
 			X_src[i,:,:,0:3] = I0
 			X_src[i,:,:,3:] = I0_warps
 
@@ -194,19 +197,29 @@ def poseExampleGenerator(examples,batch_size,param):
 		yield (X_img,X_pose)
 '''
 
+def centerAndScaleImage(I,img_width,img_height,pos,scale,joints):
 
-def augScale(I,obj_scale,scale_rand, joints):
-	scale_multiplier = scale_rand
-	scale = obj_scale * scale_multiplier
 	I = cv2.resize(I,(0,0),fx=scale,fy=scale)
-	
 	joints = joints * scale
 
+	x_offset = (img_width-1.0)/2.0 - pos[0]*scale
+	y_offset = (img_height-1.0)/2.0 - pos[1]*scale
+
+	T = np.float32([[1,0,x_offset],[0,1,y_offset]])	
+	I = cv2.warpAffine(I,T,(img_width,img_height))
+
+	joints[:,0] += x_offset
+	joints[:,1] += y_offset
+
+	return I,joints
+
+def augScale(I,obj_scale,scale_rand, joints):
+	I = cv2.resize(I,(0,0),fx=scale_rand,fy=scale_rand)
+	joints = joints * scale_rand
 	return I,joints
 
 
 def augRotate(I,img_width,img_height,degree_rand,joints):
-
 	h = I.shape[0]
 	w = I.shape[1]	
 
@@ -225,19 +238,6 @@ def rotatePoint(p,R):
 	return np.array((x_new,y_new))
 
 
-def centerImage(I,img_width,img_height,pos,joints):
-	x_offset = (img_width-1.0)/2.0 - pos[0]
-	y_offset = (img_height-1.0)/2.0 - pos[1]
-
-	T = np.float32([[1,0,x_offset],[0,1,y_offset]])	
-	I = cv2.warpAffine(I,T,(img_width,img_height))
-
-	joints[:,0] += x_offset
-	joints[:,1] += y_offset
-
-	return I,joints
-
-
 def augShift(I,img_width,img_height,rand_shift,joints):
 	x_shift = rand_shift[0]
 	y_shift = rand_shift[1]
@@ -249,7 +249,6 @@ def augShift(I,img_width,img_height,rand_shift,joints):
 	joints[:,1] += y_shift
 
 	return I,joints
-
 
 def augSaturation(I,rsat):
 	I  *= rsat
