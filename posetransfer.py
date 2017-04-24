@@ -4,7 +4,7 @@ import numpy as np
 import sys
 import cv2
 import datareader
-import preprocess
+import datageneration
 import networks
 import scipy.io as sio
 import param
@@ -35,8 +35,8 @@ def train():
 	ex_train,ex_test = datareader.makeTransferExampleList(
 		vid_pth,info_pth,n_test_vids,5,img_sfx,n_train_examples,n_test_examples)
 
-	train_feed = preprocess.transferExampleGenerator(ex_train,batch_size,params)
-	test_feed = preprocess.transferExampleGenerator(ex_test,batch_size,params)
+	train_feed = datageneration.transferExampleGenerator(ex_train,batch_size,params)
+	test_feed = datageneration.transferExampleGenerator(ex_test,batch_size,params)
 	
 	with tf.Session(config=config) as sess:
 
