@@ -12,11 +12,11 @@ from keras.models import load_model,Model
 from keras.optimizers import Adam
 
 batch_size = 8
-gpu = '/gpu:3'
+gpu = '/gpu:4'
 test_interval = 100
 test_save_interval = 500
 model_save_interval = 5000
-model_name = 'warp3'
+model_name = 'warp_spotlight2'
 
 n_test_vids = 13
 vid_pth = '../../datasets/golfswinghd/videos/'
@@ -46,9 +46,9 @@ def train():
 
 
 		with tf.device(gpu):
-			#model = networks.network_warp(params)
-			model = load_model('../results/networks/warp3/30000.h5')
-			model.compile(optimizer=Adam(lr=1e-5), loss='mse')
+			model = networks.network_warp(params)
+			#model = load_model('../results/networks/warp3/30000.h5')
+			model.compile(optimizer=Adam(lr=1e-4), loss='mse')
 	
 		#X_src,X_tgt,X_pose,X_mask = next(train_feed)			
 		#train_loss = model.train_on_batch([X_src,X_pose,X_mask],X_tgt)
@@ -56,17 +56,17 @@ def train():
 		#sio.savemat('test.mat', {'X_src': X_src, 'X_tgt': X_tgt, 'X_pose': X_pose, 'X_mask': X_mask})
 		#return
 
-		step = 30001	
+		step = 0	
 		while(True):
-			#if(step == 30000):
-			#	model.compile(optimizer=Adam(lr=1e-5),loss='mse')
+			if(step == 30000):
+				model.compile(optimizer=Adam(lr=1e-5),loss='mse')
 
 			X_src,X_tgt,X_pose,X_mask = next(train_feed)			
 
 			with tf.device(gpu):
 				train_loss = model.train_on_batch([X_src,X_pose,X_mask],[X_tgt])
 
-			print "0," + str(train_loss)
+			print str(step) + ",0," + str(train_loss)
 			sys.stdout.flush()	
 
 			if(step % test_interval == 0):
@@ -77,7 +77,7 @@ def train():
 					test_loss += model.test_on_batch([X_src,X_pose,X_mask], [X_tgt])
 
 				test_loss /= (n_batches)
-				print "1," + str(test_loss)
+				print str(step) + ",1," + str(test_loss)
 				sys.stdout.flush()
 
 			if(step % test_save_interval==0):
