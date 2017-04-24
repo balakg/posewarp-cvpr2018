@@ -105,11 +105,12 @@ def transferExampleGenerator(examples,batch_size,param):
 			joints1 = np.reshape(np.array(example[30:58]), (14,2))
 			scale = scale_factor/np.max([example[61],example[65]])
 			
+			#position of person in each frame
 			pos0 = np.array([example[58] + example[60]/2.0, example[59] + example[61]/2.0])
 			pos1 = np.array([example[62] + example[64]/2.0, example[63] + example[65]/2.0])
 
-			#Center and scale images. Center second image using position of first image so that
-			#the whole scene doesn't translate.
+			#Center and scale images. Center second image using position of person in 
+			#first image so that the whole scene doesn't translate.
 			I0,joints0 = centerAndScaleImage(I0,img_width,img_height,pos0,scale,joints0)
 			I1,joints1 = centerAndScaleImage(I1,img_width,img_height,pos0,scale,joints1) 
 
