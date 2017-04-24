@@ -108,7 +108,6 @@ def transferExampleGenerator(examples,batch_size,param):
 			pos0 = np.array([example[58] + example[60]/2.0, example[59] + example[61]/2.0])
 			pos1 = np.array([example[62] + example[64]/2.0, example[63] + example[65]/2.0])
 
-
 			#Center and scale images. Center second image using position of first image so that
 			#the whole scene doesn't translate.
 			I0,joints0 = centerAndScaleImage(I0,img_width,img_height,pos0,scale,joints0)

@@ -16,12 +16,13 @@ gpu = '/gpu:3'
 test_interval = 100
 test_save_interval = 500
 model_save_interval = 5000
+model_name = 'warp3'
 
 n_test_vids = 13
 vid_pth = '../../datasets/golfswinghd/videos/'
 info_pth = '../../datasets/golfswinghd/videoinfo/'
 img_sfx = '.jpg'
-n_train_examples = 1000
+n_train_examples = 100000
 n_test_examples = 1000
 
 params = param.getParam()
@@ -45,20 +46,20 @@ def train():
 
 
 		with tf.device(gpu):
-			model = networks.network_warp(params)
-			#model = load_model('../results/networks/warp2/30000.h5')
-			model.compile(optimizer=Adam(lr=1e-4), loss='mse')
+			#model = networks.network_warp(params)
+			model = load_model('../results/networks/warp3/30000.h5')
+			model.compile(optimizer=Adam(lr=1e-5), loss='mse')
 	
-		X_src,X_tgt,X_pose,X_mask = next(train_feed)			
+		#X_src,X_tgt,X_pose,X_mask = next(train_feed)			
 		#train_loss = model.train_on_batch([X_src,X_pose,X_mask],X_tgt)
 		#pred = model.predict([X_src,X_pose,X_warp])
-		sio.savemat('test.mat', {'X_src': X_src, 'X_tgt': X_tgt, 'X_pose': X_pose, 'X_mask': X_mask})
-		return
+		#sio.savemat('test.mat', {'X_src': X_src, 'X_tgt': X_tgt, 'X_pose': X_pose, 'X_mask': X_mask})
+		#return
 
-		step = 0	
+		step = 30001	
 		while(True):
-			if(step == 30000):
-				model.compile(optimizer=Adam(lr=1e-5),loss='mse')
+			#if(step == 30000):
+			#	model.compile(optimizer=Adam(lr=1e-5),loss='mse')
 
 			X_src,X_tgt,X_pose,X_mask = next(train_feed)			
 
@@ -68,10 +69,8 @@ def train():
 			print "0," + str(train_loss)
 			sys.stdout.flush()	
 
-			'''
 			if(step % test_interval == 0):
 				n_batches = 8
-
 				test_loss = 0
 				for j in xrange(n_batches):	
 					X_src,X_tgt,X_pose,X_mask = next(test_feed)			
@@ -85,13 +84,13 @@ def train():
 				X_src,X_tgt,X_pose,X_mask = next(test_feed)			
 				pred_val = model.predict([X_src,X_pose,X_mask])
 		
-				sio.savemat('../results/outputs/warp3/' + str(step) + '.mat',
+				sio.savemat('../results/outputs/' + model_name + '/' + str(step) + '.mat',
          		{'X_src': X_src,'X_tgt': X_tgt, 'X_mask': X_mask, 'pred': pred_val})	
 
 				
 			if(step % model_save_interval==0):
-				model.save('../results/networks/warp3/' + str(step) + '.h5')			
-			'''	
+				model.save('../results/networks/' + model_name + '/' + str(step) + '.h5')			
+			
 			step += 1	
 
 if __name__ == "__main__":
