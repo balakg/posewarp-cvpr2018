@@ -12,7 +12,7 @@ from keras.models import load_model,Model
 from keras.optimizers import Adam
 
 batch_size = 8
-gpu = '/gpu:4'
+gpu = '/gpu:3'
 test_interval = 100
 test_save_interval = 500
 model_save_interval = 5000
@@ -49,7 +49,7 @@ def train():
 			model = networks.network_warp(params)
 			#model = load_model('../results/networks/warp3/30000.h5')
 			model.compile(optimizer=Adam(lr=1e-4), loss='mse')
-	
+		
 		#X_src,X_tgt,X_pose,X_mask = next(train_feed)			
 		#train_loss = model.train_on_batch([X_src,X_pose,X_mask],X_tgt)
 		#pred = model.predict([X_src,X_pose,X_warp])
