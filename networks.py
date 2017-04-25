@@ -2,7 +2,7 @@ import tensorflow as tf
 from keras import backend as K
 from keras.models import Model
 from keras.layers import Conv2D,Dense,Activation,Input,UpSampling2D,concatenate,Flatten,Reshape,Lambda,AveragePooling2D
-from keras.layers import BatchNormalization
+#from keras.layers import BatchNormalization,LeakyReLU
 from keras.optimizers import Adam
 import keras
 
@@ -135,12 +135,21 @@ def network_warp(param):
 	x = myConv(x,128)
 	x = UpSampling2D()(x) #128
 	mask_delta = myConv(x,11,activation='linear',ki='zeros')
-	mask = keras.layers.add([mask_delta,x_mask0],name='mask')
+	mask = keras.layers.add([mask_delta,x_mask0]) #,name='mask')
+
+	def normalizeMask(arg):
+		import tensorflow as tf
+		z = tf.reduce_max(arg,1,keep_dims=True)
+		z = tf.reduce_max(z,2,keep_dims=True)
+		z = tf.tile(z,[1,128,128,1])
+		z = tf.divide(arg,z)
+		return tf.clip_by_value(z,0.0,1.0)
 
 	def RGBMask(arg):
 		from keras import backend as K
 		return K.repeat_elements(arg,3,3)
 
+	mask = Lambda(normalizeMask,name='mask')(mask)
 	mask = Lambda(RGBMask)(mask)
 
 	masked_stack = keras.layers.multiply([mask,x_stack0],name='masked_stack')
@@ -164,7 +173,7 @@ def network_warp(param):
 	x = concatenate([x,x3]) #64x64x384
 	x = myConv(x,128) #64x64x128
 	x = UpSampling2D()(x) #128x128x128
-	y = myConv(x,3,activation='linear')#128x128x3	
+	y = myConv(x,3,activation='tanh')#128x128x3	
 	
 	model = Model(inputs=[x_stack0,x_pose0,x_mask0],outputs=y)
 	return model
