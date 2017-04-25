@@ -16,8 +16,8 @@ def train(dataset,model_name,gpu_id):
 	params = param.getParam(dataset)
 	gpu = '/gpu:' + str(gpu_id)
 
-	output_dir = '/afs/csail.mit.edu/u/b/balakg/pose/pose2image/results/outputs/' + model_name
-	network_dir = '/afs/csail.mit.edu/u/b/balakg/pose/pose2image/results/networks/' + model_name
+	output_dir = params['project_dir'] + '/results/outputs/' + model_name
+	network_dir = params['project_dir'] + '/results/networks/' + model_name
 
 	if not os.path.isdir(output_dir):
 		os.mkdir(output_dir)
@@ -44,12 +44,6 @@ def train(dataset,model_name,gpu_id):
 			model = networks.network_warp(params)
 			#model = load_model('../results/networks/warp3/30000.h5')
 			model.compile(optimizer=Adam(lr=1e-4), loss='mse')
-		
-		#X_src,X_tgt,X_pose,X_mask = next(train_feed)			
-		#train_loss = model.train_on_batch([X_src,X_pose,X_mask],X_tgt)
-		#pred = model.predict([X_src,X_pose,X_warp])
-		#sio.savemat('test.mat', {'X_src': X_src, 'X_tgt': X_tgt, 'X_pose': X_pose, 'X_mask': X_mask})
-		#return
 
 		step = 0	
 		while(True):

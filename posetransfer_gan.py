@@ -11,33 +11,29 @@ import param
 from keras.models import load_model,Model
 from keras.optimizers import Adam
 
-batch_size = 8
-gpu = '/gpu:3'
-test_interval = 100
-test_save_interval=200
-model_save_interval = 5000
+def train(dataset,model_name,gpu_id):	
 
-n_test_vids = 13
-vid_pth = '../../datasets/golfswinghd/videos/'
-info_pth = '../../datasets/golfswinghd/videoinfo/'
-img_sfx = '.jpg'
-n_train_examples = 100000
-n_test_examples = 1000
+	params = param.getParam(dataset)
+	gpu = '/gpu:' + str(gpu_id)
 
-params = param.getParam()
-n_joints = params['n_joints']
-model_name = 'gan'
+	output_dir = params['project_dir'] + '/results/outputs/' + model_name 
+	network_dir = params['project_dir'] + '/results/networks/' + model_name
 
-def train():	
+	if not os.path.isdir(output_dir):
+		os.mkdir(output_dir)
+	if not os.path.isdir(network_dir):
+		os.mkdir(network_dir)
+
+	ex_train,ex_test = datareader.makeTransferExampleList(params)
+
+	train_feed = datageneration.transferExampleGenerator(ex_train,params)
+	test_feed = datageneration.transferExampleGenerator(ex_test,params)
+
+	batch_size = params['batch_size']
+
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
 	config.allow_soft_placement = True
-
-	ex_train,ex_test = datareader.makeTransferExampleList(
-		vid_pth,info_pth,n_test_vids,5,img_sfx,n_train_examples,n_test_examples)
-
-	train_feed = datageneration.transferExampleGenerator(ex_train,batch_size,params)
-	test_feed = datageneration.transferExampleGenerator(ex_test,batch_size,params)
 	
 	with tf.Session(config=config) as sess:
 
@@ -50,7 +46,7 @@ def train():
 			discriminator = networks.discriminator(params)
 			discriminator.compile(loss='binary_crossentropy', optimizer=Adam(lr=1e-4))
 			gan = networks.gan(generator,discriminator,params)
-			gan.compile(optimizer=Adam(lr=1e-4),loss=['mse','binary_crossentropy'],loss_weights=[10.0,1.0])
+			gan.compile(optimizer=Adam(lr=1e-4),loss=['mse','binary_crossentropy'],loss_weights=[1000.0,1.0])
 
 	
 		step = 0	
@@ -86,7 +82,7 @@ def train():
 			print str(step) + ",0," + str(gan_loss[0]) + "," + str(gan_loss[1]) + "," + str(gan_loss[2])
 			sys.stdout.flush()
 
-			if(step % test_interval == 0):
+			if(step % params['test_interval'] == 0):
 				n_batches = 8
 				test_loss = np.array([0.0,0.0,0.0])			
 				for j in xrange(n_batches):	
@@ -101,19 +97,21 @@ def train():
 				sys.stdout.flush()
 
 
-			if(step % test_save_interval==0):
+			if(step % params['test_save_interval']==0):
 				X_src,X_tgt,X_pose,X_mask = next(test_feed)			
 				pred_val = gan.predict([X_src,X_pose,X_mask])
 		
-				sio.savemat('../results/outputs/' + model_name + '/' + str(step) + '.mat',
+				sio.savemat(output_dir + '/' + str(step) + '.mat',
          		{'X_src': X_src,'X_tgt': X_tgt, 'pred': pred_val[0]})	
 
 			
-			if(step % model_save_interval==0): 
-				gan.save('../results/networks/' + model_name + '/' + str(step) + '.h5')			
+			if(step % params['model_save_interval']==0): 
+				gan.save(network_dir + '/' + str(step) + '.h5')			
 
 			step += 1	
 
 if __name__ == "__main__":
-	train()
-
+	if(len(sys.argv) != 3):
+		print "Need model name and gpu id as command line arguments."
+	else:
+		train('golfswinghd', sys.argv[1], sys.argv[2])
