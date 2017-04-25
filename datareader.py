@@ -4,7 +4,14 @@ import scipy.io as sio
 import os
 from tensorflow.python.framework import ops
 
-def makeTransferExampleList(vid_pth,info_pth,n_test_vids,n_end_remove,img_sfx,n_train_examples,n_test_examples):
+def makeTransferExampleList(param):
+
+	vid_pth = param['vid_pth']
+	info_pth = param['info_pth']
+	n_test_vids = param['n_test_vids']
+	img_sfx = param['img_sfx']
+	n_train_examples = param['n_train_examples']
+	n_test_examples = param['n_test_examples']
 
 	vid_names = [each for each in os.listdir(vid_pth)
                 if os.path.isdir(os.path.join(vid_pth,each))]
@@ -31,7 +38,7 @@ def makeTransferExampleList(vid_pth,info_pth,n_test_vids,n_end_remove,img_sfx,n_
 		box = info['data']['bbox'][0][0]
 		X = info['data']['X'][0][0]
 
-		n_frames = X.shape[2]-n_end_remove #Some predictions at the end are bad
+		n_frames = X.shape[2]-5 #Some predictions at the end are bad for golfswinghd
 		
 		#choose frames
 		frame0 = np.random.randint(0,n_frames)

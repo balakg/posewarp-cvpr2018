@@ -74,7 +74,7 @@ def makeInitialWarpField(joints0,joints1,sigma,img_width,img_height):
 	return V
 '''
 
-def transferExampleGenerator(examples,batch_size,param):
+def transferExampleGenerator(examples,param):
     
 	img_width = param['IMG_WIDTH']
 	img_height = param['IMG_HEIGHT']
@@ -82,6 +82,7 @@ def transferExampleGenerator(examples,batch_size,param):
 	sigma_joint = param['sigma_joint']
 	n_joints = param['n_joints']
 	scale_factor = param['obj_scale_factor']	
+	batch_size = param['batch_size']
 
 	X_src = np.zeros((batch_size,img_height,img_width,11*3)) #source image + 10 warped ones
 	X_tgt = np.zeros((batch_size,img_height,img_width,3))

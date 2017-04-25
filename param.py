@@ -1,4 +1,4 @@
-def getParam():
+def getParam(dataset):
 	param = {}
 	dn = 2 #downsample images
 	param['IMG_HEIGHT'] = 256/dn 
@@ -12,5 +12,18 @@ def getParam():
 	param['posemap_downsample'] = 4/dn 
 	param['sigma_joint'] = 7.0/dn
 	param['n_joints'] = 14
+
+	param['batch_size'] = 8
+	param['test_interval'] = 100
+	param['test_save_interval'] = 500
+	param['model_save_interval'] = 5000
+
+	if(dataset == 'golfswinghd'):
+		param['n_test_vids'] = 13
+		param['vid_pth'] = '../../datasets/golfswinghd/videos/'
+		param['info_pth'] = '../../datasets/golfswinghd/videoinfo/'
+		param['img_sfx'] = '.jpg'
+		param['n_train_examples'] = 100000
+		param['n_test_examples'] = 1000
 
 	return param
