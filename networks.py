@@ -271,12 +271,13 @@ def discriminator(param):
 	n_joints = param['n_joints']
 	pose_dn = param['posemap_downsample']
 
-	x_img = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	x_pose = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints))
+	x_src = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
+	x_tgt = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
+	x_pose = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, 2*n_joints))
 
-	x = myConv(x_img,64,strides=2) #128x128x64
-	x = myConv(x,128,strides=2) #64x64x128
-	x = concatenate([x,x_pose]) #64x64x142
+	x = concatenate([x_src,x_tgt])
+	x = myConv(x,64,strides=2) #64x64x128
+	x = concatenate([x,x_pose]) #64x64x156
 	x = myConv(x,128) #64x64x128
 	x = myConv(x,128,strides=2) #32x32x128
 	x = myConv(x,128,strides=2) #16x16x128
@@ -286,7 +287,7 @@ def discriminator(param):
 	x = myDense(x,256,activation='relu')
 	y = myDense(x,2,activation='softmax')
 
-	model = Model(inputs=[x_img,x_pose],outputs=y, name='discriminator')
+	model = Model(inputs=[x_src,x_tgt,x_pose],outputs=y, name='discriminator')
 	return model
 	
 
@@ -297,16 +298,19 @@ def gan(generator,discriminator,param):
 	n_joints = param['n_joints']
 	pose_dn = param['posemap_downsample']
 
-	x_img = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	x_pose = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints*2))
+
+	x_stack0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,33))
+	x_pose0 = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints*2))
+	x_mask0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
 
 	make_trainable(discriminator, False)
-	y_gen = generator([x_img,x_pose])
+	y_gen = generator([x_stack0,x_pose0,x_mask0])
 
-	x_pose0 = Lambda(lambda x: x[:,:,:,0:n_joints])(x_pose)
-	y_class = discriminator([y_gen,x_pose0])
+	x_src = Lambda(lambda arg: arg[:,:,:,0:3])(x_stack0)
+	
+	y_class = discriminator([x_src,y_gen,x_pose0])
 
-	gan = Model(inputs=[x_img,x_pose], outputs=[y_gen,y_class], name='gan')
+	gan = Model(inputs=[x_stack0,x_pose0,x_mask0], outputs=[y_gen,y_class], name='gan')
 	return gan
 
 
