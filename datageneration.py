@@ -98,8 +98,8 @@ def transferExampleGenerator(examples,batch_size,param):
 			I0 = cv2.imread(example[0])
 			I1 = cv2.imread(example[1])
 
-			I0 = I0/255.0 - 0.5
-			I1 = I1/255.0 - 0.5
+			I0 = (I0/255.0 - 0.5)*2.0
+			I1 = (I1/255.0 - 0.5)*2.0
 
 			joints0 = np.reshape(np.array(example[2:30]), (14,2))
 			joints1 = np.reshape(np.array(example[30:58]), (14,2))
