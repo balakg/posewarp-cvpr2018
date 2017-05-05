@@ -8,8 +8,10 @@ import datageneration
 import networks
 import scipy.io as sio
 import param
+import util
 from keras.models import load_model,Model
 from keras.optimizers import Adam
+from keras.applications.vgg19 import VGG19
 
 def train(dataset,model_name,gpu_id):	
 
@@ -42,24 +44,30 @@ def train(dataset,model_name,gpu_id):
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			generator = networks.network_warp(params)
+			vgg_model = VGG19(weights='imagenet',include_top=False,
+								input_shape=(128,128,3))
+			networks.make_trainable(vgg_model,False)
+			generator = networks.network_warp(params,vgg_model)
 			discriminator = networks.discriminator(params)
 			discriminator.compile(loss='binary_crossentropy', optimizer=Adam(lr=1e-4))
 			gan = networks.gan(generator,discriminator,params)
-			gan.compile(optimizer=Adam(lr=1e-4),loss=['mse','binary_crossentropy'],loss_weights=[1000.0,1.0])
+			gan.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse','binary_crossentropy'],
+						loss_weights=[1.0,0.001,0.001])
 
-	
 		step = 0	
 		while(True):
-			X_src,X_tgt,X_pose,X_mask = next(train_feed)			
+			X_src,X_tgt,X_pose,X_mask,X_trans = next(train_feed)			
 	
 			#Get generator output
 			with tf.device(gpu):
-				X_gen = generator.predict([X_src,X_pose,X_mask])
+				inputs = [X_src,X_pose,X_mask,X_trans]
+				X_gen = generator.predict(inputs)[0]	
 	
 			#Train discriminator
 			networks.make_trainable(discriminator,True)
 
+			#Make a batch of batch_size generated examples and batch_size 
+			#real examples. Each example is a source/target pair of images and poses.
 			X_src_disc = np.concatenate((X_src[:,:,:,0:3],X_src[:,:,:,0:3]))
 			X_tgt_disc = np.concatenate((X_gen,X_tgt))
 			X_pose_disc = np.concatenate((X_pose,X_pose))
@@ -67,42 +75,47 @@ def train(dataset,model_name,gpu_id):
 			y = np.zeros([2*batch_size,2])
 			y[0:batch_size,1] = 1
 			y[batch_size:,0] = 1
-		
+
 			with tf.device(gpu):
-				d_loss = discriminator.train_on_batch([X_src_disc, X_tgt_disc, X_pose_disc],y)
+				inputs = [X_src_disc,X_tgt_disc,X_pose_disc]
+				d_loss = discriminator.train_on_batch(inputs,y)
 
 			networks.make_trainable(discriminator,False)
 
 			#TRAIN GAN
-			X_src,X_tgt,X_pose,X_mask = next(train_feed)			
+			X_src,X_tgt,X_pose,X_mask,X_trans = next(train_feed)			
 			y = np.zeros([batch_size,2])
-			y[:,0] = 1
+			y[:,0] = 1 #Pretend these are real.
 
-			gan_loss = gan.train_on_batch([X_src,X_pose,X_mask],[X_tgt,y])
-			print str(step) + ",0," + str(gan_loss[0]) + "," + str(gan_loss[1]) + "," + str(gan_loss[2])
-			sys.stdout.flush()
+			inputs = [X_src,X_pose,X_mask,X_trans]
+			X_feat = vgg_model.predict(util.vgg_preprocess(X_tgt))
+			gan_loss = gan.train_on_batch(inputs,[X_tgt,X_feat,y])
+			util.printProgress(step,0,gan_loss)
+
 
 			if(step % params['test_interval'] == 0):
 				n_batches = 8
-				test_loss = np.array([0.0,0.0,0.0])			
+				test_loss = np.zeros(4)			
 				for j in xrange(n_batches):	
-					X_src,X_tgt,X_pose,X_mask = next(test_feed)			
+					X_src,X_tgt,X_pose,X_mask,X_trans = next(test_feed)			
 					y = np.zeros([batch_size,2])
-					y[:,0] = 1
-					test_loss_j = gan.test_on_batch([X_src,X_pose,X_mask], [X_tgt,y])
+					y[:,1] = 1 #Fake images
+
+					inputs = [X_src,X_pose,X_mask,X_trans]
+					X_feat = vgg_model.predict(util.vgg_preprocess(X_tgt))
+					test_loss_j = gan.test_on_batch(inputs, [X_tgt,X_feat,y])
 					test_loss += np.array(test_loss_j)
 	
 				test_loss /= (n_batches)
-				print str(step) + ",1," + str(test_loss[0]) + "," + str(test_loss[1]) + "," + str(test_loss[2])
-				sys.stdout.flush()
-
+				util.printProgress(step,1,test_loss)
 
 			if(step % params['test_save_interval']==0):
-				X_src,X_tgt,X_pose,X_mask = next(test_feed)			
-				pred_val = gan.predict([X_src,X_pose,X_mask])
-		
+				X_src,X_tgt,X_pose,X_mask,X_trans = next(test_feed)			
+				inputs = [X_src,X_pose,X_mask,X_trans]
+				pred_val = gan.predict(inputs)
+	
 				sio.savemat(output_dir + '/' + str(step) + '.mat',
-         		{'X_src': X_src,'X_tgt': X_tgt, 'pred': pred_val[0]})	
+         		{'X_src': X_src,'X_tgt': X_tgt, 'pred': pred_val[0]}) 
 
 			
 			if(step % params['model_save_interval']==0): 
