@@ -84,10 +84,11 @@ def transferExampleGenerator(examples,param):
 	scale_factor = param['obj_scale_factor']	
 	batch_size = param['batch_size']
 
-	X_src = np.zeros((batch_size,img_height,img_width,11*3)) #source image + 10 warped ones
+	X_src = np.zeros((batch_size,img_height,img_width,3))
 	X_tgt = np.zeros((batch_size,img_height,img_width,3))
 	X_mask = np.zeros((batch_size,img_height,img_width,11))
 	X_pose = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints*2))
+	X_trans = np.zeros((batch_size,2,3,11))
 
 	#limbs: head, right upper arm, right lower arm, left upper arm, left lower arm,
 	#right upper leg, right lower leg, left upper leg, left lower leg, chest
@@ -138,25 +139,33 @@ def transferExampleGenerator(examples,param):
 			posemap1 = makeJointHeatmaps(img_height,img_width,joints1,sigma_joint,pose_dn)
 
 			#Warp the source image once for each limb
-			I0_warps = makeWarpedImageStack(I0,joints0,joints1,img_width,img_height,limbs)
+			transforms = makeWarpedImageStack(I0,joints0,joints1,img_width,img_height,limbs)
 
-			#Make gaussian masks for the limbs in the warped images. Also make a background mask,
-			#to be applied to the original image in the neural network.
-			limb_masks = makeLimbMasks(joints1,img_width,img_height,limbs)	
-			fg_sigmas = (np.ptp(joints1,axis=0)/2.0)**2
-
-			bg_mask = 1.0 - makeGaussianMap(img_width,img_height,np.mean(joints1,axis=0),fg_sigmas[0],fg_sigmas[1],0.0)
-
+			#Make gaussian masks for the limbs in the source image.
+			limb_masks = makeLimbMasks(joints0,img_width,img_height,limbs)	
+		
+			#Make background mask
+			fg_sig0 = (np.ptp(joints0,axis=0)/2.0)**2
+			#fg_sig1 = (np.ptp(joints1,axis=0)/2.0)**2
+			fg_mask0 = makeGaussianMap(img_width,img_height,
+			    np.mean(joints0,axis=0),fg_sig0[0],fg_sig0[1],0.0)
+			#fg_mask1 = makeGaussianMap(img_width,img_height,
+			#    np.mean(joints1,axis=0),fg_sig1[0],fg_sig1[1],0.0)
+			bg_mask = 1.0 - fg_mask0 #np.maximum(fg_mask0,fg_mask1)
+			
 			X_src[i,:,:,0:3] = I0
-			X_src[i,:,:,3:] = I0_warps
+			#X_src[i,:,:,3:] = I0_warps
+
+			X_tgt[i,:,:,:] = I1
+			X_pose[i,:,:,:] = np.concatenate((posemap0,posemap1),axis=2)	
 
 			X_mask[i,:,:,0] = bg_mask
 			X_mask[i,:,:,1:] = limb_masks 
 
-			X_tgt[i,:,:,:] = I1
-			X_pose[i,:,:,:] = np.concatenate((posemap0,posemap1),axis=2)	
+			X_trans[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
+			X_trans[i,:,:,1:] = transforms
 	
-		yield (X_src,X_tgt,X_pose,X_mask)
+		yield (X_src,X_tgt,X_pose,X_mask,X_trans)
 
 '''
 def poseExampleGenerator(examples,batch_size,param):
@@ -292,7 +301,7 @@ def makeLimbMasks(joints,img_width,img_height,limbs):
 
 	#Gaussian sigma perpendicular to the limb axis. I hardcoded
 	#reasonable sigmas for now.
-	sigma_perp = np.array([11,5,5,5,5,5,5,5,5,11])**2	 
+	sigma_perp = np.array([9,5,5,5,5,5,5,5,5,11])**2	 
 
 	for i in xrange(n_limbs):	
 		n_joints_for_limb = len(limbs[i])
@@ -321,7 +330,8 @@ def makeWarpedImageStack(I,joints1,joints2,img_width,img_height,limbs):
 	n_limbs = len(limbs)
 	n_joints = joints1.shape[0]
 
-	Istack = np.zeros((img_height,img_width,3*n_limbs))
+	#Istack = np.zeros((img_height,img_width,3*n_limbs))
+	Ms = np.zeros((2,3,n_limbs))
 
 	for i in xrange(n_limbs):	
 
@@ -333,9 +343,10 @@ def makeWarpedImageStack(I,joints1,joints2,img_width,img_height,limbs):
 			p1[j,:] = [joints1[limbs[i][j],0],joints1[limbs[i][j],1]]
 			p2[j,:] = [joints2[limbs[i][j],0],joints2[limbs[i][j],1]]			
 
-		tform,_ = transformations.make_similarity(p1,p2)
+		tform,_ = transformations.make_similarity(p2,p1)
 		M = np.array([[tform[1],-tform[3],tform[0]],[tform[3],tform[1],tform[2]]])
-		Iw = cv2.warpAffine(I,M,(img_width,img_height))
-		Istack[:,:,i*3:i*3+3] = Iw
-		
-	return Istack
+		#Iw = cv2.warpAffine(I,M,(img_width,img_height))
+		#Istack[:,:,i*3:i*3+3] = Iw
+		Ms[:,:,i] = M
+
+	return Ms
