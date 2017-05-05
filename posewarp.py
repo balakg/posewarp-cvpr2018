@@ -8,8 +8,10 @@ import datageneration
 import networks
 import scipy.io as sio
 import param
+import util
 from keras.models import load_model,Model
 from keras.optimizers import Adam
+from keras.applications.vgg19 import VGG19
 
 def train(dataset,model_name,gpu_id):	
 
@@ -41,43 +43,51 @@ def train(dataset,model_name,gpu_id):
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			model = networks.network_warp(params)
-			#model = load_model('../results/networks/warp3/30000.h5')
-			model.compile(optimizer=Adam(lr=1e-4), loss='mse')
+			vgg_model = VGG19(weights='imagenet',include_top=False,
+						input_shape=(128,128,3))
+			networks.make_trainable(vgg_model,False)
+			model = networks.network_warp(params,vgg_model)
+			model.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse'],
+						loss_weights=[1.0,0.001])
 
 		step = 0	
 		while(True):
-
-			X_src,X_tgt,X_pose,X_mask = next(train_feed)			
+			X_src,X_tgt,X_pose,X_mask,X_trans = next(train_feed)			
 
 			with tf.device(gpu):
-				train_loss = model.train_on_batch([X_src,X_pose,X_mask],[X_tgt])
+				X_feat = vgg_model.predict(util.vgg_preprocess(X_tgt))
+				inputs = [X_src,X_pose,X_mask,X_trans]
+				outputs = [X_tgt,X_feat]
+				train_loss = model.train_on_batch(inputs,outputs)
 
-			print str(step) + ",0," + str(train_loss)
-			sys.stdout.flush()	
+			util.printProgress(step,0,train_loss)
 
 			if(step % params['test_interval'] == 0):
 				n_batches = 8
-				test_loss = 0
+				test_loss = [0.0,0.0,0.0]
 				for j in xrange(n_batches):	
-					X_src,X_tgt,X_pose,X_mask = next(test_feed)			
-					test_loss += model.test_on_batch([X_src,X_pose,X_mask], [X_tgt])
+					X_src,X_tgt,X_pose,X_mask,X_trans = next(test_feed)			
+					X_feat = vgg_model.predict(util.vgg_preprocess(X_tgt))
+					inputs = [X_src,X_pose,X_mask,X_trans]
+					outputs = [X_tgt,X_feat]
+					test_loss += np.array(model.test_on_batch(inputs,outputs))
 
 				test_loss /= (n_batches)
-				print str(step) + ",1," + str(test_loss)
-				sys.stdout.flush()
+				util.printProgress(step,1,test_loss)
 
+			'''
 			if(step % params['test_save_interval']==0):
-				X_src,X_tgt,X_pose,X_mask = next(test_feed)			
-				pred_val = model.predict([X_src,X_pose,X_mask])
-		
+				X_src,X_tgt,X_pose,X_mask,X_trans = next(test_feed)			
+				inputs = [X_src,X_pose,X_mask,X_trans]
+				pred = model.predict(inputs)
+	
 				sio.savemat(output_dir + '/' + str(step) + '.mat',
-         		{'X_src': X_src,'X_tgt': X_tgt, 'X_mask': X_mask, 'pred': pred_val})	
-
-				
+         		{'X_src': X_src,'X_tgt': X_tgt, 'X_mask': X_mask, 'pred': pred[0]})	
+	
 			if(step % params['model_save_interval']==0):
 				model.save(network_dir + '/' + str(step) + '.h5')			
-			
+			'''		
+
 			step += 1	
 
 if __name__ == "__main__":

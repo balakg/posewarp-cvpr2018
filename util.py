@@ -1,0 +1,19 @@
+import sys
+
+def vgg_preprocess(x):
+	x = 255.0 * (x + 1.0)/2.0
+
+	x[:,:,:,0] -= 103.939
+	x[:,:,:,1] -= 116.779
+	x[:,:,:,2] -= 123.68
+
+	return x
+
+def printProgress(step,test,train_loss):
+	s = str(step) + "," + str(test)
+
+	for i in xrange(len(train_loss)):
+		s += "," + str(train_loss[i])
+
+	print s
+	sys.stdout.flush()
