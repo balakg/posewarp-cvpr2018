@@ -52,41 +52,34 @@ def train(dataset,model_name,gpu_id):
 
 		step = 0	
 		while(True):
-			X_src,X_tgt,X_pose,X_mask,X_trans = next(train_feed)			
+			X,Y = next(train_feed)			
 
 			with tf.device(gpu):
-				X_feat = vgg_model.predict(util.vgg_preprocess(X_tgt))
-				inputs = [X_src,X_pose,X_mask,X_trans]
-				outputs = [X_tgt,X_feat]
-				train_loss = model.train_on_batch(inputs,outputs)
+				Y_vgg = vgg_model.predict(util.vgg_preprocess(Y))
+				train_loss = model.train_on_batch(X,[Y,Y_vgg])
 
 			util.printProgress(step,0,train_loss)
 
 			if(step % params['test_interval'] == 0):
 				n_batches = 8
-				test_loss = [0.0,0.0,0.0]
+				test_loss = np.zeros(3)
 				for j in xrange(n_batches):	
-					X_src,X_tgt,X_pose,X_mask,X_trans = next(test_feed)			
-					X_feat = vgg_model.predict(util.vgg_preprocess(X_tgt))
-					inputs = [X_src,X_pose,X_mask,X_trans]
-					outputs = [X_tgt,X_feat]
-					test_loss += np.array(model.test_on_batch(inputs,outputs))
+					X,Y = next(test_feed)			
+					Y_vgg = vgg_model.predict(util.vgg_preprocess(Y))
+					test_loss += np.array(model.test_on_batch(X,[Y,Y_vgg]))
 
 				test_loss /= (n_batches)
 				util.printProgress(step,1,test_loss)
 
-			'''
 			if(step % params['test_save_interval']==0):
-				X_src,X_tgt,X_pose,X_mask,X_trans = next(test_feed)			
-				inputs = [X_src,X_pose,X_mask,X_trans]
-				pred = model.predict(inputs)
+				X,Y = next(test_feed)			
+				pred = model.predict(X)[0]
 	
 				sio.savemat(output_dir + '/' + str(step) + '.mat',
-         		{'X_src': X_src,'X_tgt': X_tgt, 'X_mask': X_mask, 'pred': pred[0]})	
+         		{'X_src': X[0],'Y': Y, 'X_mask': X[2], 'pred': pred})	
 	
 			if(step % params['model_save_interval']==0):
 				model.save(network_dir + '/' + str(step) + '.h5')			
-			'''		
 
 			step += 1	
 

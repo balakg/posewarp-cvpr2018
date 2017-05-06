@@ -85,10 +85,11 @@ def transferExampleGenerator(examples,param):
 	batch_size = param['batch_size']
 
 	X_src = np.zeros((batch_size,img_height,img_width,3))
-	X_tgt = np.zeros((batch_size,img_height,img_width,3))
 	X_mask = np.zeros((batch_size,img_height,img_width,11))
 	X_pose = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints*2))
 	X_trans = np.zeros((batch_size,2,3,11))
+
+	Y = np.zeros((batch_size,img_height,img_width,3))
 
 	#limbs: head, right upper arm, right lower arm, left upper arm, left lower arm,
 	#right upper leg, right lower leg, left upper leg, left lower leg, chest
@@ -139,7 +140,7 @@ def transferExampleGenerator(examples,param):
 			posemap1 = makeJointHeatmaps(img_height,img_width,joints1,sigma_joint,pose_dn)
 
 			#Warp the source image once for each limb
-			transforms = makeWarpedImageStack(I0,joints0,joints1,img_width,img_height,limbs)
+			transforms = getLimbTransforms(I0,joints0,joints1,img_width,img_height,limbs)
 
 			#Make gaussian masks for the limbs in the source image.
 			limb_masks = makeLimbMasks(joints0,img_width,img_height,limbs)	
@@ -155,8 +156,8 @@ def transferExampleGenerator(examples,param):
 			
 			X_src[i,:,:,0:3] = I0
 			#X_src[i,:,:,3:] = I0_warps
+			Y[i,:,:,:] = I1
 
-			X_tgt[i,:,:,:] = I1
 			X_pose[i,:,:,:] = np.concatenate((posemap0,posemap1),axis=2)	
 
 			X_mask[i,:,:,0] = bg_mask
@@ -165,7 +166,7 @@ def transferExampleGenerator(examples,param):
 			X_trans[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
 			X_trans[i,:,:,1:] = transforms
 	
-		yield (X_src,X_tgt,X_pose,X_mask,X_trans)
+		yield ([X_src,X_pose,X_mask,X_trans],Y)
 
 '''
 def poseExampleGenerator(examples,batch_size,param):
@@ -325,7 +326,7 @@ def makeLimbMasks(joints,img_width,img_height,limbs):
 		
 	return mask
 
-def makeWarpedImageStack(I,joints1,joints2,img_width,img_height,limbs):
+def getLimbTransforms(I,joints1,joints2,img_width,img_height,limbs):
 	
 	n_limbs = len(limbs)
 	n_joints = joints1.shape[0]
