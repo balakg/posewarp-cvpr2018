@@ -74,7 +74,7 @@ def makeInitialWarpField(joints0,joints1,sigma,img_width,img_height):
 	return V
 '''
 
-def transferExampleGenerator(examples,param):
+def warpExampleGenerator(examples,param):
     
 	img_width = param['IMG_WIDTH']
 	img_height = param['IMG_HEIGHT']
