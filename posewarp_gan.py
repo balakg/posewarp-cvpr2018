@@ -26,10 +26,10 @@ def train(dataset,model_name,gpu_id):
 	if not os.path.isdir(network_dir):
 		os.mkdir(network_dir)
 
-	ex_train,ex_test = datareader.makeTransferExampleList(params)
+	ex_train,ex_test = datareader.makeWarpExampleList(params)
 
-	train_feed = datageneration.transferExampleGenerator(ex_train,params)
-	test_feed = datageneration.transferExampleGenerator(ex_test,params)
+	train_feed = datageneration.warpExampleGenerator(ex_train,params)
+	test_feed = datageneration.warpExampleGenerator(ex_test,params)
 
 	batch_size = params['batch_size']
 
@@ -44,78 +44,70 @@ def train(dataset,model_name,gpu_id):
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			vgg_model = VGG19(weights='imagenet',include_top=False,
-								input_shape=(128,128,3))
-			networks.make_trainable(vgg_model,False)
-			generator = networks.network_warp(params,vgg_model)
+			#vgg_model = VGG19(weights='imagenet',include_top=False,
+			#					input_shape=(128,128,3))
+			#networks.make_trainable(vgg_model,False)
+			generator = networks.network_warp(params)
 			discriminator = networks.discriminator(params)
-			discriminator.compile(loss='binary_crossentropy', optimizer=Adam(lr=1e-4))
+			discriminator.compile(loss='binary_crossentropy', optimizer=Adam(lr=5e-4))
 			gan = networks.gan(generator,discriminator,params)
-			gan.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse','binary_crossentropy'],
-						loss_weights=[1.0,0.001,0.001])
+			gan.compile(optimizer=Adam(lr=5e-4),loss=['mse','binary_crossentropy'],
+						loss_weights=[1.0,0.001])
 
 		step = 0	
 		while(True):
-			X_src,X_tgt,X_pose,X_mask,X_trans = next(train_feed)			
-	
-			#Get generator output
+			X,Y = next(train_feed)
+
 			with tf.device(gpu):
-				inputs = [X_src,X_pose,X_mask,X_trans]
-				X_gen = generator.predict(inputs)[0]	
+				gen = generator.predict(X)	
 	
 			#Train discriminator
 			networks.make_trainable(discriminator,True)
-
 			#Make a batch of batch_size generated examples and batch_size 
 			#real examples. Each example is a source/target pair of images and poses.
-			X_src_disc = np.concatenate((X_src[:,:,:,0:3],X_src[:,:,:,0:3]))
-			X_tgt_disc = np.concatenate((X_gen,X_tgt))
-			X_pose_disc = np.concatenate((X_pose,X_pose))
+			X_src_disc = np.concatenate((X[0],X[0]))
+			X_tgt_disc = np.concatenate((gen,Y))
+			X_pose_disc = np.concatenate((X[1],X[1]))
 
-			y = np.zeros([2*batch_size,2])
-			y[0:batch_size,1] = 1
-			y[batch_size:,0] = 1
+			L = np.zeros([2*batch_size,2])
+			L[0:batch_size,1] = 1
+			L[batch_size:,0] = 1
 
-			with tf.device(gpu):
-				inputs = [X_src_disc,X_tgt_disc,X_pose_disc]
-				d_loss = discriminator.train_on_batch(inputs,y)
+			inputs = [X_src_disc,X_tgt_disc,X_pose_disc]
+			d_loss = discriminator.train_on_batch(inputs,L)
 
 			networks.make_trainable(discriminator,False)
 
+
 			#TRAIN GAN
-			X_src,X_tgt,X_pose,X_mask,X_trans = next(train_feed)			
-			y = np.zeros([batch_size,2])
-			y[:,0] = 1 #Pretend these are real.
+			X,Y = next(train_feed)			
+			L = np.zeros([batch_size,2])
+			L[:,0] = 1 #Pretend these are real.
 
-			inputs = [X_src,X_pose,X_mask,X_trans]
-			X_feat = vgg_model.predict(util.vgg_preprocess(X_tgt))
-			gan_loss = gan.train_on_batch(inputs,[X_tgt,X_feat,y])
-			util.printProgress(step,0,gan_loss)
+			g_loss = gan.train_on_batch(X,[Y,L])[1]
 
+			util.printProgress(step,0,[g_loss,d_loss])
 
 			if(step % params['test_interval'] == 0):
 				n_batches = 8
-				test_loss = np.zeros(4)			
+				test_loss = np.zeros(2)			
 				for j in xrange(n_batches):	
-					X_src,X_tgt,X_pose,X_mask,X_trans = next(test_feed)			
-					y = np.zeros([batch_size,2])
-					y[:,1] = 1 #Fake images
+					X,Y = next(test_feed)			
+					L = np.zeros([batch_size,2])
+					L[:,1] = 1 #Fake images
 
-					inputs = [X_src,X_pose,X_mask,X_trans]
-					X_feat = vgg_model.predict(util.vgg_preprocess(X_tgt))
-					test_loss_j = gan.test_on_batch(inputs, [X_tgt,X_feat,y])
-					test_loss += np.array(test_loss_j)
+					test_loss_j = gan.test_on_batch(X, [Y,L])
+					test_loss += np.array([test_loss_j[1],test_loss_j[2]])
 	
 				test_loss /= (n_batches)
 				util.printProgress(step,1,test_loss)
 
 			if(step % params['test_save_interval']==0):
-				X_src,X_tgt,X_pose,X_mask,X_trans = next(test_feed)			
-				inputs = [X_src,X_pose,X_mask,X_trans]
-				pred_val = gan.predict(inputs)
+				X,Y = next(test_feed)			
+				pred_val = gan.predict(X)
 	
 				sio.savemat(output_dir + '/' + str(step) + '.mat',
-         		{'X_src': X_src,'X_tgt': X_tgt, 'pred': pred_val[0]}) 
+         		{'X': X[0],'Y': Y, 'pred': pred_val[0]}) 
 
 			
 			if(step % params['model_save_interval']==0): 

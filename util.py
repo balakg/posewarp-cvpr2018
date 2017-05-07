@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 
 def vgg_preprocess(x):
 	x = 255.0 * (x + 1.0)/2.0
@@ -12,8 +13,11 @@ def vgg_preprocess(x):
 def printProgress(step,test,train_loss):
 	s = str(step) + "," + str(test)
 
-	for i in xrange(len(train_loss)):
-		s += "," + str(train_loss[i])
+	if(isinstance(train_loss,list) or isinstance(train_loss,np.ndarray)):
+		for i in xrange(len(train_loss)):
+			s += "," + str(train_loss[i])
+	else:
+		s += "," + str(train_loss)
 
 	print s
 	sys.stdout.flush()

@@ -27,10 +27,10 @@ def train(dataset,model_name,gpu_id):
 	if not os.path.isdir(network_dir):
 		os.mkdir(network_dir)
 
-	ex_train,ex_test = datareader.makeTransferExampleList(params)
+	ex_train,ex_test = datareader.makeWarpExampleList(params)
 
-	train_feed = datageneration.transferExampleGenerator(ex_train,params)
-	test_feed = datageneration.transferExampleGenerator(ex_test,params)
+	train_feed = datageneration.warpExampleGenerator(ex_train,params)
+	test_feed = datageneration.warpExampleGenerator(ex_test,params)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
@@ -46,8 +46,8 @@ def train(dataset,model_name,gpu_id):
 			vgg_model = VGG19(weights='imagenet',include_top=False,
 						input_shape=(128,128,3))
 			networks.make_trainable(vgg_model,False)
-			model = networks.network_warp(params,vgg_model)
-			model.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse'],
+			model = networks.network_warp_affine(params,vgg_model)
+			model.compile(optimizer=Adam(lr=5e-4),loss=['mse','mse'],
 						loss_weights=[1.0,0.001])
 
 		step = 0	
@@ -76,7 +76,7 @@ def train(dataset,model_name,gpu_id):
 				pred = model.predict(X)[0]
 	
 				sio.savemat(output_dir + '/' + str(step) + '.mat',
-         		{'X_src': X[0],'Y': Y, 'X_mask': X[2], 'pred': pred})	
+         		{'X_src': X[0],'Y': Y, 'pred': pred})	
 	
 			if(step % params['model_save_interval']==0):
 				model.save(network_dir + '/' + str(step) + '.h5')			

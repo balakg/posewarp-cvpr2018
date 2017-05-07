@@ -9,13 +9,13 @@ def getParam(dataset):
 	param['max_rotate_degree'] = 10
 	param['max_sat_factor'] = 0.05
 	param['max_px_shift'] = 10/dn
-	param['posemap_downsample'] = 4/dn 
+	param['posemap_downsample'] = 2/dn 
 	param['sigma_joint'] = 7.0/dn
 	param['n_joints'] = 14
 
 	param['batch_size'] = 8
 	param['test_interval'] = 100
-	param['test_save_interval'] = 500
+	param['test_save_interval'] = 1000
 	param['model_save_interval'] = 5000
 
 	param['project_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/pose2image'
@@ -25,7 +25,7 @@ def getParam(dataset):
 		param['vid_pth'] = '../../datasets/golfswinghd/videos/'
 		param['info_pth'] = '../../datasets/golfswinghd/videoinfo/'
 		param['img_sfx'] = '.jpg'
-		param['n_train_examples'] = 1000
+		param['n_train_examples'] = 100000
 		param['n_test_examples'] = 1000
 
 	return param

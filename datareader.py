@@ -4,7 +4,7 @@ import scipy.io as sio
 import os
 from tensorflow.python.framework import ops
 
-def makeTransferExampleList(param):
+def makeWarpExampleList(param):
 
 	vid_pth = param['vid_pth']
 	info_pth = param['info_pth']

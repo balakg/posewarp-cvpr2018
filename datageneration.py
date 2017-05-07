@@ -89,6 +89,10 @@ def transferExampleGenerator(examples,param):
 	X_pose = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints*2))
 	X_trans = np.zeros((batch_size,2,3,11))
 
+	#X_identity = np.zeros((batch_size,2,3,10))
+	#X_identity[:,0,0,:] = 1
+	#X_identity[:,1,1,:] = 1
+
 	Y = np.zeros((batch_size,img_height,img_width,3))
 
 	#limbs: head, right upper arm, right lower arm, left upper arm, left lower arm,
@@ -147,11 +151,8 @@ def transferExampleGenerator(examples,param):
 		
 			#Make background mask
 			fg_sig0 = (np.ptp(joints0,axis=0)/2.0)**2
-			#fg_sig1 = (np.ptp(joints1,axis=0)/2.0)**2
 			fg_mask0 = makeGaussianMap(img_width,img_height,
 			    np.mean(joints0,axis=0),fg_sig0[0],fg_sig0[1],0.0)
-			#fg_mask1 = makeGaussianMap(img_width,img_height,
-			#    np.mean(joints1,axis=0),fg_sig1[0],fg_sig1[1],0.0)
 			bg_mask = 1.0 - fg_mask0 #np.maximum(fg_mask0,fg_mask1)
 			
 			X_src[i,:,:,0:3] = I0
@@ -167,7 +168,7 @@ def transferExampleGenerator(examples,param):
 			X_trans[i,:,:,1:] = transforms
 	
 		yield ([X_src,X_pose,X_mask,X_trans],Y)
-
+		#yield ([X_src,X_pose,X_identity],Y)
 '''
 def poseExampleGenerator(examples,batch_size,param):
     
