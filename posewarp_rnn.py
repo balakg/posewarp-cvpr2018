@@ -47,21 +47,7 @@ def train(dataset,model_name,gpu_id):
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			vgg_model = VGG19(weights='imagenet',input_shape=(128,128,3),include_top=False)
-			networks.make_trainable(vgg_model,False)
-
-			single_net = networks.network_warp(params,vgg_model)
-			single_net.load_weights('../results/networks/L2+VGG_0.001/90000.h5')
-
-			output_names = ['concatenate_2','conv2d_8','conv2d_9','conv2d_10','conv2d_12']
-			outputs = []
-			for j in output_names:
-				outputs.append(single_net.get_layer(j).output)
-
-			single_net = Model(single_net.inputs,outputs)	
-			networks.make_trainable(single_net,False)
-
-			rnn_net = networks.warp_rnn(params,vgg_model)			
+			rnn_net = netowrks.rnn_net(params,'../results/networks/L2+VGG_0.001/90000.h5')
 			rnn_net.compile(optimizer=Adam(lr=(1e-4)),loss=['mse','mse'],loss_weights=[1.0,0.001])
 
 		step = 0	

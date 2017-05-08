@@ -4,6 +4,7 @@ from keras.models import Model
 from keras.layers import Conv2D,Dense,Activation,Input,UpSampling2D
 from keras.layers import concatenate,Flatten,Reshape,Lambda
 from keras.layers import SimpleRNN,TimeDistributed
+from keras.applications.vgg19 import VGG19
 from keras.optimizers import Adam
 import keras
 
@@ -56,51 +57,6 @@ def discriminator(param):
 
 	model = Model(inputs=[x_src,x_tgt,x_pose],outputs=y, name='discriminator')
 	return model
-
-	
-def discriminator_dense(param):
-
-	IMG_HEIGHT = param['IMG_HEIGHT']
-	IMG_WIDTH = param['IMG_WIDTH']
-	n_joints = param['n_joints']
-	pose_dn = param['posemap_downsample']
-
-	x_src = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	x_tgt = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	x_pose = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, 2*n_joints))
-	x_mask = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))
-
-	def slice(arg):
-		import tensorflow as tf
-		return 1.0 - tf.expand_dims(arg[:,:,:,0],3)
-
-	mask = Lambda(slice)(x_mask)
-
-	x0 = concatenate([x_src,x_tgt])
-	x1 = myConv(x0,64,strides=2) #64x64x128
-	x2 = concatenate([x1,x_pose]) #64x64x156
-	x3 = myConv(x2,128) #64x64x128
-	x4 = myConv(x3,128,strides=2) #32x32x128
-	x5 = myConv(x4,128,strides=2) #16x16x128
-	x6 = myConv(x5,256,ks=3) #16x16x128
-	
-	x = UpSampling2D()(x6) #32x32x128
-	x = concatenate([x,x4])
-	x = myConv(x,128) #32x32x128
-	x = UpSampling2D()(x) #64x64x128
-	x = concatenate([x,x3])
-	x = myConv(x,128) #64x64x128
-	x = UpSampling2D()(x) #128x128x128
-	x = concatenate([x,x0])
-	x = myConv(x,128) #128x128x128
-	x = myConv(x,1, activation='linear',ki='zeros')
-	x = keras.layers.add([x,mask],name='discmap')
-
-	y = GlobalMaxPooling2D()(x) 
-
-	model = Model(inputs=[x_src,x_tgt,x_pose,x_mask],outputs=y, name='discriminator_dense')
-	return model
-	
 
 def gan(generator,discriminator,param):
 
@@ -405,7 +361,7 @@ def network_warp_affine(param,feat_net=None):
 	return model
 '''
 
-def warp_rnn(param,feat_net=None):
+def rnn_helper(param,feat_net=None):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
 	IMG_WIDTH = param['IMG_WIDTH']
@@ -454,6 +410,28 @@ def warp_rnn(param,feat_net=None):
 	model = Model(inputs=[skip1,skip2,skip3,skip4,embedding],outputs=outputs)
 
 	return model
+
+def rnn_net(params,single_weights_filename,rnn_weights_filename=None):
+
+	vgg_model = VGG19(weights='imagenet',input_shape=(128,128,3),include_top=False)
+	make_trainable(vgg_model,False)
+
+	single_net = network_warp(params,vgg_model)
+	single_net.load_weights(single_weights_filename)
+
+	output_names = ['concatenate_2','conv2d_8','conv2d_9','conv2d_10','conv2d_12']
+	outputs = []
+	for j in output_names:
+		outputs.append(single_net.get_layer(j).output)
+
+	single_net = Model(single_net.inputs,outputs)	
+	make_trainable(single_net,False)
+
+	rnn_net = rnn_helper(params,vgg_model)			
+	if(rnn_weights_filename):
+		rnn_net.load_weights(rnn_weights_filename)
+
+	return rnn_net
 
 '''
 def network_matching(param):
