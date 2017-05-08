@@ -33,37 +33,37 @@ def train(dataset,gpu_id):
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			rnn_net = networks.rnn_net(params,'../results/networks/L2+VGG_0.001/90000.h5', 
-									'../results/networks/rnn_L2+VGG_0.001_90000/5000.h5')
-	
-		n_batches = 1
-		for j in xrange(n_batches):	
+			single_net,rnn_net,_ = networks.make_rnn_from_single(params,
+								'../results/networks/L2+VGG_0.001/90000.h5', 
+								'../results/networks/rnn_L2+VGG_0.001_90000/10000.h5')
 
+		batch_size = params['batch_size']
+		seq_len = params['seq_len']
+
+		#src = np.zeros((batch_size,seq_len-1,128,128,3))
+		#tgt = np.zeros((batch_size,seq_len-1,128,128,3))
+		#pred = np.zeros((batch_size,seq_len-1,128,128,3))
+
+		for t in xrange(seq_len-1):
+			print t	
 			X,Y = next(test_feed)			
-			#X_feat = vgg_model.predict(util.vgg_preprocess(Y))
-			#mask = mask.predict(X)
-			sio.savemat('test.mat', {'X': X[0], 'pose': X[1], 'mask': X[2], 'trans': X[3],
-							'Y': Y})
+			
+			if(t == 0):
+				I = X[0]
 
-			#pred = gan.predict([X_src,X_pose,X_mask,X_trans])
-			#print pred[2]
-			#y = np.zeros((8,2))
-			#y[:,0] = 1
-			#gan_loss = gan.train_on_batch([X_src,X_pose,X_mask,X_trans],[X_tgt,X_feat,y])
+			with tf.device(gpu):
+				out = single_net.predict([I,X[1],X[2],X[3]])			
 
-			#test_loss = discriminator.test_on_batch([X_src,X_tgt,X_pose],y)		
-			#pred = discriminator.predict([X_src,X_tgt,X_pose])
+			for idx in xrange(len(out)):
+				out[idx] = np.expand_dims(out[idx],1)
 
-			#print pred
-			#print test_loss
+			I = rnn_net.predict(out)[0]
+			I = I[:,0,:,:,:]
 
-			#I_warp = model_warp.predict([X_src,X_pose,X_mask])
-			#I_gan = model_gan.predict([X_src,X_pose,X_mask])
-			#I_mask = model_mask.predict([X_src,X_pose,X_mask])	
+			sio.savemat('rnn_output/' + str(t) + '.mat', {'X': X[0], 'Y': Y, 'pred': I})
 
-			#sio.savemat('tests/' + str(j) + '.mat',
-         	#{'X_src': X_src,'X_tgt': X_tgt, 'mask0': X_mask, 'mask1': I_mask}), 
-			#	'I_warp': I_warp}) #, 'I_gan': I_gan[0]})	
-		'''
+		rnn_net.reset_states()
+
+
 if __name__ == "__main__":
 	train('golfswinghd',sys.argv[1])
