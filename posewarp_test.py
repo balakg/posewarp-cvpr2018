@@ -36,19 +36,19 @@ def train(dataset,gpu_id):
 		coord = tf.train.Coordinator()
 		threads = tf.train.start_queue_runners(coord=coord)
 
-		'''
 		with tf.device(gpu):
 			vgg_model = VGG19(weights='imagenet',include_top=False,input_shape=(128,128,3))
 			networks.make_trainable(vgg_model,False)
 			generator = networks.network_warp(params,vgg_model)
+			#generator.summary()
 			#discriminator = networks.discriminator(params)
 			#gan = networks.gan(generator,discriminator,params)
 			#gan.load_weights('../results/networks/gan/5000.h5')
 			#discriminator.compile(loss='binary_crossentropy',optimizer=Adam(lr=1e-4))
-			#generator.load_weights('../results/networks/L2+VGG_0.01_affine/5000.h5')
-			#mask = Model(generator.inputs,generator.get_layer('mask').output)
-		'''
+			generator.load_weights('../results/networks/L2+VGG_0.001/60000.h5')
+			rnn = networks.warp_rnn(params,generator)
 
+		'''
 		n_batches = 1
 		for j in xrange(n_batches):	
 
@@ -77,6 +77,6 @@ def train(dataset,gpu_id):
 			#sio.savemat('tests/' + str(j) + '.mat',
          	#{'X_src': X_src,'X_tgt': X_tgt, 'mask0': X_mask, 'mask1': I_mask}), 
 			#	'I_warp': I_warp}) #, 'I_gan': I_gan[0]})	
-
+		'''
 if __name__ == "__main__":
 	train('golfswinghd',sys.argv[1])

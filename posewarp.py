@@ -46,8 +46,8 @@ def train(dataset,model_name,gpu_id):
 			vgg_model = VGG19(weights='imagenet',include_top=False,
 						input_shape=(128,128,3))
 			networks.make_trainable(vgg_model,False)
-			model = networks.network_warp_affine(params,vgg_model)
-			model.compile(optimizer=Adam(lr=5e-4),loss=['mse','mse'],
+			model = networks.network_warp(params,vgg_model,True)
+			model.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse'],
 						loss_weights=[1.0,0.001])
 
 		step = 0	
@@ -60,8 +60,6 @@ def train(dataset,model_name,gpu_id):
 
 			util.printProgress(step,0,train_loss)
 
-
-			'''
 			if(step % params['test_interval'] == 0):
 				n_batches = 8
 				test_loss = np.zeros(3)
@@ -82,9 +80,9 @@ def train(dataset,model_name,gpu_id):
 	
 			if(step % params['model_save_interval']==0):
 				model.save(network_dir + '/' + str(step) + '.h5')			
-			'''
 
 			step += 1	
+
 
 if __name__ == "__main__":
 	if(len(sys.argv) != 3):

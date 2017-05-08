@@ -3,18 +3,24 @@ from keras import backend as K
 from keras.models import Model
 from keras.layers import Conv2D,Dense,Activation,Input,UpSampling2D
 from keras.layers import concatenate,Flatten,Reshape,Lambda
+from keras.layers import SimpleRNN,TimeDistributed
 from keras.optimizers import Adam
 import keras
 
 
-def myConv(x_in,nf,ks=5,strides=1,activation='relu',ki='he_normal',name=None):
+def myConv(x_in,nf,ks=5,strides=1,activation='relu',ki='he_normal',name=None,td=False):
 
 	if(name is None):
-		x_out = Conv2D(nf,kernel_size=ks, padding='same',
-			kernel_initializer=ki,strides=strides,activation=activation)(x_in)
+		layer = Conv2D(nf,kernel_size=ks, padding='same',
+			kernel_initializer=ki,strides=strides,activation=activation)
 	else:
-		x_out = Conv2D(nf,kernel_size=ks, padding='same',
-			kernel_initializer=ki,strides=strides,name=name,activation=activation)(x_in)
+		layer = Conv2D(nf,kernel_size=ks, padding='same',
+			kernel_initializer=ki,strides=strides,name=name,activation=activation)
+
+	if(td):
+		x_out = TimeDistributed(layer)(x_in)
+	else:
+		x_out = layer(x_in)
 
 	return x_out
 
@@ -256,7 +262,7 @@ def vgg_preprocess(arg):
 	b = z[:,:,:,2] - 123.68
 	return tf.stack([r,g,b],axis=3)
 
-def network_warp(param,feat_net=None):
+def network_warp(param,feat_net=None,rnn_equivalent=False):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
 	IMG_WIDTH = param['IMG_WIDTH']
@@ -295,6 +301,15 @@ def network_warp(param,feat_net=None):
 	x4 = myConv(x3,256,ks=3,strides=2) #8x8x256
 	x5 = myConv(x4,256,ks=3) #8x8x256
 
+	if(rnn_equivalent):
+		x = myConv(x5,256,ks=3,strides=2)
+		x = Flatten()(x)
+		x = myDense(x,512)
+		x = myDense(x,256*4*4)
+		x = Reshape((4,4,256))(x)
+		x = UpSampling2D()(x)
+		x5 = myConv(x,256,ks=3)
+
 	x = UpSampling2D()(x5) #16x16x256
 	x = concatenate([x,x3])
 	x = myConv(x,256,ks=3) #16x16x256
@@ -318,6 +333,7 @@ def network_warp(param,feat_net=None):
 	model = Model(inputs=[src_in,pose_in,mask_in,trans_in],outputs=outputs)
 	return model
 
+'''
 def network_warp_affine(param,feat_net=None):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
@@ -387,40 +403,57 @@ def network_warp_affine(param,feat_net=None):
 	model = Model(inputs=[src_in,pose_in,mask_in,trans_in],outputs=outputs)
 
 	return model
-
 '''
-def network_rnn(encoder):
 
+def warp_rnn(param,feat_net=None):
 
-	x_in = Input(shape=(3,1024))
-	x = TimeDistributed(x_in
-	
+	IMG_HEIGHT = param['IMG_HEIGHT']
+	IMG_WIDTH = param['IMG_WIDTH']
+	n_joints = param['n_joints']
+	seq_len = param['seq_len']
+	batch_size = param['batch_size']
 
+	skip1 = Input(batch_shape=(batch_size,1,128,128,33+28))
+	skip2 = Input(batch_shape=(batch_size,1,64,64,128))
+	skip3 = Input(batch_shape=(batch_size,1,32,32,256))
+	skip4 = Input(batch_shape=(batch_size,1,16,16,256))
+	embedding = Input(batch_shape=(batch_size,1,8,8,256))	
 
-	x = UpSampling2D()(x5) #16x16x256
-	x = concatenate([x,x3])
-	x = myConv(x,256,ks=3) #16x16x256
-	x = UpSampling2D()(x) #32x32x256
-	x = concatenate([x,x2])
-	x = myConv(x,256) #32x32x256
-	x = UpSampling2D()(x) #64x64x256
-	x = concatenate([x,x1]) #64x64x384
-	x = myConv(x,128) #64x64x128
-	x = UpSampling2D()(x) #128x128x128
-	x = concatenate([x,x0])
-	x = myConv(x,64)
-	y = myConv(x,3,activation='tanh')#128x128x3	
+	x = myConv(embedding,256,td=True,strides=2,ks=3)		
+	x = TimeDistributed(Flatten())(x)
+	x = TimeDistributed(Dense(512))(x)	
+	x = SimpleRNN(512,activation='relu',kernel_initializer='he_normal',
+				  return_sequences=True,stateful=True)(x)
+
+	x = TimeDistributed(Dense(4*4*256))(x)
+	x = TimeDistributed(Reshape((4,4,256)))(x)
+
+	x = TimeDistributed(UpSampling2D())(x)
+	x = myConv(x,256,ks=3,td=True)	
+	x = TimeDistributed(UpSampling2D())(x)
+	x = concatenate([x,skip4])
+	x = myConv(x,256,ks=3,td=True)
+	x = TimeDistributed(UpSampling2D())(x)
+	x = concatenate([x,skip3])
+	x = myConv(x,256,td=True)
+	x = TimeDistributed(UpSampling2D())(x)
+	x = concatenate([x,skip2])
+	x = myConv(x,128,td=True)
+	x = TimeDistributed(UpSampling2D())(x)
+	x = concatenate([x,skip1])
+	x = myConv(x,64,td=True)
+	y = myConv(x,3,activation='tanh',td=True)
 
 	outputs = [y]
+
 	if(feat_net is not None):		
-		y = Lambda(vgg_preprocess)(y)
-		y_feat = feat_net(y)
+		y = TimeDistributed(Lambda(vgg_preprocess))(y)
+		y_feat = TimeDistributed(feat_net)(y)
 		outputs.append(y_feat)
-	
-	model = Model(inputs=[src_in,pose_in,mask_in,trans_in],outputs=outputs)
+
+	model = Model(inputs=[skip1,skip2,skip3,skip4,embedding],outputs=outputs)
 
 	return model
-'''
 
 '''
 def network_matching(param):

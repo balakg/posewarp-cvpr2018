@@ -12,9 +12,10 @@ def getParam(dataset):
 	param['posemap_downsample'] = 2/dn 
 	param['sigma_joint'] = 7.0/dn
 	param['n_joints'] = 14
-	param['seq_len'] = 2
 
-	param['batch_size'] = 4
+	param['seq_len'] = 2
+	param['batch_size'] = 6
+
 	param['test_interval'] = 100
 	param['test_save_interval'] = 1000
 	param['model_save_interval'] = 5000
@@ -26,7 +27,7 @@ def getParam(dataset):
 		param['vid_pth'] = '../../datasets/golfswinghd/videos/'
 		param['info_pth'] = '../../datasets/golfswinghd/videoinfo/'
 		param['img_sfx'] = '.jpg'
-		param['n_train_examples'] = 1000
+		param['n_train_examples'] = 100000
 		param['n_test_examples'] = 1000
 
 	return param
