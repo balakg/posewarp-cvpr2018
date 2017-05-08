@@ -36,26 +36,27 @@ def train(dataset,gpu_id):
 		coord = tf.train.Coordinator()
 		threads = tf.train.start_queue_runners(coord=coord)
 
+		'''
 		with tf.device(gpu):
-
 			vgg_model = VGG19(weights='imagenet',include_top=False,input_shape=(128,128,3))
 			networks.make_trainable(vgg_model,False)
-			generator = networks.network_warp_affine(params,vgg_model)
+			generator = networks.network_warp(params,vgg_model)
 			#discriminator = networks.discriminator(params)
 			#gan = networks.gan(generator,discriminator,params)
 			#gan.load_weights('../results/networks/gan/5000.h5')
 			#discriminator.compile(loss='binary_crossentropy',optimizer=Adam(lr=1e-4))
-			generator.load_weights('../results/networks/L2+VGG_0.01_affine/5000.h5')
+			#generator.load_weights('../results/networks/L2+VGG_0.01_affine/5000.h5')
 			#mask = Model(generator.inputs,generator.get_layer('mask').output)
+		'''
 
 		n_batches = 1
 		for j in xrange(n_batches):	
 
 			X,Y = next(test_feed)			
-
 			#X_feat = vgg_model.predict(util.vgg_preprocess(Y))
-			mask = mask.predict(X)
-			sio.savemat('test.mat', {'X': X[0], 'Y': Y, 'M': mask})
+			#mask = mask.predict(X)
+			sio.savemat('test.mat', {'X': X[0], 'pose': X[1], 'mask': X[2], 'trans': X[3],
+							'Y': Y})
 
 			#pred = gan.predict([X_src,X_pose,X_mask,X_trans])
 			#print pred[2]

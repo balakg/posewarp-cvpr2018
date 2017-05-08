@@ -388,6 +388,7 @@ def network_warp_affine(param,feat_net=None):
 
 	return model
 
+'''
 def network_rnn(encoder):
 
 
@@ -419,7 +420,7 @@ def network_rnn(encoder):
 	model = Model(inputs=[src_in,pose_in,mask_in,trans_in],outputs=outputs)
 
 	return model
-
+'''
 
 '''
 def network_matching(param):
