@@ -47,7 +47,8 @@ def train(dataset,model_name,gpu_id):
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			rnn_net = netowrks.rnn_net(params,'../results/networks/L2+VGG_0.001/90000.h5')
+			single_net,rnn_net,vgg_model = networks.make_rnn_from_single(params,
+							'../results/networks/L2+VGG_0.001/90000.h5')
 			rnn_net.compile(optimizer=Adam(lr=(1e-4)),loss=['mse','mse'],loss_weights=[1.0,0.001])
 
 		step = 0	

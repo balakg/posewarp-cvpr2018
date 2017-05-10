@@ -13,9 +13,10 @@ from keras.models import load_model,Model
 from keras.optimizers import Adam
 from keras.applications.vgg19 import VGG19
 
-def train(dataset,model_name,gpu_id):	
+def train(model_name,gpu_id):	
 
-	params = param.getParam(dataset)
+	params = param.getGeneralParams()
+
 	gpu = '/gpu:' + str(gpu_id)
 
 	output_dir = params['project_dir'] + '/results/outputs/' + model_name
@@ -27,7 +28,15 @@ def train(dataset,model_name,gpu_id):
 	if not os.path.isdir(network_dir):
 		os.mkdir(network_dir)
 
-	ex_train,ex_test = datareader.makeWarpExampleList(params)
+
+	dataset1_params = param.getDatasetParams('weightlifting',10000,500)
+	dataset2_params = param.getDatasetParams('golfswinghd',50000,1000)
+
+	ex_train1,ex_test1 = datareader.makeWarpExampleList(dataset1_params,params['seq_len'])
+	ex_train2,ex_test2 = datareader.makeWarpExampleList(dataset2_params,params['seq_len'])
+
+	ex_train = ex_train1 + ex_train2
+	ex_test = ex_test1 + ex_test2
 
 	train_feed = datageneration.warpExampleGenerator(ex_train,params)
 	test_feed = datageneration.warpExampleGenerator(ex_test,params)
@@ -46,9 +55,12 @@ def train(dataset,model_name,gpu_id):
 			vgg_model = VGG19(weights='imagenet',include_top=False,
 						input_shape=(128,128,3))
 			networks.make_trainable(vgg_model,False)
-			model = networks.network_warp(params,vgg_model,True)
+			model = networks.network_warp(params,vgg_model)
 			model.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse'],
 						loss_weights=[1.0,0.001])
+
+		#X,Y = next(test_feed)
+		#sio.savemat('test.mat',{'X_src': X[0],'Y': Y})	
 
 		step = 0	
 		while(True):
@@ -77,7 +89,7 @@ def train(dataset,model_name,gpu_id):
 	
 				sio.savemat(output_dir + '/' + str(step) + '.mat',
          		{'X_src': X[0],'Y': Y, 'pred': pred})	
-	
+
 			if(step % params['model_save_interval']==0):
 				model.save(network_dir + '/' + str(step) + '.h5')			
 
@@ -88,4 +100,4 @@ if __name__ == "__main__":
 	if(len(sys.argv) != 3):
 		print "Need model name and gpu id as command line arguments."
 	else:
-		train('golfswinghd',sys.argv[1],sys.argv[2])
+		train(sys.argv[1],sys.argv[2])

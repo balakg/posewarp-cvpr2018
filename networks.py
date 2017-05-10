@@ -218,7 +218,7 @@ def vgg_preprocess(arg):
 	b = z[:,:,:,2] - 123.68
 	return tf.stack([r,g,b],axis=3)
 
-def network_warp(param,feat_net=None,rnn_equivalent=False):
+def network_warp(param,feat_net=None):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
 	IMG_WIDTH = param['IMG_WIDTH']
@@ -257,6 +257,7 @@ def network_warp(param,feat_net=None,rnn_equivalent=False):
 	x4 = myConv(x3,256,ks=3,strides=2) #8x8x256
 	x5 = myConv(x4,256,ks=3) #8x8x256
 
+	'''
 	if(rnn_equivalent):
 		x = myConv(x5,256,ks=3,strides=2)
 		x = Flatten()(x)
@@ -265,6 +266,7 @@ def network_warp(param,feat_net=None,rnn_equivalent=False):
 		x = Reshape((4,4,256))(x)
 		x = UpSampling2D()(x)
 		x5 = myConv(x,256,ks=3)
+	'''
 
 	x = UpSampling2D()(x5) #16x16x256
 	x = concatenate([x,x3])
@@ -411,7 +413,7 @@ def rnn_helper(param,feat_net=None):
 
 	return model
 
-def rnn_net(params,single_weights_filename,rnn_weights_filename=None):
+def make_rnn_from_single(params,single_weights_filename,rnn_weights_filename=None):
 
 	vgg_model = VGG19(weights='imagenet',input_shape=(128,128,3),include_top=False)
 	make_trainable(vgg_model,False)
@@ -431,7 +433,7 @@ def rnn_net(params,single_weights_filename,rnn_weights_filename=None):
 	if(rnn_weights_filename):
 		rnn_net.load_weights(rnn_weights_filename)
 
-	return rnn_net
+	return single_net,rnn_net,vgg_model
 
 '''
 def network_matching(param):
