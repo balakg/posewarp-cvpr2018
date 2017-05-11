@@ -27,9 +27,9 @@ def train(dataset,gpu_id):
 	_,ex_test2 = datareader.makeWarpExampleList(dataset2_params)
 
 
-	#feed = datageneration.warpTransferExampleGenerator(ex_test2,ex_test1,params)
+	feed = datageneration.warpTransferExampleGenerator(ex_test2,ex_test1,params)
 
-	feed = datageneration.warpExampleGenerator(ex_test1,params)
+	#feed = datageneration.warpExampleGenerator(ex_test1,params)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
@@ -41,11 +41,11 @@ def train(dataset,gpu_id):
 		coord = tf.train.Coordinator()
 		threads = tf.train.start_queue_runners(coord=coord)
 	
-		'''	
 		with tf.device(gpu):
-			vgg_model = VGG19(weights='imagenet',include_top=False,input_shape=(128,128,3))
+			vgg_model = VGG19(weights='imagenet',include_top=False,input_shape=(256,256,3))
 			networks.make_trainable(vgg_model,False)
 			generator = networks.network_warp(params,vgg_model)
+		
 			#generator.summary()
 			#discriminator = networks.discriminator(params)
 			#gan = networks.gan(generator,discriminator,params)
@@ -53,15 +53,14 @@ def train(dataset,gpu_id):
 			#discriminator.compile(loss='binary_crossentropy',optimizer=Adam(lr=1e-4))
 			#generator.load_weights('../results/networks/L2+VGG_0.001/100000.h5')
 			#generator.load_weights('../results/networks/lifting/50000.h5')
-			generator.load_weights('../results/networks/golf+lifting/10000.h5')
-			#rnn = networks.warp_rnn(params,generator)
-		'''
-
-		X,Y = next(feed)
-
-		sio.savemat('0.mat',{'X': X[0], 'Y': Y, 'pose': X[1]}), 
+			generator.load_weights('../results/networks/golf+lifting/17500.h5')
+			#mask = Model(inputs=generator.inputs,outputs=generator.get_layer('mask').output)
 		
-		'''
+		#generator.summary()
+		#X,Y = next(feed)
+
+		#sio.savemat('0.mat',{'X': X[0], 'Y': Y, 'pose': X[1]}), 
+		
 		n_batches = 5
 		for j in xrange(n_batches):	
 
@@ -69,14 +68,13 @@ def train(dataset,gpu_id):
 
 			pred = generator.predict(X)[0]
 			#mask = mask.predict(X)
+			
 			sio.savemat('results/golf2lifting_combined/' + str(j) + '.mat', 
 					{'X': X[0], 'pose': X[1], 'pred': pred})
 
 
-			#sio.savemat('tests/' + str(j) + '.mat',
-         	#{'X_src': X_src,'X_tgt': X_tgt, 'mask0': X_mask, 'mask1': I_mask}), 
-			#	'I_warp': I_warp}) #, 'I_gan': I_gan[0]})	
-		'''
+			#sio.savemat('test.mat',{'X': X[0],'Y': Y, 'mask': mask})	
+
 
 if __name__ == "__main__":
 	train('golfswinghd',sys.argv[1])

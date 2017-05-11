@@ -223,21 +223,25 @@ def network_warp(param,feat_net=None):
 	IMG_HEIGHT = param['IMG_HEIGHT']
 	IMG_WIDTH = param['IMG_WIDTH']
 	n_joints = param['n_joints']
+	pose_dn = param['posemap_downsample']
 
 	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	pose_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,n_joints*2))
+	pose_in = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints*2))
 	mask_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
 	trans_in = Input(shape=(2,3,11))
 	
 	pose_src = Lambda(lambda arg: arg[:,:,:,0:14],
-		output_shape=(IMG_HEIGHT,IMG_WIDTH,14))(pose_in)	
+		output_shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,14))(pose_in)	
 	
-	x = concatenate([src_in,pose_src])
-	x = myConv(x,64,strides=2)
-	x = myConv(x,128,strides=2)
-	x = myConv(x,128,strides=2)
+	x = myConv(src_in,64,strides=2)
+	x = concatenate([x,pose_src])
 	x = myConv(x,128)
+	x = myConv(x,128,strides=2)
+	x = myConv(x,128,strides=2)
+	x = myConv(x,128,strides=2)
 	x = UpSampling2D()(x) 
+	x = myConv(x,128)
+	x = UpSampling2D()(x)
 	x = myConv(x,128)
 	x = UpSampling2D()(x)
 	x = myConv(x,128)
@@ -250,35 +254,27 @@ def network_warp(param,feat_net=None):
 	warped_stack = Lambda(makeWarpedStack,output_shape=(IMG_HEIGHT,IMG_WIDTH,33),
 					name='warped_stack')([mask,src_in,trans_in])
 
-	x0 = concatenate([warped_stack,pose_in])
-	x1 = myConv(x0,128,strides=2)
-	x2 = myConv(x1,256,strides=2) #32x32x256
-	x3 = myConv(x2,256,strides=2) #16x16x256
-	x4 = myConv(x3,256,ks=3,strides=2) #8x8x256
-	x5 = myConv(x4,256,ks=3) #8x8x256
+	x0 = myConv(warped_stack,128,strides=2)
+	x1 = concatenate([x0,pose_in])
+	x2 = myConv(x1,128)
+	x3 = myConv(x2,128,strides=2) #64
+	x4 = myConv(x3,256,strides=2) #32x32x256
+	x5 = myConv(x4,256,strides=2) #16x16x256
+	x6 = myConv(x5,256,ks=3,strides=2) #8x8x256
+	x7 = myConv(x6,256,ks=3) #8x8x256
 
-	'''
-	if(rnn_equivalent):
-		x = myConv(x5,256,ks=3,strides=2)
-		x = Flatten()(x)
-		x = myDense(x,512)
-		x = myDense(x,256*4*4)
-		x = Reshape((4,4,256))(x)
-		x = UpSampling2D()(x)
-		x5 = myConv(x,256,ks=3)
-	'''
-
-	x = UpSampling2D()(x5) #16x16x256
-	x = concatenate([x,x3])
+	x = UpSampling2D()(x7) #16x16x256
+	x = concatenate([x,x5])
 	x = myConv(x,256,ks=3) #16x16x256
 	x = UpSampling2D()(x) #32x32x256
-	x = concatenate([x,x2])
+	x = concatenate([x,x4])
 	x = myConv(x,256) #32x32x256
 	x = UpSampling2D()(x) #64x64x256
-	x = concatenate([x,x1]) #64x64x384
+	x = concatenate([x,x3]) #64x64x384
 	x = myConv(x,128) #64x64x128
 	x = UpSampling2D()(x) #128x128x128
-	x = concatenate([x,x0])
+	x = concatenate([x,x2])
+	x = UpSampling2D()(x) #256
 	x = myConv(x,64)
 	y = myConv(x,3,activation='tanh')#128x128x3	
 
@@ -289,6 +285,45 @@ def network_warp(param,feat_net=None):
 		outputs.append(y_feat)
 	
 	model = Model(inputs=[src_in,pose_in,mask_in,trans_in],outputs=outputs)
+	return model
+
+
+def posenet(param):
+
+	IMG_HEIGHT = param['IMG_HEIGHT']
+	IMG_WIDTH = param['IMG_WIDTH']
+	n_joints = param['n_joints']
+	pose_dn = param['posemap_downsample']
+
+	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
+	ctr_in = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,1))
+	
+	x0 = myConv(src_in,128,strides=2)#128
+	x1 = myConv(x0,128,strides=2)#64
+	x2 = myConv(x1,128,strides=2)#32
+	x3 = myConv(x2,128,strides=2)#16
+	x4 = myConv(x3,128,strides=2,ks=3)
+	x5 = myConv(x4,128,ks=3)
+
+	x = UpSampling2D()(x5) #16
+	x = concatenate([x,x3])
+	x = myConv(x,128)
+	x = UpSampling2D()(x) #32
+	x = concatenate([x,x2])
+	x = myConv(x,128)
+	x = UpSampling2D()(x) #64
+	x = concatenate([x,x1])
+	x = myConv(x,128)
+	x = UpSampling2D()(x)
+	x = concatenate([x,x0])
+	y = myConv(x,n_joints,activation='linear',ki='zeros')
+
+	ctr_rep = concatenate([ctr_in,ctr_in,ctr_in,ctr_in,ctr_in,ctr_in,ctr_in,
+							 ctr_in,ctr_in,ctr_in,ctr_in,ctr_in,ctr_in,ctr_in])
+
+	y = keras.layers.add([y,ctr_rep])
+	
+	model = Model(inputs=[src_in,ctr_in],outputs=y)
 	return model
 
 '''

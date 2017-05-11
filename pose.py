@@ -9,6 +9,7 @@ import networks
 import scipy.io as sio
 import param
 import util
+import random
 from keras.models import load_model,Model
 from keras.optimizers import Adam
 from keras.applications.vgg19 import VGG19
@@ -29,20 +30,17 @@ def train(model_name,gpu_id):
 		os.mkdir(network_dir)
 
 
-	dataset1_params = param.getDatasetParams('weightlifting',10000,500)
-	dataset2_params = param.getDatasetParams('golfswinghd',50000,1000)
-
-	ex_train1,ex_test1 = datareader.makeWarpExampleList(dataset1_params,params['seq_len'])
-	ex_train2,ex_test2 = datareader.makeWarpExampleList(dataset2_params,params['seq_len'])
-
-	ex_train = ex_train1 + ex_train2
-	ex_test = ex_test1 + ex_test2
-	#ex_train = ex_train1
-	#ex_test = ex_test1
-
-	train_feed = datageneration.warpExampleGenerator(ex_train,params)
-	test_feed = datageneration.warpExampleGenerator(ex_test,params)
+	ex1,_ = datareader.makePoseExampleList('json/MPII_annotations.json',0,params['n_joints'])
+	ex2,_ = datareader.makePoseExampleList('json/LEEDS_annotations.json',0,params['n_joints'])
 	
+	ex_all = ex1 + ex2
+	random.shuffle(ex_all)
+	ex_test = ex_all[0:500]
+	ex_train = ex_all[1000:]
+
+	train_feed = datageneration.poseExampleGenerator(ex_train,params)
+	test_feed = datageneration.poseExampleGenerator(ex_test,params)
+
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
 	config.allow_soft_placement = True
@@ -53,41 +51,38 @@ def train(model_name,gpu_id):
 		coord = tf.train.Coordinator()
 		threads = tf.train.start_queue_runners(coord=coord)
 
+
 		with tf.device(gpu):
-			vgg_model = VGG19(weights='imagenet',include_top=False,
-						input_shape=(256,256,3))
-			networks.make_trainable(vgg_model,False)
-			model = networks.network_warp(params,vgg_model)
-			model.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse'],
-						loss_weights=[1.0,0.001])
+			model = networks.posenet(params)
+			model.compile(optimizer=Adam(lr=1e-4),loss='mse')
 
-		#X,Y = next(test_feed)
-		#sio.savemat('test.mat',{'X_src': X[0],'Y': Y})	
-
+		'''
+		X,Y = next(test_feed)
+		sio.savemat('test.mat', {'X': X[0], 'Y': Y, 'mask': X[1]})		
+		'''
+	
 		step = 0	
 		while(True):
 			X,Y = next(train_feed)			
 
 			with tf.device(gpu):
-				Y_vgg = vgg_model.predict(util.vgg_preprocess(Y))
-				train_loss = model.train_on_batch(X,[Y,Y_vgg])
+				train_loss = model.train_on_batch(X,Y)
 
 			util.printProgress(step,0,train_loss)
 
 			if(step % params['test_interval'] == 0):
 				n_batches = 8
-				test_loss = np.zeros(3)
+				test_loss = 0
 				for j in xrange(n_batches):	
 					X,Y = next(test_feed)			
-					Y_vgg = vgg_model.predict(util.vgg_preprocess(Y))
-					test_loss += np.array(model.test_on_batch(X,[Y,Y_vgg]))
+					test_loss += model.test_on_batch(X,Y)
 
 				test_loss /= (n_batches)
 				util.printProgress(step,1,test_loss)
 
 			if(step % params['test_save_interval']==0):
 				X,Y = next(test_feed)			
-				pred = model.predict(X)[0]
+				pred = model.predict(X)
 	
 				sio.savemat(output_dir + '/' + str(step) + '.mat',
          		{'X': X[0],'Y': Y, 'pred': pred})	
@@ -96,7 +91,6 @@ def train(model_name,gpu_id):
 				model.save(network_dir + '/' + str(step) + '.h5')			
 
 			step += 1	
-
 
 if __name__ == "__main__":
 	if(len(sys.argv) != 3):
