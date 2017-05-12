@@ -4,14 +4,24 @@ import scipy.io as sio
 import os
 import json
 
-def makeWarpExampleList(param,seq_len=3):
+def getPersonScale(joints):
+	torso_size = (-joints[0][1] + (joints[8][1] + joints[11][1])/2.0)
+	peak_to_peak = np.ptp(joints,axis=0)[1]
+	#rarm_length = np.sqrt((joints[2][0] - joints[4][0])**2 + (joints[2][1]-joints[4][1])**2)			
+	#larm_length = np.sqrt((joints[5][0] - joints[7][0])**2 + (joints[5][1]-joints[7][1])**2)
+	rcalf_size = np.sqrt((joints[9][1] - joints[10][1])**2 + (joints[9][0] - joints[10][0])**2)
+	lcalf_size = np.sqrt((joints[12][1] - joints[13][1])**2 + (joints[12][0] - joints[13][0])**2)
+	calf_size = (lcalf_size + rcalf_size)/2.0
+
+	size = np.max([2.5 * torso_size,calf_size*5,peak_to_peak*1.1]) 
+	return (size/200.0)
+
+def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=3):
 
 	vid_pth = param['vid_pth']
 	info_pth = param['info_pth']
 	n_test_vids = param['n_test_vids']
 	img_sfx = param['img_sfx']
-	n_train_examples = param['n_train_examples']
-	n_test_examples = param['n_test_examples']
 	test_vids = param['test_vids']
 
 	vid_names = [each for each in os.listdir(vid_pth)
@@ -43,7 +53,7 @@ def makeWarpExampleList(param,seq_len=3):
 		box = info['data']['bbox'][0][0]
 		X = info['data']['X'][0][0]
 
-		n_frames = X.shape[2]-1 #last frames are sometimes bad
+		n_frames = X.shape[2]
 
 		'''	
 		if(entire_vid):
@@ -61,9 +71,11 @@ def makeWarpExampleList(param,seq_len=3):
 		l = []
 		for j in xrange(len(frames)):
 			I_name_j = os.path.join(vid_pth,vid_name,str(frames[j]+1)+img_sfx)
-			P_j = X[:,:,frames[j]].flatten()-1.0	
+			joints = X[:,:,frames[j]]-1.0
 			box_j = box[frames[j],:]
-			l += [I_name_j] + np.ndarray.tolist(P_j) + np.ndarray.tolist(box_j)
+			scale = getPersonScale(joints)
+			pos = [(box_j[0] + box_j[2]/2.0), (box_j[1] + box_j[3]/2.0)] 
+			l += [I_name_j] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
 
 		if(i < n_test_examples):
 			ex_test.append(l)
