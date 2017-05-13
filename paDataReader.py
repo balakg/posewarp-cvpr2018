@@ -7,16 +7,11 @@ pennaction2cpm = [1, 1, 2, 4, 6, 3, 5, 7, 8, 10, 12, 9, 11, 13]
 n_cpm_joints = 14
 n_pa_joints = 13
 
-def makePAWarpExampleList(param, actionNames=None,
-		okVidsDir='good_pa_vids', seq_len=3):
+def makePAWarpExampleList(param,n_train_examples,n_test_examples,actionNames=None,okVidsDir='good_pa_vids', seq_len=2):
 
 	vid_pth = param['vid_pth']
 	info_pth = param['info_pth']
-	n_test_vids = param['n_test_vids']
 	img_sfx = param['img_sfx']
-	n_train_examples = param['n_train_examples']
-	n_test_examples = param['n_test_examples']
-	test_vids = param['test_vids']
 
 	# load all available action classes by default
 	if actionNames is None or actionNames == 'all':
@@ -34,23 +29,19 @@ def makePAWarpExampleList(param, actionNames=None,
 	ex_train = []
 	ex_test = []
 
-	if(test_vids):
-		test_vids = test_vids
-		train_vids = list(set(range(n_vids)) - set(test_vids))
-	else:
-		# load train and test sets according to PA split
-		test_vids = []
-		train_vids = []
+	# load train and test sets according to PA split
+	test_vids = []
+	train_vids = []
 
-		# go through all OK vids to see which ones are specified as test vs train
-		for i in range(n_vids):
-			vid_name = vid_names[i]
-			info = sio.loadmat(os.path.join(info_pth, vid_name + '.mat'))
-			isTrain = info['train'][0][0] == 1
-			if isTrain:
-				train_vids.append(i)
-			else:
-				test_vids.append(i)
+	# go through all OK vids to see which ones are specified as test vs train
+	for i in range(n_vids):
+		vid_name = vid_names[i]
+		info = sio.loadmat(os.path.join(info_pth, vid_name + '.mat'))
+		isTrain = info['train'][0][0] == 1
+		if isTrain:
+			train_vids.append(i)
+		else:
+			test_vids.append(i)
 
 	for i in range(n_train_examples+n_test_examples):
 		if(i < n_test_examples):
@@ -63,14 +54,16 @@ def makePAWarpExampleList(param, actionNames=None,
 		isTrain = info['train'][0][0]==1
 		n_frames = info['x'].shape[0]-1
 
-		joints = np.concatenate((np.reshape(info['x'][:n_frames, :], (n_frames,n_pa_joints, 1)), np.reshape(info['y'][:n_frames, :], (n_frames,n_pa_joints, 1))), axis=2)
+		joints = np.concatenate((np.reshape(info['x'][:n_frames, :], (n_frames,n_pa_joints, 1)), 
+				 np.reshape(info['y'][:n_frames, :], (n_frames,n_pa_joints, 1))), axis=2)
+
 		joints_cpm = np.zeros((n_frames,n_cpm_joints, 2))
 		for j in range(0, n_cpm_joints):
 			joints_cpm[:,j,:] = joints[:,pennaction2cpm[j] - 1, 0:2]
 		joints_cpm[:,1,:] = (joints_cpm[:,2,:] + joints_cpm[:,5,:])/2.0
 		#headLen = np.linalg.norm( joints_cpm[:,0,:] - joints_cpm[:,1,:],axis=2)
 		headVec = joints_cpm[:,0,:] - joints_cpm[:,1,:]
-		print(headVec)
+		#print(headVec)
 
 		joints_cpm[:,0,:] = joints_cpm[:,0,:] + np.multiply(headVec,0.3)
 		joints_cpm[:, 1, :] = joints_cpm[:, 1, :] + np.multiply(headVec, 0.3)
@@ -98,11 +91,17 @@ def makePAWarpExampleList(param, actionNames=None,
 										 np.linalg.norm(joints_cpm[frames[j],0,:]-joints_cpm[frames[j],13,:]),
 										 np.linalg.norm(joints_cpm[frames[j], 4, :] - joints_cpm[frames[j], 10, :]),
 										 np.linalg.norm(joints_cpm[frames[j], 7, :] - joints_cpm[frames[j], 13, :]) )
+
 			#if bboxH > cv2.imread(I_name_j).shape[0]*0.9: # if bounding box is too large compared to frame, use shin instead
 			if bboxH > 1.2 * personH:
 				scale = max(rShinLen*4.5, lShinLen*4.5)/200.0
 			else:
 				scale = bboxH/200.0
+
+			if(scale <= 0):
+				print scale,bboxH
+
+
 			l += [I_name_j] + np.ndarray.tolist(P_j) + pos + [scale]
 
 		if not isTrain:
@@ -116,15 +115,13 @@ def makePAWarpExampleList(param, actionNames=None,
 if __name__=='__main__':
 	testParams = { 'vid_pth':'..\\..\\Matlab\\Datasets\\Penn_Action\\Penn_Action\\frames',
 	'info_pth': '..\\..\\Matlab\\Datasets\\Penn_Action\\Penn_Action\\labels',
-	'n_test_vids': 10,
 	'img_sfx': '.jpg',
-	'n_train_examples': 2000,
-	'n_test_examples': 0,
-	'test_vids': None }
-	segLen = 3
+	}
+
+	segLen = 2
 	exLen = 1 + 14*2 + 2 + 1
 
-	ex_train, ex_test = makePAWarpExampleList( testParams, seq_len = segLen )
+	ex_train, ex_test = makePAWarpExampleList(testParams,2000,0,seq_len = segLen)
 
 	# write preview jpgs of joints, obj_pos and scales
 	imCount = 0
