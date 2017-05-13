@@ -94,7 +94,12 @@ def makePAWarpExampleList(param, actionNames=None,
 			pos = [(box_j[0] + box_j[2])/2.0, (box_j[1] + box_j[3])/2.0]
 
 			bboxH = box_j[3]-box_j[1]
-			if bboxH > cv2.imread(I_name_j).shape[0]*0.9: # if bounding box is too large compared to frame, use shin instead
+			personH = max( np.linalg.norm(joints_cpm[frames[j],0,:]-joints_cpm[frames[j],10,:]),
+										 np.linalg.norm(joints_cpm[frames[j],0,:]-joints_cpm[frames[j],13,:]),
+										 np.linalg.norm(joints_cpm[frames[j], 4, :] - joints_cpm[frames[j], 10, :]),
+										 np.linalg.norm(joints_cpm[frames[j], 7, :] - joints_cpm[frames[j], 13, :]) )
+			#if bboxH > cv2.imread(I_name_j).shape[0]*0.9: # if bounding box is too large compared to frame, use shin instead
+			if bboxH > 1.2 * personH:
 				scale = max(rShinLen*4.5, lShinLen*4.5)/200.0
 			else:
 				scale = bboxH/200.0
