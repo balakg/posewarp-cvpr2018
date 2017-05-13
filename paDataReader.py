@@ -72,8 +72,8 @@ def makePAWarpExampleList(param, actionNames=None,
 		headVec = joints_cpm[:,0,:] - joints_cpm[:,1,:]
 		print(headVec)
 
-		joints_cpm[:,0,:] = joints_cpm[:,0,:] + np.multiply(headVec,0.5)
-		joints_cpm[:, 1, :] = joints_cpm[:, 1, :] + np.multiply(headVec, 0.5)
+		joints_cpm[:,0,:] = joints_cpm[:,0,:] + np.multiply(headVec,0.3)
+		joints_cpm[:, 1, :] = joints_cpm[:, 1, :] + np.multiply(headVec, 0.3)
 		box = info['bbox'][:n_frames,:]
 
 		frames = np.random.choice(n_frames,seq_len)
