@@ -93,13 +93,13 @@ def makePAWarpExampleList(param,n_train_examples,n_test_examples,actionNames=Non
 										 np.linalg.norm(joints_cpm[frames[j], 7, :] - joints_cpm[frames[j], 13, :]) )
 
 			#if bboxH > cv2.imread(I_name_j).shape[0]*0.9: # if bounding box is too large compared to frame, use shin instead
-			if bboxH > 1.2 * personH:
+			if bboxH > 1.2 * personH or int(bboxH)==0:
 				scale = max(rShinLen*4.5, lShinLen*4.5)/200.0
 			else:
 				scale = bboxH/200.0
 
 			if(scale <= 0):
-				print scale,bboxH
+				print('{},{}'.format(scale,bboxH))
 
 
 			l += [I_name_j] + np.ndarray.tolist(P_j) + pos + [scale]
@@ -136,7 +136,7 @@ if __name__=='__main__':
 			scale = ex[t * exLen + 1 + 14 *2 + 2]
 			pos = [int(i) for i in ex[t * exLen + 1 + 14 *2:t * exLen + 1 + 14 *2+2]]
 			joints = np.reshape([int(i) for i in ex[t*exLen+1:t*exLen+1+14*2]],(14,2))
-
+			print(scale)
 			im = cv2.line( cv2.drawMarker(cv2.imread( imFile ), tuple(pos), color=(255,0,0)), \
 				(pos[0],int(pos[1]-scale*100.0)), (pos[0],int(pos[1]+scale*100.0)), color=(0,0,255), thickness=2)
 			for i in range(14):
