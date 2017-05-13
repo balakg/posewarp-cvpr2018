@@ -18,19 +18,18 @@ def makePAWarpExampleList(param, actionNames=None,
 	n_test_examples = param['n_test_examples']
 	test_vids = param['test_vids']
 
+	# load all available action classes by default
 	if actionNames is None or actionNames == 'all':
 		actionNames = ['baseball_pitch','baseball_swing','jump_rope','jumping_jacks','tennis_forehand','tennis_serve']
 
 	vid_names = []
 	for an in actionNames:
-		okVidsFile = os.path.join(okVidsDir, an+'.txt')
-
+		okVidsFile = os.path.join( okVidsDir, an + '.txt' )
 		with open(okVidsFile) as f:
 			content = f.readlines()
 			vid_names += [x.strip() for x in content]
 
 	n_vids = len(vid_names)
-
 
 	ex_train = []
 	ex_test = []
@@ -39,6 +38,7 @@ def makePAWarpExampleList(param, actionNames=None,
 		test_vids = test_vids
 		train_vids = list(set(range(n_vids)) - set(test_vids))
 	else:
+		# load train and test sets according to PA split
 		test_vids = []
 		train_vids = []
 
@@ -52,8 +52,6 @@ def makePAWarpExampleList(param, actionNames=None,
 			else:
 				test_vids.append(i)
 
-	print(train_vids)
-	print(test_vids)
 	for i in range(n_train_examples+n_test_examples):
 		if(i < n_test_examples):
 			vidId = test_vids[np.random.randint(0,len(test_vids))]
@@ -63,18 +61,22 @@ def makePAWarpExampleList(param, actionNames=None,
 		vid_name = vid_names[vidId]
 		info = sio.loadmat(os.path.join(info_pth, vid_name + '.mat'))
 		isTrain = info['train'][0][0]==1
-		n_frames = info['x'].shape[0]-1 #
+		n_frames = info['x'].shape[0]-1
 
 		joints = np.concatenate((np.reshape(info['x'][:n_frames, :], (n_frames,n_pa_joints, 1)), np.reshape(info['y'][:n_frames, :], (n_frames,n_pa_joints, 1))), axis=2)
-
 		joints_cpm = np.zeros((n_frames,n_cpm_joints, 2))
 		for j in range(0, n_cpm_joints):
 			joints_cpm[:,j,:] = joints[:,pennaction2cpm[j] - 1, 0:2] - 1
+		joints_cpm[:,1,:] = (joints_cpm[:,2,:] + joints_cpm[:,5,:])/2.0
+		#headLen = np.linalg.norm( joints_cpm[:,0,:] - joints_cpm[:,1,:],axis=2)
+		headVec = joints_cpm[:,0,:] - joints_cpm[:,1,:]
+		print(headVec)
 
+		joints_cpm[:,0,:] = joints_cpm[:,0,:] - np.multiply(headVec,0.5)
+		joints_cpm[:, 1, :] = joints_cpm[:, 1, :] - np.multiply(headVec, 0.5)
 		box = info['bbox'][:n_frames,:]
 
 		frames = np.random.choice(n_frames,seq_len)
-
 		if(np.random.rand() < 0.5):
 			frames.sort()
 		else:		
@@ -88,6 +90,7 @@ def makePAWarpExampleList(param, actionNames=None,
 			rShinLen = np.linalg.norm(joints_cpm[frames[j],9,:]-joints_cpm[frames[j],10,:])
 			lShinLen = np.linalg.norm(joints_cpm[frames[j],12,:]-joints_cpm[frames[j],13,:])
 
+			# center of bbox
 			pos = [(box_j[0] + box_j[2])/2.0, (box_j[1] + box_j[3])/2.0]
 
 			bboxH = box_j[3]-box_j[1]
@@ -110,7 +113,7 @@ if __name__=='__main__':
 	'info_pth': '..\\..\\Matlab\\Datasets\\Penn_Action\\Penn_Action\\labels',
 	'n_test_vids': 10,
 	'img_sfx': '.jpg',
-	'n_train_examples': 1000,
+	'n_train_examples': 2000,
 	'n_test_examples': 0,
 	'test_vids': None }
 	segLen = 3
@@ -118,6 +121,7 @@ if __name__=='__main__':
 
 	ex_train, ex_test = makePAWarpExampleList( testParams, seq_len = segLen )
 
+	# write preview jpgs of joints, obj_pos and scales
 	imCount = 0
 	ims = None
 	setCount = 0
