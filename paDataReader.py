@@ -66,14 +66,14 @@ def makePAWarpExampleList(param, actionNames=None,
 		joints = np.concatenate((np.reshape(info['x'][:n_frames, :], (n_frames,n_pa_joints, 1)), np.reshape(info['y'][:n_frames, :], (n_frames,n_pa_joints, 1))), axis=2)
 		joints_cpm = np.zeros((n_frames,n_cpm_joints, 2))
 		for j in range(0, n_cpm_joints):
-			joints_cpm[:,j,:] = joints[:,pennaction2cpm[j] - 1, 0:2] - 1
+			joints_cpm[:,j,:] = joints[:,pennaction2cpm[j] - 1, 0:2]
 		joints_cpm[:,1,:] = (joints_cpm[:,2,:] + joints_cpm[:,5,:])/2.0
 		#headLen = np.linalg.norm( joints_cpm[:,0,:] - joints_cpm[:,1,:],axis=2)
 		headVec = joints_cpm[:,0,:] - joints_cpm[:,1,:]
 		print(headVec)
 
-		joints_cpm[:,0,:] = joints_cpm[:,0,:] - np.multiply(headVec,0.5)
-		joints_cpm[:, 1, :] = joints_cpm[:, 1, :] - np.multiply(headVec, 0.5)
+		joints_cpm[:,0,:] = joints_cpm[:,0,:] + np.multiply(headVec,0.5)
+		joints_cpm[:, 1, :] = joints_cpm[:, 1, :] + np.multiply(headVec, 0.5)
 		box = info['bbox'][:n_frames,:]
 
 		frames = np.random.choice(n_frames,seq_len)
