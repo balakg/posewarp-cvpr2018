@@ -9,6 +9,7 @@ import networks
 import scipy.io as sio
 import param
 import util
+import paDataReader
 from keras.models import load_model,Model
 from keras.optimizers import Adam
 from keras.applications.vgg19 import VGG19
@@ -28,20 +29,17 @@ def train(model_name,gpu_id):
 	if not os.path.isdir(network_dir):
 		os.mkdir(network_dir)
 
+	lift_params = param.getDatasetParams('weightlifting')
+	golf_params = param.getDatasetParams('golfswinghd')
 
-	dataset1_params = param.getDatasetParams('weightlifting',10000,500)
-	dataset2_params = param.getDatasetParams('golfswinghd',50000,1000)
+	lift_train,lift_test = datareader.makeWarpExampleList(lift_params,20000,2000,2,1)
+	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,50000,5000,2,2)
 
-	ex_train1,ex_test1 = datareader.makeWarpExampleList(dataset1_params,params['seq_len'])
-	ex_train2,ex_test2 = datareader.makeWarpExampleList(dataset2_params,params['seq_len'])
+	warp_train = lift_train + golf_train
+	warp_test = lift_test + golf_test
 
-	ex_train = ex_train1 + ex_train2
-	ex_test = ex_test1 + ex_test2
-	#ex_train = ex_train1
-	#ex_test = ex_test1
-
-	train_feed = datageneration.warpExampleGenerator(ex_train,params)
-	test_feed = datageneration.warpExampleGenerator(ex_test,params)
+	train_feed = datageneration.warpExampleGenerator(warp_train,params)
+	test_feed = datageneration.warpExampleGenerator(warp_test,params)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
@@ -57,30 +55,28 @@ def train(model_name,gpu_id):
 			vgg_model = VGG19(weights='imagenet',include_top=False,
 						input_shape=(256,256,3))
 			networks.make_trainable(vgg_model,False)
-			model = networks.network_warp(params,vgg_model)
-			model.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse'],
-						loss_weights=[1.0,0.001])
-
-		#X,Y = next(test_feed)
-		#sio.savemat('test.mat',{'X_src': X[0],'Y': Y})	
-
-		step = 0	
+			model = networks.network_warpclass(params,vgg_model)
+			#model.load_weights('../results/networks/centered/2500.h5')
+			#model.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse'],
+			#			loss_weights=[1.0,0.001])
+		
+		step = 0
 		while(True):
 			X,Y = next(train_feed)			
 
 			with tf.device(gpu):
 				Y_vgg = vgg_model.predict(util.vgg_preprocess(Y))
-				train_loss = model.train_on_batch(X,[Y,Y_vgg])
+				train_loss = model.train_on_batch(X,[Y,Y,Y_vgg])
 
 			util.printProgress(step,0,train_loss)
 
 			if(step % params['test_interval'] == 0):
 				n_batches = 8
-				test_loss = np.zeros(3)
+				test_loss = np.zeros(4)
 				for j in xrange(n_batches):	
 					X,Y = next(test_feed)			
 					Y_vgg = vgg_model.predict(util.vgg_preprocess(Y))
-					test_loss += np.array(model.test_on_batch(X,[Y,Y_vgg]))
+					test_loss += np.array(model.test_on_batch(X,[Y,Y,Y_vgg]))
 
 				test_loss /= (n_batches)
 				util.printProgress(step,1,test_loss)

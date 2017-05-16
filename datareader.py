@@ -16,7 +16,7 @@ def getPersonScale(joints):
 	size = np.max([2.5 * torso_size,calf_size*5,peak_to_peak*1.1]) 
 	return (size/200.0)
 
-def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=3):
+def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=2,class_id=0):
 
 	vid_pth = param['vid_pth']
 	info_pth = param['info_pth']
@@ -77,6 +77,12 @@ def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=3):
 			pos = [(box_j[0] + box_j[2]/2.0), (box_j[1] + box_j[3]/2.0)] 
 			l += [I_name_j] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
 
+
+		if(class_id == 1):
+			l += [1,0]
+		elif(class_id == 2):
+			l += [0,1]
+		
 		if(i < n_test_examples):
 			ex_test.append(l)
 		else:	
