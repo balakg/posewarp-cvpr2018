@@ -35,6 +35,23 @@ def make_trainable(net,val):
 	for l in net.layers:
 		l.trainable = val
 
+def gradient(arg):
+	dy = arg[:,0:255,:,:] - arg[:,1:256,:,:]
+	dx = arg[:,:,0:255,:] - arg[:,:,1:256,:]	
+
+	#dy = tf.reduce_max(dy,axis=3,keep_dims=True)
+	#dx = tf.reduce_max(dx,axis=3,keep_dims=True)
+
+	batch_size = tf.shape(arg)[0]
+	height = tf.shape(arg)[1]
+	width = tf.shape(arg)[2]
+	n_chan = tf.shape(arg)[3]
+
+	dy = tf.concat([dy,tf.zeros([batch_size,1,width,n_chan],tf.float32)],axis=1)
+	dx = tf.concat([dx,tf.zeros([batch_size,height,1,n_chan],tf.float32)],axis=2)	
+
+	return tf.concat([dx,dy],axis=3)
+
 def discriminator(param):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
@@ -43,19 +60,22 @@ def discriminator(param):
 	pose_dn = param['posemap_downsample']
 
 	x_src = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	#x_tgt = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	x_pose = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints))
+	x_pose = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn, n_joints))
+	#x_mask = Input(shape=(IMG_HEIGHT,IMG_WIDTH,1))
 
-	x = myConv(x_src,128,ks=7,strides=2)
+	#x_grad = Lambda(gradient)(x_src)
+	
+	#x = concatenate([x_mask,x_mask,x_mask,x_mask,x_mask,x_mask])
+	#x = keras.layers.multiply([x,x_grad])
+	x = myConv(x_src,32,strides=2)
 	x = concatenate([x,x_pose])
-	x = myConv(x,128,strides=2) #64x64x128
-	x = myConv(x,128,strides=2) #32x32x256
-	x = myConv(x,256,strides=2) #16x16x256
-	x = myConv(x,256,strides=2) #8x8x256
-	x = myConv(x,256,strides=2) #4x4x256
+	x = myConv(x,64,strides=2)
+	x = myConv(x,128,strides=2)
+	x = myConv(x,128,strides=2)
+	x = myConv(x,256,strides=2)
+
 	x = Flatten()(x)
-	x = myDense(x,256,activation='relu')
-	x = myDense(x,256,activation='relu')
+	x = myDense(x,10,activation='relu')
 	y = myDense(x,2,activation='softmax')
 
 	model = Model(inputs=[x_src,x_pose],outputs=y, name='discriminator')
@@ -72,6 +92,7 @@ def gan(generator,discriminator,param):
 	pose_in = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints*2))
 	mask_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
 	trans_in = Input(shape=(2,3,11))
+	#mask_tgt = Input(shape=(IMG_HEIGHT,IMG_WIDTH,1))
 
 	make_trainable(discriminator, False)
 	y_gen = generator([src_in,pose_in,mask_in,trans_in])
@@ -82,8 +103,9 @@ def gan(generator,discriminator,param):
 	y_class = discriminator([y_gen[0],pose_tgt])
 
 	gan = Model(inputs=[src_in,pose_in,mask_in,trans_in], 
-				outputs=[y_gen[0],y_gen[1],y_class], name='gan')
+				outputs=[y_gen[0],y_class], name='gan')
 	return gan
+
 
 def _repeat(x, n_repeats):
 	rep = tf.transpose(
@@ -210,33 +232,6 @@ def makeWarpedStack(args):
 
 	return warps
 
-
-def makeWarpedFeatureStack(args):	
-	mask = args[0]
-	src_in = args[1]
-	trans_in = args[2]
-
-	for i in xrange(11):
-		mask_i = K.repeat_elements(tf.expand_dims(mask[:,:,:,i],3),10,3)	
-		src_masked =  tf.multiply(mask_i,src_in[:,:,:,10*i:10*(i+1)])
-		warp_i = affineWarp(src_masked,trans_in[:,:,:,i])
-		if(i == 0):
-			warps = warp_i
-		else:
-			warps = tf.concat([warps,warp_i],3)
-
-	return warps
-
-
-
-def normalizeMask(arg):
-	z = tf.reduce_max(arg,1,keep_dims=True)
-	z = tf.reduce_max(z,2,keep_dims=True)
-	z = tf.tile(z,[1,tf.shape(arg)[1],tf.shape(arg)[2],1])
-	z = tf.divide(arg,z)
-	return tf.clip_by_value(z,0.0,1.0)
-
-
 def vgg_preprocess(arg):
 	z = 255.0 * (arg+1.0)/2.0
 	r = z[:,:,:,0] - 103.939
@@ -246,15 +241,16 @@ def vgg_preprocess(arg):
 
 
 def gradientLoss(y_true,y_pred):
-	dx_true = y_true[:,0:254,:,:] - y_true[:,1:255,:,:]
-	dy_true = y_true[:,:,0:254,:] - y_true[:,:,1:255,:]	
-	dx_pred = y_pred[:,0:254,:,:] - y_pred[:,1:255,:,:]
-	dy_pred = y_pred[:,:,0:254,:] - y_pred[:,:,1:255,:]	
+	dx_true = y_true[:,0:255,:,:] - y_true[:,1:256,:,:]
+	dy_true = y_true[:,:,0:255,:] - y_true[:,:,1:256,:]	
+	dx_pred = y_pred[:,0:255,:,:] - y_pred[:,1:256,:,:]
+	dy_pred = y_pred[:,:,0:255,:] - y_pred[:,:,1:256,:]	
 	dx2 = tf.reduce_mean(tf.multiply(dx_true-dx_pred,dx_true-dx_pred))		
 	dy2 = tf.reduce_mean(tf.multiply(dy_true-dy_pred,dy_true-dy_pred))			
 	energy = dx2 + dy2
 	return energy
 
+'''
 def network_warp(param,feat_net=None):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
@@ -268,7 +264,6 @@ def network_warp(param,feat_net=None):
 	trans_in = Input(shape=(2,3,11))
 	
 	pose_src = Lambda(lambda arg: arg[:,:,:,0:n_joints])(pose_in)	
-	#pose_tgt = Lambda(lambda arg: arg[:,:,:,n_joints:])(pose_in)	
 	
 	x = myConv(src_in,64,strides=2)
 	x = concatenate([x,pose_src])
@@ -276,6 +271,7 @@ def network_warp(param,feat_net=None):
 	x = myConv(x,128,strides=2)
 	x = myConv(x,128,strides=2)
 	x = myConv(x,128,strides=2)
+	x = myConv(x,128)
 	x = UpSampling2D()(x) 
 	x = myConv(x,128)
 	x = UpSampling2D()(x)
@@ -286,13 +282,7 @@ def network_warp(param,feat_net=None):
 
 	mask_delta = myConv(x,11,activation='linear',ki='zeros')
 	mask = keras.layers.add([mask_delta,mask_in])
-	mask = Lambda(normalizeMask,name='mask')(mask)
-
-	#src_feat = myConv(src_in,64,ks=11)
-	#src_feat = myConv(src_feat,10*11)
-
-	#warped_stack = Lambda(makeWarpedFeatureStack,output_shape=(IMG_HEIGHT,IMG_WIDTH,10*11),
-	#				name='warped_stack')([mask,src_feat,trans_in])
+	mask = Activation('softmax',name='mask')(mask)
 
 	warped_stack = Lambda(makeWarpedStack,output_shape=(IMG_HEIGHT,IMG_WIDTH,33),
 					name='warped_stack')([mask,src_in,trans_in])
@@ -321,14 +311,169 @@ def network_warp(param,feat_net=None):
 	x = myConv(x,64)
 	y = myConv(x,3,activation='tanh')#256x256x3	
 
-	outputs = [y,y]
+	outputs = [y]
 	if(feat_net is not None):		
 		y = Lambda(vgg_preprocess)(y)
 		y_feat = feat_net(y)
 		outputs.append(y_feat)
 
 	model = Model(inputs=[src_in,pose_in,mask_in,trans_in],outputs=outputs)
-	model.compile(optimizer=Adam(lr=1e-4),loss=['mse',gradientLoss,'mse'],loss_weights=[1.0,1.0,0.001])
+	#model.compile(optimizer=Adam(lr=1e-4),loss=['mse',gradientLoss,'mse'],loss_weights=[1.0,1.0,0.001])
+	return model
+'''
+
+def network_fgbg(param,feat_net=None):
+
+	IMG_HEIGHT = param['IMG_HEIGHT']
+	IMG_WIDTH = param['IMG_WIDTH']
+	n_joints = param['n_joints']
+	pose_dn = param['posemap_downsample']
+
+	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
+	pose_in = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints*2))
+	mask_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
+	trans_in = Input(shape=(2,3,11))
+	
+	pose_src = Lambda(lambda arg: arg[:,:,:,0:n_joints])(pose_in)	
+	
+	x = myConv(src_in,128,strides=2)
+	x = concatenate([x,pose_src])
+	x = myConv(x,128)
+	x = myConv(x,128,strides=2)
+	x = myConv(x,128,strides=2)
+	x = myConv(x,128,strides=2)
+	x = myConv(x,128,strides=2)
+	x = UpSampling2D()(x) 
+	x = myConv(x,128)
+	x = UpSampling2D()(x)
+	x = myConv(x,128)
+	x = UpSampling2D()(x)
+	x = myConv(x,128)
+	x = UpSampling2D()(x)
+	x = myConv(x,128)
+	x = UpSampling2D()(x)
+	x = myConv(x,128)
+
+	mask_delta = myConv(x,11,activation='linear',ki='zeros')
+	mask = keras.layers.add([mask_delta,mask_in])
+	mask = Activation('softmax',name='mask_src')(mask)
+
+	warped_stack = Lambda(makeWarpedStack)([mask,src_in,trans_in])
+
+	fg_stack = Lambda(lambda arg: arg[:,:,:,3:],output_shape=(256,256,30),
+				name = 'fg_stack')(warped_stack)	
+	bg_src = Lambda(lambda arg: arg[:,:,:,0:3],output_shape=(256,256,3),
+				name = 'bg_src')(warped_stack)
+	bg_src_mask = Lambda(lambda arg: tf.expand_dims(arg[:,:,:,0],3))(mask)
+
+	bg_src = concatenate([bg_src,bg_src_mask])
+	x0 = myConv(bg_src,128,strides=2)
+	x1 = myConv(x0,128,strides=2) #64
+	x2 = myConv(x1,256,strides=2) #32x32x256
+	x3 = myConv(x2,256,strides=2) #16x16x256
+	x4 = myConv(x3,256,ks=3,strides=2) #8x8x256
+
+	x = UpSampling2D()(x4) #16x16x256
+	x = concatenate([x,x3])
+	x = myConv(x,256,ks=3)
+	x = UpSampling2D()(x) #32x32x256
+	x = concatenate([x,x2])
+	x = myConv(x,256)
+	x = UpSampling2D()(x) #64x64x256
+	x = concatenate([x,x1])
+	x = myConv(x,128)
+	x = UpSampling2D()(x) #128
+	x = concatenate([x,x0])
+	x = myConv(x,128)
+	x = UpSampling2D()(x) #256
+	x = concatenate([x,bg_src])
+	x = myConv(x,32)
+	bg_tgt = myConv(x,3,activation='tanh',name='bg_tgt')
+
+
+	x0 = myConv(fg_stack,128,strides=2)
+	x1 = concatenate([x0,pose_in])
+	x2 = myConv(x1,128)
+	x3 = myConv(x2,128,strides=2) #64
+	x4 = myConv(x3,256,strides=2) #32x32x256
+	x5 = myConv(x4,256,strides=2) #16x16x256
+	x6 = myConv(x5,256,ks=3,strides=2) #8x8x256
+	x7 = myConv(x6,256,ks=3) #8x8x256
+
+	x = UpSampling2D()(x7) #16x16x256
+	x = concatenate([x,x5])
+	x = myConv(x,256,ks=3)
+	x = UpSampling2D()(x) #32x32x256
+	x = concatenate([x,x4])
+	x = myConv(x,256)
+	x = UpSampling2D()(x) #64x64x256
+	x = concatenate([x,x3])
+	x = myConv(x,128)
+	x = UpSampling2D()(x) #128x128x128
+	x = concatenate([x,x2])
+	x = UpSampling2D()(x) #256x256
+	fg_tgt = myConv(x,3,activation='tanh',name='fg_tgt')#256x256x3
+	fg_mask = myConv(x,1,activation='sigmoid',name='fg_mask_tgt')
+
+	fg_mask = concatenate([fg_mask,fg_mask,fg_mask])
+	bg_mask = Lambda(lambda arg: 1-arg)(fg_mask)	
+
+	fg_tgt = keras.layers.multiply([fg_tgt,fg_mask])
+	bg_tgt = keras.layers.multiply([bg_tgt,bg_mask])
+	y = keras.layers.add([fg_tgt,bg_tgt])
+
+	outputs = [y]
+	if(feat_net is not None):		
+		y = Lambda(vgg_preprocess)(y)
+		y_feat = feat_net(y)
+		outputs.append(y_feat)
+
+	model = Model(inputs=[src_in,pose_in,mask_in,trans_in],outputs=outputs)
+	return model
+
+
+
+def network_ed(param,feat_net=None):
+
+	IMG_HEIGHT = param['IMG_HEIGHT']
+	IMG_WIDTH = param['IMG_WIDTH']
+	n_joints = param['n_joints']
+	pose_dn = param['posemap_downsample']
+
+	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
+	pose_in = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints*2))
+	
+	x0 = myConv(src_in,128,strides=2)
+	x1 = concatenate([x0,pose_in])
+	x2 = myConv(x1,128)
+	x3 = myConv(x2,128,strides=2) #64
+	x4 = myConv(x3,256,strides=2) #32x32x256
+	x5 = myConv(x4,256,strides=2) #16x16x256
+	x6 = myConv(x5,256,ks=3,strides=2) #8x8x256
+	x7 = myConv(x6,256,ks=3) #8x8x256
+
+	x = UpSampling2D()(x7) #16x16x256
+	x = concatenate([x,x5])
+	x = myConv(x,256,ks=3)
+	x = UpSampling2D()(x) #32x32x256
+	x = concatenate([x,x4])
+	x = myConv(x,256)
+	x = UpSampling2D()(x) #64x64x256
+	x = concatenate([x,x3])
+	x = myConv(x,128)
+	x = UpSampling2D()(x) #128x128x128
+	x = concatenate([x,x2])
+	x = UpSampling2D()(x) #256x256
+	x = myConv(x,64)
+	y = myConv(x,3,activation='tanh')#256x256x3	
+
+	outputs = [y]
+	if(feat_net is not None):		
+		y = Lambda(vgg_preprocess)(y)
+		y_feat = feat_net(y)
+		outputs.append(y_feat)
+
+	model = Model(inputs=[src_in,pose_in],outputs=outputs)
 	return model
 
 
@@ -343,8 +488,8 @@ def network_warpclass(param,feat_net=None):
 	pose_in = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints*2))
 	mask_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
 	trans_in = Input(shape=(2,3,11))
-	class_src = Input(shape=(2,))
-	class_tgt = Input(shape=(2,))	
+	class_src = Input(shape=(3,))
+	class_tgt = Input(shape=(3,))	
 
 	pose_src = Lambda(lambda arg: arg[:,:,:,0:n_joints])(pose_in)	
 	
@@ -415,16 +560,15 @@ def network_warpclass(param,feat_net=None):
 	x = myConv(x,64)
 	y = myConv(x,3,activation='tanh')#256x256x3	
 
-	outputs = [y,y]
+	outputs = [y]
 	if(feat_net is not None):		
 		y = Lambda(vgg_preprocess)(y)
 		y_feat = feat_net(y)
 		outputs.append(y_feat)
 
 	model = Model(inputs=[src_in,pose_in,mask_in,trans_in,class_src,class_tgt],outputs=outputs)
-	model.compile(optimizer=Adam(lr=1e-4),loss=['mse',gradientLoss,'mse'],loss_weights=[1.0,1.0,0.001])
+	#model.compile(optimizer=Adam(lr=1e-4),loss=['mse',gradientLoss,'mse'],loss_weights=[1.0,1.0,0.001])
 	return model
-
 
 '''
 def posenet(param):
@@ -717,4 +861,23 @@ def switch2(arg):
 	return tf.concat([a,b],axis=1)
 
 	x = Lambda(switch2)([x,class_tgt])
+'''
+
+'''
+
+def makeWarpedFeatureStack(args):	
+	mask = args[0]
+	src_in = args[1]
+	trans_in = args[2]
+
+	for i in xrange(11):
+		mask_i = K.repeat_elements(tf.expand_dims(mask[:,:,:,i],3),10,3)	
+		src_masked =  tf.multiply(mask_i,src_in[:,:,:,10*i:10*(i+1)])
+		warp_i = affineWarp(src_masked,trans_in[:,:,:,i])
+		if(i == 0):
+			warps = warp_i
+		else:
+			warps = tf.concat([warps,warp_i],3)
+
+	return warps
 '''

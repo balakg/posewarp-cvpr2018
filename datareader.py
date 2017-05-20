@@ -29,11 +29,12 @@ def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=2,class_i
 
 	n_vids = len(vid_names)
 
+	np.random.seed(17)
+
 	if(test_vids):
 		test_vids = test_vids
 		train_vids = list(set(range(n_vids)) - set(test_vids))	
 	else:
-		np.random.seed(17)
 		random_order = np.random.permutation(n_vids).tolist()
 		test_vids = random_order[0:n_test_vids]
 		train_vids = random_order[n_test_vids:]
@@ -77,11 +78,15 @@ def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=2,class_i
 			pos = [(box_j[0] + box_j[2]/2.0), (box_j[1] + box_j[3]/2.0)] 
 			l += [I_name_j] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
 
-
+		'''
 		if(class_id == 1):
-			l += [1,0]
+			l += [1,0,0]
 		elif(class_id == 2):
-			l += [0,1]
+			l += [0,1,0]
+		elif(class_id == 3):
+			l += [0,0,1]
+		'''
+		l += [class_id]
 		
 		if(i < n_test_examples):
 			ex_test.append(l)

@@ -31,12 +31,14 @@ def train(model_name,gpu_id):
 
 	lift_params = param.getDatasetParams('weightlifting')
 	golf_params = param.getDatasetParams('golfswinghd')
+	yoga_params = param.getDatasetParams('yoga')
 
 	lift_train,lift_test = datareader.makeWarpExampleList(lift_params,20000,2000,2,1)
 	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,50000,5000,2,2)
+	yoga_train,yoga_test = datareader.makeWarpExampleList(yoga_params,12000,1200,2,3)
 
-	warp_train = lift_train + golf_train
-	warp_test = lift_test + golf_test
+	warp_train = lift_train + golf_train + yoga_train
+	warp_test = lift_test + golf_test + yoga_test
 
 	train_feed = datageneration.warpExampleGenerator(warp_train,params)
 	test_feed = datageneration.warpExampleGenerator(warp_test,params)
@@ -50,33 +52,39 @@ def train(model_name,gpu_id):
 		sess.run(tf.global_variables_initializer())
 		coord = tf.train.Coordinator()
 		threads = tf.train.start_queue_runners(coord=coord)
-
+	
 		with tf.device(gpu):
 			vgg_model = VGG19(weights='imagenet',include_top=False,
 						input_shape=(256,256,3))
 			networks.make_trainable(vgg_model,False)
-			model = networks.network_warpclass(params,vgg_model)
-			#model.load_weights('../results/networks/centered/2500.h5')
-			#model.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse'],
-			#			loss_weights=[1.0,0.001])
-		
+			model = networks.network_fgbg(params,vgg_model)
+
+			#model = networks.network_ed(params,vgg_model)
+			#model.load_weights('../results/networks/l2+vgg/8000.h5',by_name=True)
+			model.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse'],
+						loss_weights=[1.0,0.001])		
+			#model.compile(optimizer=Adam(lr=2e-4),loss=['mse'])
+
+
+		#model.save(network_dir + '/' + str(0) + '.h5')			
+
 		step = 0
 		while(True):
 			X,Y = next(train_feed)			
 
 			with tf.device(gpu):
 				Y_vgg = vgg_model.predict(util.vgg_preprocess(Y))
-				train_loss = model.train_on_batch(X,[Y,Y,Y_vgg])
+				train_loss = model.train_on_batch(X,[Y,Y_vgg])
 
 			util.printProgress(step,0,train_loss)
 
 			if(step % params['test_interval'] == 0):
 				n_batches = 8
-				test_loss = np.zeros(4)
+				test_loss = np.zeros(3)
 				for j in xrange(n_batches):	
 					X,Y = next(test_feed)			
 					Y_vgg = vgg_model.predict(util.vgg_preprocess(Y))
-					test_loss += np.array(model.test_on_batch(X,[Y,Y,Y_vgg]))
+					test_loss += np.array(model.test_on_batch(X,[Y,Y_vgg]))
 
 				test_loss /= (n_batches)
 				util.printProgress(step,1,test_loss)
@@ -92,7 +100,6 @@ def train(model_name,gpu_id):
 				model.save(network_dir + '/' + str(step) + '.h5')			
 
 			step += 1	
-
 
 if __name__ == "__main__":
 	if(len(sys.argv) != 3):

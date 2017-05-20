@@ -29,24 +29,12 @@ def randSat(param):
 
 	return np.random.rand()*(max_sat-min_sat) + min_sat
 
-def readImage(path):
-	I = cv2.imread(path)
-	I = (I/255.0 - 0.5)*2.0
-	return I
+#def readImage(path):
+#	I = cv2.imread(path)
+#	I = (I/255.0 - 0.5)*2.0
+#	return I
 
-def getObjectScale(joints):
-	torso_size = (-joints[0][1] + (joints[8][1] + joints[11][1])/2.0)
-	peak_to_peak = np.ptp(joints,axis=0)[1]
-	#rarm_length = np.sqrt((joints[2][0] - joints[4][0])**2 + (joints[2][1]-joints[4][1])**2)			
-	#larm_length = np.sqrt((joints[5][0] - joints[7][0])**2 + (joints[5][1]-joints[7][1])**2)
-	rcalf_size = np.sqrt((joints[9][1] - joints[10][1])**2 + (joints[9][0] - joints[10][0])**2)
-	lcalf_size = np.sqrt((joints[12][1] - joints[13][1])**2 + (joints[12][0] - joints[13][0])**2)
-	calf_size = (lcalf_size + rcalf_size)/2.0
-
-	return np.max([2.5 * torso_size,calf_size*5.0,peak_to_peak*1.1]) 
-
-
-def warpExampleGenerator(examples,param):
+def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel_color=None):
     
 	img_width = param['IMG_WIDTH']
 	img_height = param['IMG_HEIGHT']
@@ -55,7 +43,6 @@ def warpExampleGenerator(examples,param):
 	n_joints = param['n_joints']
 	scale_factor = param['obj_scale_factor']	
 	batch_size = param['batch_size']
-	seq_len = param['seq_len']
 
 	while True:
 
@@ -63,59 +50,69 @@ def warpExampleGenerator(examples,param):
 		X_mask = np.zeros((batch_size,img_height,img_width,11))
 		X_pose = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints*2))
 		X_trans = np.zeros((batch_size,2,3,11))
+		#X_joints = np.zeros((batch_size,n_joints*4))	
+		#X_class = np.zeros((batch_size,1))
+	
 		Y = np.zeros((batch_size,img_height,img_width,3))
 	
 		for i in xrange(batch_size):
 			example = examples[np.random.randint(0,len(examples))]	
 
-			I0 = readImage(example[0])
-			I1 = readImage(example[33])
+			I0 = cv2.imread(example[0])
+			I1 = cv2.imread(example[32])
 
 			joints0 = np.reshape(np.array(example[1:29]), (14,2))
-			joints1 = np.reshape(np.array(example[34:62]), (14,2))
+			joints1 = np.reshape(np.array(example[33:61]), (14,2))
 
-			scale0 = getObjectScale(joints0)
-			scale1 = getObjectScale(joints1)
+			scale0 = scale_factor/example[31]
+			scale1 = scale_factor/example[63]
 
-			idx = 0 + 33*(scale1>scale0)
-			pos = np.array([example[idx+29] + example[idx+31]/2.0, 
-							example[idx+30] + example[idx+32]/2.0])
-	
-			scale = scale_factor*200.0/np.max([scale0,scale1])
+			if(scale0 > scale1):
+				pos = np.array(example[29:31])
+				scale = scale0
+			else:
+				pos = np.array(example[61:63])
+				scale = scale1	
+
 	
 			I0,joints0 = centerAndScaleImage(I0,img_width,img_height,pos,scale,joints0)
 			I1,joints1 = centerAndScaleImage(I1,img_width,img_height,pos,scale,joints1)
 
-			rscale = randScale(param)
-			rshift = randShift(param)
-			rdegree = randRot(param)
-			rsat = randSat(param)
-			
-			I0,joints0 = augment(I0,joints0,rscale,rshift,rdegree,rsat,img_height,img_width)	
-			I1,joints1 = augment(I1,joints1,rscale,rshift,rdegree,rsat,img_height,img_width)	
+			if(draw_skeleton):
+				I0 = drawLimbsOnImage(I0,joints0,skel_color)
+				I1 = drawLimbsOnImage(I1,joints1,skel_color)
+
+			I0 = (I0/255.0 - 0.5)*2.0
+			I1 = (I1/255.0 - 0.5)*2.0
+
+			if(do_augment):
+				rscale,rshift,rdegree,rsat = randAugmentations(param)				
+				I0,joints0 = augment(I0,joints0,rscale,rshift,rdegree,rsat,img_height,img_width)	
+				I1,joints1 = augment(I1,joints1,rscale,rshift,rdegree,rsat,img_height,img_width)	
 
 			posemap0 = makeJointHeatmaps(img_height,img_width,joints0,sigma_joint,pose_dn)
 			posemap1 = makeJointHeatmaps(img_height,img_width,joints1,sigma_joint,pose_dn)
 
-			limb_masks = makeLimbMasks(joints0,img_width,img_height,limbs)	
-		
-			fg_sig = (np.ptp(joints0,axis=0)/2.0)**2
-			bg_mask = 1.0 - makeGaussianMap(img_width,img_height,
-			    			np.mean(joints0,axis=0),fg_sig[0],fg_sig[1],0.0)
-			
+			src_limb_masks = makeLimbMasks(joints0,img_width,img_height)	
+			bg_mask = 1.0 - np.amax(src_limb_masks,axis=2)
+
+			src_limb_masks = np.log(src_limb_masks + 1e-10)
+			bg_mask = np.log(bg_mask+1e-10)
+
 			X_src[i,:,:,:] = I0
-			X_pose[i,:,:,0:n_joints] = posemap0
-			X_pose[i,:,:,n_joints:] = posemap1
-			X_mask[i,:,:,0] = bg_mask
-			X_mask[i,:,:,1:] = limb_masks 
+			X_pose[i,:,:,:] = np.concatenate((posemap0,posemap1),axis=2)
+			X_mask[i,:,:,:] = np.concatenate((np.expand_dims(bg_mask,2),src_limb_masks),axis=2)
 			X_trans[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
-			X_trans[i,:,:,1:] = getLimbTransforms(joints0,joints1,img_width,img_height,limbs)
+			X_trans[i,:,:,1:] = getLimbTransforms(joints0,joints1)
 			Y[i,:,:,:] = I1
+			#X_joints[i,:] = np.concatenate((joints0.flatten(),joints1.flatten()))
+			#X_class[i,0] = example[64]
 	
 		yield ([X_src,X_pose,X_mask,X_trans],Y)
+		#yield ([X_src,X_pose,X_mask,X_trans,X_tgt_mask],Y)
 
 
-def warpTransferExampleGenerator(examples0,examples1,param):
+def transferExampleGenerator(examples0,examples1,param,rflip=0,do_augment=True):
     
 	img_width = param['IMG_WIDTH']
 	img_height = param['IMG_HEIGHT']
@@ -131,49 +128,65 @@ def warpTransferExampleGenerator(examples0,examples1,param):
 			X_src = np.zeros((batch_size,img_height,img_width,3))
 			X_mask = np.zeros((batch_size,img_height,img_width,11))
 			X_pose = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints*2))
-			X_trans = np.zeros((batch_size,2,3,11))
+			X_trans = np.zeros((batch_size,2,3,11))	
+			Y = np.zeros((batch_size,img_height,img_width,3))
 	
 			for i in xrange(batch_size):
-				example0 = examples0[np.random.randint(0,len(examples0))] 
-				example1 = examples1[np.random.randint(0,len(examples1))] 
+				if(np.random.rand() < rflip):
+					example0 = examples0[np.random.randint(0,len(examples0))] 
+					example1 = examples1[np.random.randint(0,len(examples1))] 
+				else:	
+					example0 = examples1[np.random.randint(0,len(examples1))] 
+					example1 = examples0[np.random.randint(0,len(examples0))] 
 
-				I0 = readImage(example0[0])
+				I0 = cv2.imread(example0[0])
+				I1 = cv2.imread(example1[0])
+				
 				joints0 = np.reshape(np.array(example0[1:29]), (14,2))
-				joints1 = np.reshape(np.array(example1[34:62]), (14,2))
+				joints1 = np.reshape(np.array(example1[1:29]), (14,2))
 
-				scale0 = getObjectScale(joints0)
-				scale1 = getObjectScale(joints1)
-	
-				pos = np.array([example0[29] + example0[31]/2.0, 
-							    example0[30] + example0[32]/2.0])
+				scale0 = scale_factor/example0[31]
+				scale1 = scale_factor/example1[31]
 
-				scale = scale_factor*200.0/scale0
+				pos0 = np.array(example0[29:31])
+				I0,joints0 = centerAndScaleImage(I0,img_width,img_height,pos0,scale0,joints0)
 
-				I0,joints0 = centerAndScaleImage(I0,img_width,img_height,pos,scale,joints0)
-								
-				joints1 = joints1 * scale_factor/scale1
-				joints1 += np.tile(np.median(joints0-joints1,axis=0),(14,1))
-		
+				I1 = cv2.resize(I1,(0,0),fx=scale1,fy=scale1)
+				joints1 = joints1 * scale1
+				offset = (joints0[10,:]+joints0[13,:] - joints1[10,:] - joints1[13,:])/2.0
+				joints1 += np.tile(offset,(14,1)) 
+				T = np.float32([[1,0,offset[0]],[0,1,offset[1]]])	
+				I1 = cv2.warpAffine(I1,T,(img_width,img_height))
+
+				I0 = (I0/255.0 - 0.5)*2.0
+				I1 = (I1/255.0 - 0.5)*2.0
+
+				if(do_augment):	
+					rscale,rshift,rdegree,rsat = randAugmentations(param)		
+					I0,joints0 = augment(I0,joints0,rscale,rshift,rdegree,rsat,img_height,img_width)	
+					I1,joints1 = augment(I1,joints1,rscale,rshift,rdegree,rsat,img_height,img_width)	
+
 				posemap0 = makeJointHeatmaps(img_height,img_width,joints0,sigma_joint,pose_dn)
 				posemap1 = makeJointHeatmaps(img_height,img_width,joints1,sigma_joint,pose_dn)
 
-				limb_masks = makeLimbMasks(joints0,img_width,img_height,limbs)	
-		
-				fg_sig = (np.ptp(joints0,axis=0)/2.0)**2
-				bg_mask = 1.0 - makeGaussianMap(img_width,img_height,
-			    			np.mean(joints0,axis=0),fg_sig[0],fg_sig[1],0.0)
-			
+				src_limb_masks = makeLimbMasks(joints0,img_width,img_height)	
+				bg_mask = 1.0 - np.amax(src_limb_masks,axis=2)
+
+				src_limb_masks = np.log(src_limb_masks + 1e-10)
+				bg_mask = np.log(bg_mask+1e-10)
+
+
 				X_src[i,:,:,:] = I0
-				X_pose[i,:,:,0:n_joints] = posemap0
-				X_pose[i,:,:,n_joints:] = posemap1
-				X_mask[i,:,:,0] = bg_mask
-				X_mask[i,:,:,1:] = limb_masks 
+				X_pose[i,:,:,:] = np.concatenate((posemap0,posemap1),axis=2)
+				X_mask[i,:,:,:] = np.concatenate((np.expand_dims(bg_mask,2),src_limb_masks),axis=2)
 				X_trans[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
-				X_trans[i,:,:,1:] = getLimbTransforms(joints0,joints1,img_width,img_height,limbs)
-	
-			yield [X_src,X_pose,X_mask,X_trans]
+				X_trans[i,:,:,1:] = getLimbTransforms(joints0,joints1)
+				Y[i,:,:,:] = I1
 
+			yield ([X_src,X_pose,X_mask,X_trans],Y)
+			#yield ([X_src,X_pose,X_mask,X_trans,X_tgt_mask],Y)
 
+'''
 def poseExampleGenerator(examples,param):
     
 	img_width = param['IMG_WIDTH']
@@ -189,24 +202,19 @@ def poseExampleGenerator(examples,param):
 		X_src = np.zeros((batch_size,img_height,img_width,3))
 		X_mask = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,1))
 		Y = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
-		#Y = np.zeros((batch_size,14,2))	
 
 		for i in xrange(batch_size):
 			example = examples[np.random.randint(0,len(examples))]	
 			I = readImage(example[0])
 
 			joints = np.reshape(np.array(example[1:29]), (14,2))
-			pos = np.array(example[29:31])
-	
-			scale = 1.147/(example[31])
+			pos = np.array(example[29:31])	
+			scale = 1.15/(example[31])
 
 			I,joints = centerAndScaleImage(I,img_width,img_height,pos,scale,joints)
 
-			rscale = randScale(param)
-			rshift = randShift(param)
-			rdegree = randRot(param)
-			rsat = randSat(param)
-		
+			rscale,rshift,rdegree,rsat = randAugmentations(param)
+	
 			I,joints = augment(I,joints,rscale,rshift,rdegree,rsat,img_height,img_width)	
 
 			posemap = makeJointHeatmaps(img_height,img_width,joints,sigma_joint,pose_dn)
@@ -221,7 +229,34 @@ def poseExampleGenerator(examples,param):
 			Y[i,:,:,:] = posemap
 
 		yield ([X_src,X_mask],Y)
+'''
 
+def drawLimbsOnImage(I,joints,color=(0,0,255)):	
+
+	n_limbs = len(limbs)
+
+	#if(color is None):
+	#	colors = [(0,0,0),(255,0,0),(0,255,0),(255,0,0),(0,255,0),(0,0,255), (255,255,0),(0,0,255),(255,255,0)]
+
+	for i in xrange(n_limbs):	
+		n_joints_for_limb = len(limbs[i])
+		if(n_joints_for_limb != 2):
+			continue
+
+		p1 = (int(joints[limbs[i][0],0]),int(joints[limbs[i][0],1]))
+		p2 = (int(joints[limbs[i][1],0]),int(joints[limbs[i][1],1]))
+		cv2.line(I,p1,p2,color,2) #colors[i],2)
+	
+	return I
+
+def randAugmentations(param):
+
+	rscale = randScale(param)
+	rshift = randShift(param)
+	rdegree = randRot(param)
+	rsat = randSat(param)
+	
+	return rscale,rshift,rdegree,rsat
 
 
 def augment(I,joints,rscale,rshift,rdegree,rsat,img_height,img_width):
@@ -322,7 +357,9 @@ def makeGaussianMap(img_width,img_height,center,sigma_x,sigma_y,theta):
 			c*(yv-center[1])*(yv-center[1])))
 
 
-def makeLimbMasks(joints,img_width,img_height,limbs):
+def makeLimbMasks(joints,img_width,img_height):
+
+	limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
 	n_limbs = len(limbs)
 	n_joints = joints.shape[0]
 
@@ -330,7 +367,7 @@ def makeLimbMasks(joints,img_width,img_height,limbs):
 
 	#Gaussian sigma perpendicular to the limb axis. I hardcoded
 	#reasonable sigmas for now.
-	sigma_perp = np.array([9,5,5,5,5,5,5,5,5,11])**2	 
+	sigma_perp = np.array([11,11,11,11,11,11,11,11,11,13])**2	 
 
 	for i in xrange(n_limbs):	
 		n_joints_for_limb = len(limbs[i])
@@ -346,7 +383,7 @@ def makeLimbMasks(joints,img_width,img_height,limbs):
 
 		center = np.mean(p,axis=0)		
 
-		sigma_parallel = (np.sum((p[1,:] - p[0,:])**2))/4
+		sigma_parallel = np.max([5,(np.sum((p[1,:] - p[0,:])**2))/1.5])
 		theta = np.arctan2(p[1,1] - p[0,1], p[0,0] - p[1,0])
 
 		mask_i = makeGaussianMap(img_width,img_height,center,sigma_parallel,sigma_perp[i],theta)
@@ -354,7 +391,7 @@ def makeLimbMasks(joints,img_width,img_height,limbs):
 		
 	return mask
 
-def getLimbTransforms(joints1,joints2,img_width,img_height,limbs):
+def getLimbTransforms(joints1,joints2): 
 	
 	n_limbs = len(limbs)
 	n_joints = joints1.shape[0]

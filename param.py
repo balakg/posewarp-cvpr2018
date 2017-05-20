@@ -3,7 +3,7 @@ def getGeneralParams():
 	dn = 1 #downsample images from 256 to 128 for now
 	param['IMG_HEIGHT'] = 256/dn 
 	param['IMG_WIDTH'] = 256/dn
-	param['obj_scale_factor'] = 1.16/dn
+	param['obj_scale_factor'] = 1.14/dn
 	param['scale_max'] = 1.05
 	param['scale_min'] = 0.95
 	param['max_rotate_degree'] = 5
@@ -15,7 +15,7 @@ def getGeneralParams():
 
 	param['test_interval'] = 100
 	param['test_save_interval'] = 1000
-	param['model_save_interval'] = 2500
+	param['model_save_interval'] = 500
 	param['project_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/pose2image'
 
 	param['batch_size'] = 4
@@ -43,5 +43,12 @@ def getDatasetParams(dataset):
 		param['vid_pth'] = '../../datasets/Penn_Action/frames'
 		param['info_pth'] = '../../datasets/Penn_Action/labels'
 		param['img_sfx'] = '.jpg'
+
+	if(dataset == 'yoga'):
+		param['vid_pth'] = '../../datasets/yoga/frames'
+		param['info_pth'] = '../../datasets/yoga/videoinfo'
+		param['img_sfx'] = '.jpg'
+		param['n_test_vids'] = 4
+		param['test_vids'] = None
 
 	return param
