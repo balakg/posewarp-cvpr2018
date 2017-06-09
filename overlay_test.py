@@ -11,9 +11,9 @@ import scipy.io as sio
 import param
 from keras.models import load_model,Model
 from keras.optimizers import Adam
-from keras.applications.vgg19 import VGG19
 import h5py
 import util
+import myVGG
 
 def train(dataset,gpu_id):	
 
@@ -42,10 +42,13 @@ def train(dataset,gpu_id):
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			vgg_model = VGG19(weights='imagenet',include_top=False,input_shape=(256,256,3))
+			vgg_model = myVGG.vgg_norm()
 			networks.make_trainable(vgg_model,False)
-			fgbg = networks.network_fgbg(params,vgg_model)
-			fgbg.load_weights('../results/networks/fgbg/5000.h5')
+			response_weights = sio.loadmat('mean_response4.mat')
+			fgbg = networks.cycleNet(params,vgg_model,response_weights)
+			fgbg.load_weights('../results/networks/fgbg_cycle/5000.h5')	
+
+			'''
 			outputs = [fgbg.outputs[0]]
 			outputs.append(fgbg.get_layer('mask_src').output)
 			outputs.append(fgbg.get_layer('fg_stack').output)
@@ -53,18 +56,23 @@ def train(dataset,gpu_id):
 			outputs.append(fgbg.get_layer('bg_tgt').output)
 			outputs.append(fgbg.get_layer('fg_tgt').output)
 			outputs.append(fgbg.get_layer('fg_mask_tgt').output)
-
+			#outputs.append(fgbg.get_layer('conv2d_14').output)
 			model = Model(fgbg.inputs, outputs)
+			'''
 
+		fgbg.summary()
 
+		np.random.rand(17)
 		n_batches = 10
 		for j in xrange(n_batches):	
 			print j
-			X,Y = next(feed)			
-			pred = model.predict(X)
+			X,Y = next(feed)		
+			pred = fgbg.predict(X)
+			#sio.savemat('results/vggnorm/' + str(j) + '.mat',{'X': X[0],'Y': Y, 'pred': pred[0], 'mask_src': pred[1],
+			#			'fg_stack': pred[2], 'bg_src': pred[3], 'bg_tgt': pred[4], 'fg_tgt': pred[5], 'fg_mask_tgt': pred[6], 
+			#			'prior': X[2][:,:,:,0]}) #, 'flow': pred[7]})	
 
-			sio.savemat('results/5000/' + str(j) + '.mat',{'X': X[0],'Y': Y, 'pred': pred[0], 'mask_src': pred[1],
-						'fg_stack': pred[2], 'bg_src': pred[3], 'bg_tgt': pred[4], 'fg_tgt': pred[5], 'fg_mask_tgt': pred[6]})	
+			sio.savemat('results/cycle/' + str(j) + '.mat', {'X': X[0], 'Y': Y, 'pred0': pred[0], 'pred1': pred[1]})
 
 if __name__ == "__main__":
 	train('golfswinghd',sys.argv[1])

@@ -15,7 +15,7 @@ def getGeneralParams():
 
 	param['test_interval'] = 100
 	param['test_save_interval'] = 1000
-	param['model_save_interval'] = 500
+	param['model_save_interval'] = 5000
 	param['project_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/pose2image'
 
 	param['batch_size'] = 4
@@ -48,7 +48,13 @@ def getDatasetParams(dataset):
 		param['vid_pth'] = '../../datasets/yoga/frames'
 		param['info_pth'] = '../../datasets/yoga/videoinfo'
 		param['img_sfx'] = '.jpg'
-		param['n_test_vids'] = 4
+		param['n_test_vids'] = 5
 		param['test_vids'] = None
 
+	if(dataset == 'famous'):
+		param['vid_pth'] = '../../datasets/famous/frames'
+		param['info_pth'] = '../../datasets/famous/info'
+		param['img_sfx'] = '.jpg'
+		param['n_test_vids'] = 1
+		param['test_vids'] = None
 	return param

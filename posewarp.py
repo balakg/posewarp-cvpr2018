@@ -12,7 +12,8 @@ import util
 import paDataReader
 from keras.models import load_model,Model
 from keras.optimizers import Adam
-from keras.applications.vgg19 import VGG19
+import myVGG
+import pickle
 
 def train(model_name,gpu_id):	
 
@@ -20,11 +21,7 @@ def train(model_name,gpu_id):
 
 	gpu = '/gpu:' + str(gpu_id)
 
-	output_dir = params['project_dir'] + '/results/outputs/' + model_name
 	network_dir = params['project_dir'] + '/results/networks/' + model_name
-
-	if not os.path.isdir(output_dir):
-		os.mkdir(output_dir)
 
 	if not os.path.isdir(network_dir):
 		os.mkdir(network_dir)
@@ -33,9 +30,9 @@ def train(model_name,gpu_id):
 	golf_params = param.getDatasetParams('golfswinghd')
 	yoga_params = param.getDatasetParams('yoga')
 
-	lift_train,lift_test = datareader.makeWarpExampleList(lift_params,20000,2000,2,1)
-	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,50000,5000,2,2)
-	yoga_train,yoga_test = datareader.makeWarpExampleList(yoga_params,12000,1200,2,3)
+	lift_train,lift_test = datareader.makeWarpExampleList(lift_params,25000,2500,2,1) #25000
+	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,50000,5000,2,2) #50000
+	yoga_train,yoga_test = datareader.makeWarpExampleList(yoga_params,20000,2000,2,3) #20000
 
 	warp_train = lift_train + golf_train + yoga_train
 	warp_test = lift_test + golf_test + yoga_test
@@ -52,29 +49,58 @@ def train(model_name,gpu_id):
 		sess.run(tf.global_variables_initializer())
 		coord = tf.train.Coordinator()
 		threads = tf.train.start_queue_runners(coord=coord)
-	
+
+
 		with tf.device(gpu):
-			vgg_model = VGG19(weights='imagenet',include_top=False,
-						input_shape=(256,256,3))
+			vgg_model = myVGG.vgg_norm()
 			networks.make_trainable(vgg_model,False)
-			model = networks.network_fgbg(params,vgg_model)
+			response_weights = sio.loadmat('mean_response4.mat')
+			#model = networks.network_fgbg(params,vgg_model,response_weights)
+			model = networks.cycleNet(params,vgg_model,response_weights)
+			#model.load_weights('../results/networks/fgbg_l2/10000.h5')
 
-			#model = networks.network_ed(params,vgg_model)
-			#model.load_weights('../results/networks/l2+vgg/8000.h5',by_name=True)
-			model.compile(optimizer=Adam(lr=1e-4),loss=['mse','mse'],
-						loss_weights=[1.0,0.001])		
-			#model.compile(optimizer=Adam(lr=2e-4),loss=['mse'])
+		#model.summary()
 
+		'''
+		step = 0
+		mean_response = []
+		std_response = []
+		for step in xrange(300):
+			print step
+			X,Y = next(train_feed)			
+			pred_step = vgg_model.predict(util.vgg_preprocess(X[0]))
 
-		#model.save(network_dir + '/' + str(0) + '.h5')			
+			for i in xrange(len(pred_step)):
+				mean_step = np.mean(pred_step[i],axis=(0,1,2))
+				std_step = np.std(pred_step[i],axis=(0,1,2))
 
+				if(step == 0):
+					mean_response.append(mean_step)
+					std_response.append(std_step)
+				else:
+					mean_response[i] += mean_step
+					std_response[i] += std_step
+
+			step += 1		
+		
+		for i in xrange(len(mean_response)):
+			mean_response[i]/= (300.0)
+			std_response[i]/= (300.0)
+
+		responses = {}
+		for i in xrange(12):
+			responses[str(i)] = (mean_response[i],std_response[i])
+
+		sio.savemat('mean_response4.mat', responses)
+
+		'''
+		
 		step = 0
 		while(True):
 			X,Y = next(train_feed)			
 
 			with tf.device(gpu):
-				Y_vgg = vgg_model.predict(util.vgg_preprocess(Y))
-				train_loss = model.train_on_batch(X,[Y,Y_vgg])
+				train_loss = model.train_on_batch(X,[Y,X[0]])
 
 			util.printProgress(step,0,train_loss)
 
@@ -83,23 +109,17 @@ def train(model_name,gpu_id):
 				test_loss = np.zeros(3)
 				for j in xrange(n_batches):	
 					X,Y = next(test_feed)			
-					Y_vgg = vgg_model.predict(util.vgg_preprocess(Y))
-					test_loss += np.array(model.test_on_batch(X,[Y,Y_vgg]))
+					test_loss += np.array(model.test_on_batch(X,[Y,X[0]]))
 
 				test_loss /= (n_batches)
 				util.printProgress(step,1,test_loss)
-
-			if(step % params['test_save_interval']==0):
-				X,Y = next(test_feed)			
-				pred = model.predict(X)[0]
-	
-				sio.savemat(output_dir + '/' + str(step) + '.mat',
-         		{'X': X[0],'Y': Y, 'pred': pred})	
 
 			if(step % params['model_save_interval']==0):
 				model.save(network_dir + '/' + str(step) + '.h5')			
 
 			step += 1	
+
+
 
 if __name__ == "__main__":
 	if(len(sys.argv) != 3):

@@ -232,6 +232,7 @@ def makeWarpedStack(args):
 
 	return warps
 
+
 def vgg_preprocess(arg):
 	z = 255.0 * (arg+1.0)/2.0
 	r = z[:,:,:,0] - 103.939
@@ -245,13 +246,15 @@ def gradientLoss(y_true,y_pred):
 	dy_true = y_true[:,:,0:255,:] - y_true[:,:,1:256,:]	
 	dx_pred = y_pred[:,0:255,:,:] - y_pred[:,1:256,:,:]
 	dy_pred = y_pred[:,:,0:255,:] - y_pred[:,:,1:256,:]	
+
 	dx2 = tf.reduce_mean(tf.multiply(dx_true-dx_pred,dx_true-dx_pred))		
 	dy2 = tf.reduce_mean(tf.multiply(dy_true-dy_pred,dy_true-dy_pred))			
 	energy = dx2 + dy2
+	
 	return energy
 
-'''
-def network_warp(param,feat_net=None):
+
+def network_fgbg(param,feat_net=None, feat_weights=None):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
 	IMG_WIDTH = param['IMG_WIDTH']
@@ -259,36 +262,51 @@ def network_warp(param,feat_net=None):
 	pose_dn = param['posemap_downsample']
 
 	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	pose_in = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints*2))
+	pose_src = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
+	pose_tgt = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
 	mask_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
 	trans_in = Input(shape=(2,3,11))
 	
-	pose_src = Lambda(lambda arg: arg[:,:,:,0:n_joints])(pose_in)	
-	
-	x = myConv(src_in,64,strides=2)
-	x = concatenate([x,pose_src])
+	x0 = myConv(src_in,128,strides=2)#128
+	x1 = concatenate([x0,pose_src])
+	x2 = myConv(x1,128)
+	x3 = myConv(x2,128,strides=2)#64
+	x4 = myConv(x3,128,strides=2)#32
+	x5 = myConv(x4,128,strides=2)#16
+	x6 = myConv(x5,128,ks=3,strides=2)#8
+	x7 = myConv(x6,128,ks=3)#8
+
+	x = UpSampling2D()(x7) #16 
+	x = concatenate([x,x5])
+	x = myConv(x,128,ks=3)
+	x = UpSampling2D()(x)#32
+	x = concatenate([x,x4])
 	x = myConv(x,128)
-	x = myConv(x,128,strides=2)
-	x = myConv(x,128,strides=2)
-	x = myConv(x,128,strides=2)
+	x = UpSampling2D()(x)#64
+	x = concatenate([x,x3])
 	x = myConv(x,128)
-	x = UpSampling2D()(x) 
+	x = UpSampling2D()(x)#128
+	x = concatenate([x,x2])
 	x = myConv(x,128)
-	x = UpSampling2D()(x)
-	x = myConv(x,128)
-	x = UpSampling2D()(x)
-	x = myConv(x,128)
-	x = UpSampling2D()(x)
+	x = UpSampling2D()(x)#256
+	x = concatenate([x,src_in])
+	x = myConv(x,32)
 
 	mask_delta = myConv(x,11,activation='linear',ki='zeros')
 	mask = keras.layers.add([mask_delta,mask_in])
-	mask = Activation('softmax',name='mask')(mask)
+	mask = Activation('softmax',name='mask_src')(mask)
 
-	warped_stack = Lambda(makeWarpedStack,output_shape=(IMG_HEIGHT,IMG_WIDTH,33),
-					name='warped_stack')([mask,src_in,trans_in])
-	
-	x0 = myConv(warped_stack,128,strides=2)
-	x1 = concatenate([x0,pose_in])
+	warped_stack = Lambda(makeWarpedStack)([mask,src_in,trans_in])
+
+	fg_stack = Lambda(lambda arg: arg[:,:,:,3:],
+				output_shape=(256,256,30),name = 'fg_stack')(warped_stack)	
+	bg_src = Lambda(lambda arg: arg[:,:,:,0:3],
+				output_shape=(256,256,3),name = 'bg_src')(warped_stack)
+	bg_src_mask = Lambda(lambda arg: tf.expand_dims(arg[:,:,:,0],3))(mask)
+
+	bg_src = concatenate([bg_src,bg_src_mask])
+	x0 = myConv(bg_src,128,strides=2)
+	x1 = concatenate([x0,pose_src])
 	x2 = myConv(x1,128)
 	x3 = myConv(x2,128,strides=2) #64
 	x4 = myConv(x3,256,strides=2) #32x32x256
@@ -305,85 +323,8 @@ def network_warp(param,feat_net=None):
 	x = UpSampling2D()(x) #64x64x256
 	x = concatenate([x,x3])
 	x = myConv(x,128)
-	x = UpSampling2D()(x) #128x128x128
-	x = concatenate([x,x2])
-	x = UpSampling2D()(x) #256x256
-	x = myConv(x,64)
-	y = myConv(x,3,activation='tanh')#256x256x3	
-
-	outputs = [y]
-	if(feat_net is not None):		
-		y = Lambda(vgg_preprocess)(y)
-		y_feat = feat_net(y)
-		outputs.append(y_feat)
-
-	model = Model(inputs=[src_in,pose_in,mask_in,trans_in],outputs=outputs)
-	#model.compile(optimizer=Adam(lr=1e-4),loss=['mse',gradientLoss,'mse'],loss_weights=[1.0,1.0,0.001])
-	return model
-'''
-
-def network_fgbg(param,feat_net=None):
-
-	IMG_HEIGHT = param['IMG_HEIGHT']
-	IMG_WIDTH = param['IMG_WIDTH']
-	n_joints = param['n_joints']
-	pose_dn = param['posemap_downsample']
-
-	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	pose_in = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints*2))
-	mask_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
-	trans_in = Input(shape=(2,3,11))
-	
-	pose_src = Lambda(lambda arg: arg[:,:,:,0:n_joints])(pose_in)	
-	
-	x = myConv(src_in,128,strides=2)
-	x = concatenate([x,pose_src])
-	x = myConv(x,128)
-	x = myConv(x,128,strides=2)
-	x = myConv(x,128,strides=2)
-	x = myConv(x,128,strides=2)
-	x = myConv(x,128,strides=2)
-	x = UpSampling2D()(x) 
-	x = myConv(x,128)
-	x = UpSampling2D()(x)
-	x = myConv(x,128)
-	x = UpSampling2D()(x)
-	x = myConv(x,128)
-	x = UpSampling2D()(x)
-	x = myConv(x,128)
-	x = UpSampling2D()(x)
-	x = myConv(x,128)
-
-	mask_delta = myConv(x,11,activation='linear',ki='zeros')
-	mask = keras.layers.add([mask_delta,mask_in])
-	mask = Activation('softmax',name='mask_src')(mask)
-
-	warped_stack = Lambda(makeWarpedStack)([mask,src_in,trans_in])
-
-	fg_stack = Lambda(lambda arg: arg[:,:,:,3:],output_shape=(256,256,30),
-				name = 'fg_stack')(warped_stack)	
-	bg_src = Lambda(lambda arg: arg[:,:,:,0:3],output_shape=(256,256,3),
-				name = 'bg_src')(warped_stack)
-	bg_src_mask = Lambda(lambda arg: tf.expand_dims(arg[:,:,:,0],3))(mask)
-
-	bg_src = concatenate([bg_src,bg_src_mask])
-	x0 = myConv(bg_src,128,strides=2)
-	x1 = myConv(x0,128,strides=2) #64
-	x2 = myConv(x1,256,strides=2) #32x32x256
-	x3 = myConv(x2,256,strides=2) #16x16x256
-	x4 = myConv(x3,256,ks=3,strides=2) #8x8x256
-
-	x = UpSampling2D()(x4) #16x16x256
-	x = concatenate([x,x3])
-	x = myConv(x,256,ks=3)
-	x = UpSampling2D()(x) #32x32x256
-	x = concatenate([x,x2])
-	x = myConv(x,256)
-	x = UpSampling2D()(x) #64x64x256
-	x = concatenate([x,x1])
-	x = myConv(x,128)
 	x = UpSampling2D()(x) #128
-	x = concatenate([x,x0])
+	x = concatenate([x,x2])
 	x = myConv(x,128)
 	x = UpSampling2D()(x) #256
 	x = concatenate([x,bg_src])
@@ -392,7 +333,7 @@ def network_fgbg(param,feat_net=None):
 
 
 	x0 = myConv(fg_stack,128,strides=2)
-	x1 = concatenate([x0,pose_in])
+	x1 = concatenate([x0,pose_tgt])
 	x2 = myConv(x1,128)
 	x3 = myConv(x2,128,strides=2) #64
 	x4 = myConv(x3,256,strides=2) #32x32x256
@@ -411,7 +352,220 @@ def network_fgbg(param,feat_net=None):
 	x = myConv(x,128)
 	x = UpSampling2D()(x) #128x128x128
 	x = concatenate([x,x2])
+	x = myConv(x,128)
 	x = UpSampling2D()(x) #256x256
+	x = concatenate([x,fg_stack])
+	x = myConv(x,32)
+
+	fg_tgt = myConv(x,3,activation='tanh',name='fg_tgt')#256x256x3
+	fg_mask = myConv(x,1,activation='sigmoid',name='fg_mask_tgt')
+
+	fg_mask = concatenate([fg_mask,fg_mask,fg_mask])
+	bg_mask = Lambda(lambda arg: 1-arg)(fg_mask)	
+
+	fg_tgt = keras.layers.multiply([fg_tgt,fg_mask])
+	bg_tgt = keras.layers.multiply([bg_tgt,bg_mask])
+	y = keras.layers.add([fg_tgt,bg_tgt])
+
+	'''
+	def vggLoss(y_true,y_pred):
+		y_true = Lambda(vgg_preprocess)(y_true)
+		y_pred = Lambda(vgg_preprocess)(y_pred)
+		y_true_feat = feat_net(y_true)
+		y_pred_feat = feat_net(y_pred)
+
+		loss = []
+		for j in xrange(12):
+			std = feat_weights[str(j)][1]
+			std = tf.expand_dims(tf.expand_dims(tf.expand_dims(std,0),0),0)
+
+			batch_size = tf.shape(std)[0]
+			height = tf.shape(std)[1]
+			width = tf.shape(std)[2]
+			weights = tf.tile(std, [batch_size,height,width,1])
+
+			d = tf.subtract(y_true_feat[j],y_pred_feat[j])
+			d = tf.divide(d,std)
+			#d = tf.multiply(d,d)
+			d = tf.abs(d)
+			loss_j = tf.reduce_mean(d)
+		
+			if(j == 0):
+				loss = loss_j
+			else:
+				loss = tf.add(loss,loss_j)
+
+		return loss/12.0
+	'''
+
+	model = Model(inputs=[src_in,pose_src,pose_tgt,mask_in,trans_in],outputs=y)
+	#model.compile(optimizer=Adam(lr=1e-4),loss=[vggLoss])
+	
+	return model
+
+def cycleNet(param,feat_net=None,feat_weights=None):
+	
+	model_fgbg = network_fgbg(param,feat_net, feat_weights)
+
+	IMG_HEIGHT = param['IMG_HEIGHT']
+	IMG_WIDTH = param['IMG_WIDTH']
+	n_joints = param['n_joints']
+	pose_dn = param['posemap_downsample']
+
+	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
+	pose_src = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
+	pose_tgt = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
+	mask_in1 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
+	mask_in2 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
+	trans_in1 = Input(shape=(2,3,11))
+	trans_in2 = Input(shape=(2,3,11))
+
+	y1 = model_fgbg([src_in,pose_src,pose_tgt,mask_in1,trans_in1])
+	y2 = model_fgbg([y1,pose_tgt,pose_src,mask_in2,trans_in2])
+
+
+	def vggLoss(y_true,y_pred):
+		y_true = Lambda(vgg_preprocess)(y_true)
+		y_pred = Lambda(vgg_preprocess)(y_pred)
+		y_true_feat = feat_net(y_true)
+		y_pred_feat = feat_net(y_pred)
+
+		loss = []
+		for j in xrange(12):
+			std = feat_weights[str(j)][1]
+			std = tf.expand_dims(tf.expand_dims(tf.expand_dims(std,0),0),0)
+
+			batch_size = tf.shape(std)[0]
+			height = tf.shape(std)[1]
+			width = tf.shape(std)[2]
+			weights = tf.tile(std, [batch_size,height,width,1])
+
+			d = tf.subtract(y_true_feat[j],y_pred_feat[j])
+			d = tf.divide(d,std)
+			#d = tf.multiply(d,d)
+			d = tf.abs(d)
+			loss_j = tf.reduce_mean(d)
+		
+			if(j == 0):
+				loss = loss_j
+			else:
+				loss = tf.add(loss,loss_j)
+
+		return loss/12.0
+
+
+	model = Model(inputs=[src_in,pose_src,pose_tgt,mask_in1,mask_in2,trans_in1,trans_in2],outputs=[y1,y2])
+	#model = Model(inputs=[src_in,pose_src,pose_tgt,mask_in1,trans_in1],outputs=[y1])
+	model.compile(optimizer=Adam(lr=1e-4),loss=[vggLoss,vggLoss])
+	return model	
+
+'''
+def network_fgbg2(param,feat_net=None, feat_weights=None):
+
+	IMG_HEIGHT = param['IMG_HEIGHT']
+	IMG_WIDTH = param['IMG_WIDTH']
+	n_joints = param['n_joints']
+	pose_dn = param['posemap_downsample']
+
+	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
+	pose_in = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints*2))
+	mask_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
+	flow_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,22))
+	
+	pose_src = Lambda(lambda arg: arg[:,:,:,0:n_joints])(pose_in)	
+	pose_tgt = Lambda(lambda arg: arg[:,:,:,n_joints:])(pose_in)	
+	
+	x0 = myConv(src_in,128,strides=2)#128
+	x1 = concatenate([x0,pose_in])
+	x2 = myConv(x1,128)
+	x3 = myConv(x2,128,strides=2)#64
+	x4 = myConv(x3,256,strides=2)#32
+	x5 = myConv(x4,256,strides=2)#16
+	x6 = myConv(x5,256,ks=3,strides=2)#8
+	x7 = myConv(x6,256,ks=3)#8
+
+	x = UpSampling2D()(x7) #16 
+	x = concatenate([x,x5])
+	x = myConv(x,256,ks=3)
+	x = UpSampling2D()(x)#32
+	x = concatenate([x,x4])
+	x = myConv(x,128)
+	x = UpSampling2D()(x)#64
+	x = concatenate([x,x3])
+	x = myConv(x,128)
+	x = UpSampling2D()(x)#128
+	x = concatenate([x,x2])
+	x = myConv(x,128)
+	x = UpSampling2D()(x)#256
+	x = concatenate([x,src_in])
+	x = myConv(x,32)
+
+	mask_delta = myConv(x,11,activation='linear',ki='zeros')
+	mask = keras.layers.add([mask_delta,mask_in])
+	mask = Activation('softmax',name='mask_src')(mask)
+
+	flow_delta = myConv(x,22,activation='linear',ki='zeros')
+	flow = keras.layers.add([flow_delta,flow_in], name='flow')
+
+	warped_stack = Lambda(makeWarpedStack2)([mask,src_in,flow])
+
+	fg_stack = Lambda(lambda arg: arg[:,:,:,3:],output_shape=(256,256,30),name = 'fg_stack')(warped_stack)	
+	bg_src = Lambda(lambda arg: arg[:,:,:,0:3],output_shape=(256,256,3),name = 'bg_src')(warped_stack)
+	bg_src_mask = Lambda(lambda arg: tf.expand_dims(arg[:,:,:,0],3))(mask)
+
+	bg_src = concatenate([bg_src,bg_src_mask])
+	x0 = myConv(bg_src,128,strides=2)
+	x1 = concatenate([x0,pose_src])
+	x2 = myConv(x1,128)
+	x3 = myConv(x2,128,strides=2) #64
+	x4 = myConv(x3,256,strides=2) #32x32x256
+	x5 = myConv(x4,256,strides=2) #16x16x256
+	x6 = myConv(x5,256,ks=3,strides=2) #8x8x256
+	x7 = myConv(x6,256,ks=3) #8x8x256
+
+	x = UpSampling2D()(x7) #16x16x256
+	x = concatenate([x,x5])
+	x = myConv(x,256,ks=3)
+	x = UpSampling2D()(x) #32x32x256
+	x = concatenate([x,x4])
+	x = myConv(x,256)
+	x = UpSampling2D()(x) #64x64x256
+	x = concatenate([x,x3])
+	x = myConv(x,128)
+	x = UpSampling2D()(x) #128
+	x = concatenate([x,x2])
+	x = myConv(x,128)
+	x = UpSampling2D()(x) #256
+	x = concatenate([x,bg_src])
+	x = myConv(x,32)
+	bg_tgt = myConv(x,3,activation='tanh',name='bg_tgt')
+
+
+	x0 = myConv(fg_stack,128,strides=2)
+	x1 = concatenate([x0,pose_tgt])
+	x2 = myConv(x1,128)
+	x3 = myConv(x2,128,strides=2) #64
+	x4 = myConv(x3,256,strides=2) #32x32x256
+	x5 = myConv(x4,256,strides=2) #16x16x256
+	x6 = myConv(x5,256,ks=3,strides=2) #8x8x256
+	x7 = myConv(x6,256,ks=3) #8x8x256
+
+	x = UpSampling2D()(x7) #16x16x256
+	x = concatenate([x,x5])
+	x = myConv(x,256,ks=3)
+	x = UpSampling2D()(x) #32x32x256
+	x = concatenate([x,x4])
+	x = myConv(x,256)
+	x = UpSampling2D()(x) #64x64x256
+	x = concatenate([x,x3])
+	x = myConv(x,128)
+	x = UpSampling2D()(x) #128x128x128
+	x = concatenate([x,x2])
+	x = myConv(x,128)
+	x = UpSampling2D()(x) #256x256
+	x = concatenate([x,fg_stack])
+	x = myConv(x,32)
+
 	fg_tgt = myConv(x,3,activation='tanh',name='fg_tgt')#256x256x3
 	fg_mask = myConv(x,1,activation='sigmoid',name='fg_mask_tgt')
 
@@ -423,152 +577,39 @@ def network_fgbg(param,feat_net=None):
 	y = keras.layers.add([fg_tgt,bg_tgt])
 
 	outputs = [y]
-	if(feat_net is not None):		
-		y = Lambda(vgg_preprocess)(y)
-		y_feat = feat_net(y)
-		outputs.append(y_feat)
 
-	model = Model(inputs=[src_in,pose_in,mask_in,trans_in],outputs=outputs)
-	return model
+	def vggLoss(y_true,y_pred):
+		y_true = Lambda(vgg_preprocess)(y_true)
+		y_pred = Lambda(vgg_preprocess)(y_pred)
+		y_true_feat = feat_net(y_true)
+		y_pred_feat = feat_net(y_pred)
 
+		loss = []
+		for j in xrange(12):
+			std = feat_weights[str(j)][1]
+			std = tf.expand_dims(tf.expand_dims(tf.expand_dims(std,0),0),0)
 
+			batch_size = tf.shape(std)[0]
+			height = tf.shape(std)[1]
+			width = tf.shape(std)[2]
+			weights = tf.tile(std, [batch_size,height,width,1])
 
-def network_ed(param,feat_net=None):
+			d = tf.divide(tf.subtract(y_true_feat[j],y_pred_feat[j]),std)
+			d = tf.abs(d)
+			loss_j = tf.reduce_mean(d)
+		
+			if(j == 0):
+				loss = loss_j
+			else:
+				loss = tf.add(loss,loss_j)
 
-	IMG_HEIGHT = param['IMG_HEIGHT']
-	IMG_WIDTH = param['IMG_WIDTH']
-	n_joints = param['n_joints']
-	pose_dn = param['posemap_downsample']
+		return loss/12.0
 
-	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	pose_in = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints*2))
+	model = Model(inputs=[src_in,pose_in,mask_in,flow_in],outputs=outputs)
+	model.compile(optimizer=Adam(lr=1e-4),loss=[vggLoss])
 	
-	x0 = myConv(src_in,128,strides=2)
-	x1 = concatenate([x0,pose_in])
-	x2 = myConv(x1,128)
-	x3 = myConv(x2,128,strides=2) #64
-	x4 = myConv(x3,256,strides=2) #32x32x256
-	x5 = myConv(x4,256,strides=2) #16x16x256
-	x6 = myConv(x5,256,ks=3,strides=2) #8x8x256
-	x7 = myConv(x6,256,ks=3) #8x8x256
-
-	x = UpSampling2D()(x7) #16x16x256
-	x = concatenate([x,x5])
-	x = myConv(x,256,ks=3)
-	x = UpSampling2D()(x) #32x32x256
-	x = concatenate([x,x4])
-	x = myConv(x,256)
-	x = UpSampling2D()(x) #64x64x256
-	x = concatenate([x,x3])
-	x = myConv(x,128)
-	x = UpSampling2D()(x) #128x128x128
-	x = concatenate([x,x2])
-	x = UpSampling2D()(x) #256x256
-	x = myConv(x,64)
-	y = myConv(x,3,activation='tanh')#256x256x3	
-
-	outputs = [y]
-	if(feat_net is not None):		
-		y = Lambda(vgg_preprocess)(y)
-		y_feat = feat_net(y)
-		outputs.append(y_feat)
-
-	model = Model(inputs=[src_in,pose_in],outputs=outputs)
 	return model
-
-
-def network_warpclass(param,feat_net=None):
-
-	IMG_HEIGHT = param['IMG_HEIGHT']
-	IMG_WIDTH = param['IMG_WIDTH']
-	n_joints = param['n_joints']
-	pose_dn = param['posemap_downsample']
-
-	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	pose_in = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints*2))
-	mask_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
-	trans_in = Input(shape=(2,3,11))
-	class_src = Input(shape=(3,))
-	class_tgt = Input(shape=(3,))	
-
-	pose_src = Lambda(lambda arg: arg[:,:,:,0:n_joints])(pose_in)	
-	
-	x = myConv(src_in,64,strides=2)
-	x = concatenate([x,pose_src])
-	x = myConv(x,128)
-	x = myConv(x,128,strides=2)
-	x = myConv(x,128,strides=2)
-	x = myConv(x,128,strides=2)
-	x = myConv(x,128,strides=2)
-
-	x = Flatten()(x)
-	x = concatenate([x,class_src])
-	x = myDense(x,512)
-	x = myDense(x,512)
-
-	x = myDense(x,8*8*128)
-	x = Reshape((8,8,128))(x)
-
-	x = UpSampling2D()(x)
-	x = myConv(x,128)
-	x = UpSampling2D()(x) 
-	x = myConv(x,128)
-	x = UpSampling2D()(x)
-	x = myConv(x,128)
-	x = UpSampling2D()(x)
-	x = myConv(x,128)
-	x = UpSampling2D()(x)
-
-	mask_delta = myConv(x,11,activation='linear',ki='zeros')
-	mask = keras.layers.add([mask_delta,mask_in])
-	mask = Lambda(normalizeMask,name='mask')(mask)
-
-	warped_stack = Lambda(makeWarpedStack,output_shape=(IMG_HEIGHT,IMG_WIDTH,33),
-					name='warped_stack')([mask,src_in,trans_in])
-	
-	x0 = myConv(warped_stack,128,strides=2)
-	x1 = concatenate([x0,pose_in])
-	x2 = myConv(x1,128)
-	x3 = myConv(x2,128,strides=2) #64
-	x4 = myConv(x3,256,strides=2) #32x32x256
-	x5 = myConv(x4,256,strides=2) #16x16x256
-	x6 = myConv(x5,256,ks=3,strides=2) #8x8x256
-	x7 = myConv(x6,256,ks=3,strides=2) #4x4x256
-
-	x = Flatten()(x7)
-	x = concatenate([x,class_tgt])
-	x = myDense(x,1024)
-	x = myDense(x,1024)
-	x = myDense(x,4*4*256)
-	x = Reshape((4,4,256))(x)	
-
-	x = UpSampling2D()(x) #8x8x256
-	x = concatenate([x,x6])
-	x = myConv(x,256,ks=3)
-	x = UpSampling2D()(x) #16x16x256
-	x = concatenate([x,x5])
-	x = myConv(x,256,ks=3)
-	x = UpSampling2D()(x) #32x32x256
-	x = concatenate([x,x4])
-	x = myConv(x,256)
-	x = UpSampling2D()(x) #64x64x256
-	x = concatenate([x,x3])
-	x = myConv(x,128)
-	x = UpSampling2D()(x) #128x128x128
-	x = concatenate([x,x2])
-	x = UpSampling2D()(x) #256x256
-	x = myConv(x,64)
-	y = myConv(x,3,activation='tanh')#256x256x3	
-
-	outputs = [y]
-	if(feat_net is not None):		
-		y = Lambda(vgg_preprocess)(y)
-		y_feat = feat_net(y)
-		outputs.append(y_feat)
-
-	model = Model(inputs=[src_in,pose_in,mask_in,trans_in,class_src,class_tgt],outputs=outputs)
-	#model.compile(optimizer=Adam(lr=1e-4),loss=['mse',gradientLoss,'mse'],loss_weights=[1.0,1.0,0.001])
-	return model
+'''
 
 '''
 def posenet(param):
@@ -609,76 +650,6 @@ def posenet(param):
 	model = Model(inputs=[src_in,ctr_in],outputs=y)
 	return model
 
-
-def network_warp_affine(param,feat_net=None):
-
-	IMG_HEIGHT = param['IMG_HEIGHT']
-	IMG_WIDTH = param['IMG_WIDTH']
-	n_joints = param['n_joints']
-
-	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	pose_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,n_joints*2))
-	mask_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
-	trans_in = Input(shape=(2,3,11))
-	
-	x0 = concatenate([src_in,pose_in])
-	x1 = myConv(x0,64,strides=2) #64
-	x2 = myConv(x1,128,strides=2) #32
-	x3 = myConv(x2,128,strides=2) #16
-	x4 = myConv(x3,128,strides=2,ks=3) #8
-	x5 = myConv(x4,128,ks=3)#8
-	x = UpSampling2D()(x5) #16x16x128
-	x = myConv(x,128,ks=3) #16x16x128
-	x = UpSampling2D()(x) #32x32x128
-	x = myConv(x,128) #32x32x128
-	x = UpSampling2D()(x) #64x64x128
-	x = myConv(x,128) #64x64x128
-	x = UpSampling2D()(x) #128x128x128
-
-	mask_delta = myConv(x,11,activation='linear')
-	mask = keras.layers.add([mask_delta,mask_in])
-	mask = Lambda(normalizeMask,name='mask')(mask)
-
-	trans = Flatten()(x5)
-	trans = myDense(trans,128)
-	trans = myDense(trans,6*11,activation='linear')
-	trans = Reshape((2,3,11))(trans)
-	trans = keras.layers.add([trans,trans_in],name='transforms')
-
-	warped_stack = Lambda(makeWarpedStack,
-					output_shape=(IMG_HEIGHT,IMG_WIDTH,3*11),
-					name='warped_stack')([mask,src_in,trans])
-
-	x0 = concatenate([warped_stack,pose_in])
-	x1 = myConv(x0,128,strides=2)
-	x2 = myConv(x1,256,strides=2) #32x32x256
-	x3 = myConv(x2,256,strides=2) #16x16x256
-	x4 = myConv(x3,256,ks=3,strides=2) #8x8x256
-	x5 = myConv(x4,256,ks=3) #8x8x256
-
-	x = UpSampling2D()(x5) #16x16x256
-	x = concatenate([x,x3])
-	x = myConv(x,256,ks=3) #16x16x256
-	x = UpSampling2D()(x) #32x32x256
-	x = concatenate([x,x2])
-	x = myConv(x,256) #32x32x256
-	x = UpSampling2D()(x) #64x64x256
-	x = concatenate([x,x1]) #64x64x384
-	x = myConv(x,128) #64x64x128
-	x = UpSampling2D()(x) #128x128x128
-	x = concatenate([x,x0])
-	x = myConv(x,64)
-	y = myConv(x,3,activation='tanh')#128x128x3	
-
-	outputs = [y]
-	if(feat_net is not None):		
-		y = Lambda(vgg_preprocess)(y)
-		y_feat = feat_net(y)
-		outputs.append(y_feat)
-	
-	model = Model(inputs=[src_in,pose_in,mask_in,trans_in],outputs=outputs)
-
-	return model
 
 def rnn_helper(param,feat_net=None):
 
@@ -752,118 +723,6 @@ def make_rnn_from_single(params,single_weights_filename,rnn_weights_filename=Non
 
 	return single_net,rnn_net,vgg_model
 
-def network_matching(param):
-
-	IMG_HEIGHT = param['IMG_HEIGHT']
-	IMG_WIDTH = param['IMG_WIDTH']
-	n_joints = param['n_joints']
-	pose_dn = param['posemap_downsample']
-	
-	x_img = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3),name='img_input')
-	x_pose = Input(shape=(IMG_HEIGHT/pose_dn, IMG_WIDTH/pose_dn, n_joints*2),name='pose_input')
-	x_flow = Input(shape=(IMG_HEIGHT, IMG_WIDTH,2),name='flow_input')
- 	x_mask = Input(shape=(IMG_HEIGHT, IMG_WIDTH,1),name='mask_input')
-	
-	x = myConv(x_img,64,strides=2) #128x128x64
-	x = myConv(x,64,strides=2) #64x64x64
-	x = concatenate([x,x_pose])
-	x = myConv(x,128) #64x64x128
-	x = myConv(x,128,strides=2) #32x32x128
-	x = myConv(x,128,strides=2) #16x16x128
-	x = myConv(x,128,strides=2) #8x8x128
-
-	x = UpSampling2D()(x) #16x16x128
-	x = myConv(x,128) #16x16x128
-	x = UpSampling2D()(x) #32x32x128
-	x = myConv(x,128) #32x32x128
-	x = UpSampling2D()(x) #64x64x128
-	x = myConv(x,64) #64x64x64
-	x = UpSampling2D()(x) #128x128x64
-	x = myConv(x,64) #128x128x64
-	x = UpSampling2D()(x) #256x256x64
-
-	fx = myConv(x,1,activation='linear',ki='zeros')
-	fy = myConv(x,1,activation='linear',ki='zeros')
-	mask = myConv(x,1,activation='linear',ki='zeros')	
-	
-	fx = Lambda(lambda x: x[0][:,:,:,0] + x[1][:,:,:,0],name='flowx')([fx,x_flow])
-	fy = Lambda(lambda x: x[0][:,:,:,0] + x[1][:,:,:,1],name='flowy')([fy,x_flow])	
-	y_fg = Lambda(interpolate,output_shape=(IMG_HEIGHT,IMG_WIDTH,3))([x_img,fx,fy])
-
-	mask = keras.layers.add([mask,x_mask])
-	mask = Activation('sigmoid',name='mask')(mask)	
-	mask = concatenate([mask,mask,mask])
-
-	y_fg_masked = keras.layers.multiply([y_fg,mask])
-	inv_mask = Lambda(lambda x: 1-x) (mask)
-	y_bg_masked = keras.layers.multiply([x_img,inv_mask])
-
-	y = keras.layers.add([y_fg_masked,y_bg_masked])
-
-	model = Model(inputs=[x_img,x_pose,x_flow,x_mask],outputs=y)
-	adam = Adam(lr=1e-4)
-	model.compile(optimizer=adam,loss='mse')
-
-	return model
-
-def motionNet(n_joints,IMG_HEIGHT,IMG_WIDTH,IMG_CHAN,stride,batch_size):
-	x_img0 = Input(shape=(IMG_HEIGHT,IMG_WIDTH,IMG_CHAN),name='img_input')
-	x_pose0 = Input(shape=(IMG_HEIGHT/stride, IMG_WIDTH/stride, n_joints*2),name='pose_input')
- 
-	x_mot = myConv(x_pose0,64) #64x64x64
-	x_mot = myConv(x_mot,64,strides=2) #32x32x64
-	x_mot = myConv(x_mot,128,strides=2) #16x16x128
-	x_mot = myConv(x_mot,192,strides=2) #8x8x192
-
-
-	#img_i = x_img_pyr[4]
-
-	img_i = x_img0
-	x_feats = []
-	for i in xrange(0,5,1):
-		xi = myConv(img_i,32)
-		xi = myConv(xi,32)
-		xi = myConv(xi,32)
-
-		kerni = Lambda(lambda x: x[:,:,:,i*32:(i+1)*32])(x_mot) #batch_sizex8x8x6
-
-		for j in xrange(batch_size):
-			xij = Lambda(lambda x: tf.expand_dims(x[j,:,:,:],0))(xi) #1xhxwx3
-			kernij = Lambda(lambda x: tf.expand_dims(x[j,:,:,:],axis=3))(kerni)
-
-			xij_feat = Lambda(lambda x: tf.nn.depthwise_conv2d(x[0],x[1],
-					[1,1,1,1],'SAME'))([xij,kernij])
-			xij_feat = UpSampling2D((2**i,2**i))(xij_feat)
-
-			if(j == 0):
-				xi_feat = xij_feat
-			else:
-				xi_feat = Lambda(lambda x: K.concatenate([x[0],x[1]],axis=0))([xi_feat,xij_feat])	
-
-		x_feats.append(xi_feat)
-		img_i = AveragePooling2D()(img_i)
-
-	x_enc = concatenate([x_feats[0],x_feats[1],x_feats[2],x_feats[3],x_feats[4]])	
-	x_enc = myConv(x_enc,128)
-	x_enc = myConv(x_enc,64)
-	x_enc = myConv(x_enc,32)
-	y = myConv(x_enc,3,activation='linear')	
-	
-	model = Model(inputs=[x_img0,x_pose0],outputs=y)
-	return model
-'''
-
-
-'''
-def switch2(arg):
-	a = tf.multiply(arg[0][:,0:512],tf.tile(tf.expand_dims(arg[1][:,0],1),[1,512]))
-	b = tf.multiply(arg[0][:,512:],tf.tile(tf.expand_dims(arg[1][:,1],1), [1,512]))	
-	return tf.concat([a,b],axis=1)
-
-	x = Lambda(switch2)([x,class_tgt])
-'''
-
-'''
 
 def makeWarpedFeatureStack(args):	
 	mask = args[0]
@@ -880,4 +739,27 @@ def makeWarpedFeatureStack(args):
 			warps = tf.concat([warps,warp_i],3)
 
 	return warps
+
+
+def makeWarpedStack2(args):	
+	mask = args[0]
+	src_in = args[1]
+	flow_in = args[2]
+
+	for i in xrange(11):
+		mask_i = K.repeat_elements(tf.expand_dims(mask[:,:,:,i],3),3,3)	
+		src_masked =  tf.multiply(mask_i,src_in)
+
+		x_flat = tf.reshape(flow_in[:,:,:,i*2],[-1])
+		y_flat = tf.reshape(flow_in[:,:,:,i*2+1],[-1])
+		
+		warp_i = interpolate([src_masked,x_flat,y_flat])		
+		if(i == 0):
+			warps = warp_i
+		else:
+			warps = tf.concat([warps,warp_i],3)
+
+	return warps
+
+
 '''
