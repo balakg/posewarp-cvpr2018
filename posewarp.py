@@ -28,14 +28,16 @@ def train(model_name,gpu_id):
 
 	lift_params = param.getDatasetParams('weightlifting')
 	golf_params = param.getDatasetParams('golfswinghd')
-	yoga_params = param.getDatasetParams('yoga')
+	workout_params = param.getDatasetParams('workout')
+	tennis_params = param.getDatasetParams('tennis')
 
-	lift_train,lift_test = datareader.makeWarpExampleList(lift_params,25000,2500,2,1) #25000
-	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,50000,5000,2,2) #50000
-	yoga_train,yoga_test = datareader.makeWarpExampleList(yoga_params,20000,2000,2,3) #20000
+	lift_train,lift_test = datareader.makeWarpExampleList(lift_params,20000,20000,2,1)
+	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,50000,50000,2,2)
+	workout_train,workout_test = datareader.makeWarpExampleList(workout_params,25000,25000,2,3)
+	tennis_train,tennis_test = datareader.makeWarpExampleList(tennis_params,20000,20000,2,4)
 
-	warp_train = lift_train + golf_train + yoga_train
-	warp_test = lift_test + golf_test + yoga_test
+	warp_train = lift_train + golf_train + workout_train + tennis_train
+	warp_test = lift_test + golf_test + workout_test + tennis_test
 
 	train_feed = datageneration.warpExampleGenerator(warp_train,params)
 	test_feed = datageneration.warpExampleGenerator(warp_test,params)
@@ -50,16 +52,12 @@ def train(model_name,gpu_id):
 		coord = tf.train.Coordinator()
 		threads = tf.train.start_queue_runners(coord=coord)
 
-
 		with tf.device(gpu):
 			vgg_model = myVGG.vgg_norm()
 			networks.make_trainable(vgg_model,False)
-			response_weights = sio.loadmat('mean_response4.mat')
-			#model = networks.network_fgbg(params,vgg_model,response_weights)
-			model = networks.cycleNet(params,vgg_model,response_weights)
-			#model.load_weights('../results/networks/fgbg_l2/10000.h5')
-
-		#model.summary()
+			response_weights = sio.loadmat('mean_response.mat')
+			model = networks.network_fgbg(params,vgg_model,response_weights,True)
+			#model.load_weights('../results/networks/fgbg_flip11/150000.h5')
 
 		'''
 		step = 0
@@ -100,16 +98,16 @@ def train(model_name,gpu_id):
 			X,Y = next(train_feed)			
 
 			with tf.device(gpu):
-				train_loss = model.train_on_batch(X,[Y,X[0]])
+				train_loss = model.train_on_batch(X,Y)
 
 			util.printProgress(step,0,train_loss)
 
 			if(step % params['test_interval'] == 0):
 				n_batches = 8
-				test_loss = np.zeros(3)
+				test_loss = np.zeros(1)
 				for j in xrange(n_batches):	
 					X,Y = next(test_feed)			
-					test_loss += np.array(model.test_on_batch(X,[Y,X[0]]))
+					test_loss += np.array(model.test_on_batch(X,Y))
 
 				test_loss /= (n_batches)
 				util.printProgress(step,1,test_loss)
