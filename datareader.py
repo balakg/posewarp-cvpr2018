@@ -39,6 +39,7 @@ def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=2,class_i
 		test_vids = random_order[0:n_test_vids]
 		train_vids = random_order[n_test_vids:]
 
+
 	ex_train = []
 	ex_test = []
 

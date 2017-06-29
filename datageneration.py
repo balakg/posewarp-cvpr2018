@@ -7,6 +7,7 @@ import transformations
 
 
 limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
+#limbs = [[0,1,2,3],[2,3,4], [5,6,7], [8,9,10],[11,12,13], [2,5,8,11]]
 
 def randScale(param):
 	rnd = np.random.rand()
@@ -43,12 +44,13 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel
 	while True:
 
 		X_src = np.zeros((batch_size,img_height,img_width,3))
-		X_mask_src = np.zeros((batch_size,img_height,img_width,11))
-		X_mask_tgt = np.zeros((batch_size,img_height,img_width,11))
+		X_mask_src = np.zeros((batch_size,img_height,img_width,len(limbs)+1))
 		X_pose_src = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
 		X_pose_tgt = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
 		X_trans1 = np.zeros((batch_size,2,3,11))
-		X_trans2 = np.zeros((batch_size,2,3,11))
+
+		#X_posevec_src = np.zeros((batch_size,n_joints,2))
+		#X_posevec_tgt = np.zeros((batch_size,n_joints,2))
 
 		Y = np.zeros((batch_size,img_height,img_width,3))
 	
@@ -83,9 +85,9 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel
 			I1 = (I1/255.0 - 0.5)*2.0
 
 			if(do_augment):
-				rscale,rshift,rdegree,rsat = randAugmentations(param)				
-				I0,joints0 = augment(I0,joints0,rscale,rshift,rdegree,rsat,img_height,img_width)	
-				I1,joints1 = augment(I1,joints1,rscale,rshift,rdegree,rsat,img_height,img_width)	
+				rflip,rscale,rshift,rdegree,rsat = randAugmentations(param)				
+				I0,joints0 = augment(I0,joints0,rflip,rscale,rshift,rdegree,rsat,img_height,img_width)	
+				I1,joints1 = augment(I1,joints1,rflip,rscale,rshift,rdegree,rsat,img_height,img_width)	
 
 			posemap0 = makeJointHeatmaps(img_height,img_width,joints0,sigma_joint,pose_dn)
 			posemap1 = makeJointHeatmaps(img_height,img_width,joints1,sigma_joint,pose_dn)
@@ -95,26 +97,26 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel
 			src_limb_masks = np.log(src_limb_masks + 1e-10)
 			src_bg_mask = np.log(src_bg_mask+1e-10)
 
-			tgt_limb_masks = makeLimbMasks(joints1,img_width,img_height)	
-			tgt_bg_mask = 1.0 - np.amax(tgt_limb_masks,axis=2)
-			tgt_limb_masks = np.log(tgt_limb_masks + 1e-10)
-			tgt_bg_mask = np.log(tgt_bg_mask+1e-10)
+			#tgt_limb_masks = makeLimbMasks(joints1,img_width,img_height)	
+			#tgt_bg_mask = 1.0 - np.amax(tgt_limb_masks,axis=2)
+			#tgt_limb_masks = np.log(tgt_limb_masks + 1e-10)
+			#tgt_bg_mask = np.log(tgt_bg_mask+1e-10)
 
 			X_src[i,:,:,:] = I0
 			X_pose_src[i,:,:,:] = posemap0
 			X_pose_tgt[i,:,:,:] = posemap1
 			X_mask_src[i,:,:,:] = np.concatenate((np.expand_dims(src_bg_mask,2),src_limb_masks),axis=2)
-			X_mask_tgt[i,:,:,:] = np.concatenate((np.expand_dims(tgt_bg_mask,2),tgt_limb_masks),axis=2)
 
 			X_trans1[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
 			X_trans1[i,:,:,1:] = getLimbTransforms(joints0,joints1)
-			X_trans2[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
-			X_trans2[i,:,:,1:] = getLimbTransforms(joints1,joints0)
+
+			#X_posevec_src[i,:,:] = joints0
+			#X_posevec_tgt[i,:,:] = joints1
 
 			Y[i,:,:,:] = I1
 	
-		yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_mask_tgt,X_trans1,X_trans2],Y)
-		#yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans1],Y)
+		#yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_mask_tgt,X_trans1,X_trans2],Y)
+		yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans1],Y)
 
 def transferExampleGenerator(examples0,examples1,param,rflip=1.0,do_augment=True):
     
@@ -316,15 +318,17 @@ def drawLimbsOnImage(I,joints,color=(0,0,255)):
 
 def randAugmentations(param):
 
+	rflip = np.random.rand()
 	rscale = randScale(param)
 	rshift = randShift(param)
 	rdegree = randRot(param)
 	rsat = randSat(param)
 	
-	return rscale,rshift,rdegree,rsat
+	return rflip,rscale,rshift,rdegree,rsat
 
 
-def augment(I,joints,rscale,rshift,rdegree,rsat,img_height,img_width):
+def augment(I,joints,rflip,rscale,rshift,rdegree,rsat,img_height,img_width):
+	I,joints = augFlip(I,rflip,joints)
 	I,joints = augScale(I,rscale,joints)
 	I,joints = augShift(I,img_width,img_height,rshift,joints)
 	I,joints = augRotate(I,img_width,img_height,rdegree,joints)
@@ -347,6 +351,24 @@ def centerAndScaleImage(I,img_width,img_height,pos,scale,joints):
 	joints[:,0] += x_offset
 	joints[:,1] += y_offset
 
+	return I,joints
+
+def augFlip(I,rflip,joints):
+	
+	if(rflip < 0.5):
+		return I,joints
+	
+	I = np.fliplr(I)
+	joints[:,0] = I.shape[1] - 1 - joints[:,0]
+
+	right = [2,3,4,8,9,10]
+	left = [5,6,7,11,12,13]
+
+	for i in xrange(6):
+		tmp = np.copy(joints[right[i],:])
+		joints[right[i],:] = np.copy(joints[left[i],:])
+		joints[left[i],:] = tmp
+	
 	return I,joints
 
 def augScale(I,scale_rand, joints):
@@ -460,7 +482,6 @@ def makeGaussianMap(img_width,img_height,center,sigma_x,sigma_y,theta):
 
 def makeLimbMasks(joints,img_width,img_height):
 
-	limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
 	n_limbs = len(limbs)
 	n_joints = joints.shape[0]
 
@@ -492,13 +513,14 @@ def makeLimbMasks(joints,img_width,img_height):
 		
 	return mask
 
+
 def getLimbTransforms(joints1,joints2): 
 	
 	n_limbs = len(limbs)
 	n_joints = joints1.shape[0]
 
-	Ms = np.zeros((2,3,n_limbs))
-
+	Ms = np.zeros((2,3,10)) #+4))
+	ctr = 0
 	for i in xrange(n_limbs):	
 
 		n_joints_for_limb = len(limbs[i])
@@ -509,8 +531,17 @@ def getLimbTransforms(joints1,joints2):
 			p1[j,:] = [joints1[limbs[i][j],0],joints1[limbs[i][j],1]]
 			p2[j,:] = [joints2[limbs[i][j],0],joints2[limbs[i][j],1]]			
 
-		tform,_ = transformations.make_similarity(p2,p1)
-		M = np.array([[tform[1],-tform[3],tform[0]],[tform[3],tform[1],tform[2]]])
-		Ms[:,:,i] = M
+		tform = transformations.make_similarity(p2,p1,False)
+		Ms[:,:,ctr] = np.array([[tform[1],-tform[3],tform[0]],[tform[3],tform[1],tform[2]]])
+		ctr+=1
+
+		'''	
+		if(i >= 1 and i <= 4):
+			tform = transformations.make_similarity(p2,p1,True)	
+			Ms[:,:,ctr] = np.array([[tform[1],tform[3],tform[0]],[tform[3],-tform[1],tform[2]]])
+			ctr+=1
+		'''
+		#M = np.array([[tform[1], tform[2], tform[0]],[tform[5],tform[6],tform[4]]])
+		#Ms[:,:,i] = M
 
 	return Ms

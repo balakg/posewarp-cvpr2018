@@ -22,15 +22,19 @@ def train(dataset,gpu_id):
 
 	lift_params = param.getDatasetParams('weightlifting')
 	golf_params = param.getDatasetParams('golfswinghd')
-	yoga_params = param.getDatasetParams('yoga')
+	workout_params = param.getDatasetParams('workout')
+	tennis_params = param.getDatasetParams('tennis')
 
 	_,lift_test = datareader.makeWarpExampleList(lift_params,0,5000,2,1)
 	_,golf_test = datareader.makeWarpExampleList(golf_params,0,5000,2,2)
-	_,yoga_test = datareader.makeWarpExampleList(yoga_params,0,5000,2,3)
+	_,workout_test = datareader.makeWarpExampleList(workout_params,0,5000,2,3)
+	_,tennis_test = datareader.makeWarpExampleList(tennis_params,0,5000,2,4)
 
-	test = lift_test + golf_test + yoga_test
+	test = lift_test + golf_test+workout_test + tennis_test
 	feed = datageneration.warpExampleGenerator(test,params,do_augment=False,draw_skeleton=False,skel_color=(0,0,255))
 	
+
+
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
 	config.allow_soft_placement = True
@@ -44,11 +48,13 @@ def train(dataset,gpu_id):
 		with tf.device(gpu):
 			vgg_model = myVGG.vgg_norm()
 			networks.make_trainable(vgg_model,False)
-			response_weights = sio.loadmat('mean_response4.mat')
-			fgbg = networks.cycleNet(params,vgg_model,response_weights)
-			fgbg.load_weights('../results/networks/fgbg_cycle/5000.h5')	
+			response_weights = sio.loadmat('mean_response.mat')
+			fgbg = networks.network_fgbg(params,vgg_model,response_weights,False)
+			fgbg.load_weights('../results/networks/fgbgx/320000.h5')	
+			#disc = networks.discriminator(params)
+			#gan = networks.gan(fgbg,disc,params,vgg_model,response_weights)
+			#gan.load_weights('../results/networks/gan_mask/2000.h5')
 
-			'''
 			outputs = [fgbg.outputs[0]]
 			outputs.append(fgbg.get_layer('mask_src').output)
 			outputs.append(fgbg.get_layer('fg_stack').output)
@@ -56,23 +62,28 @@ def train(dataset,gpu_id):
 			outputs.append(fgbg.get_layer('bg_tgt').output)
 			outputs.append(fgbg.get_layer('fg_tgt').output)
 			outputs.append(fgbg.get_layer('fg_mask_tgt').output)
-			#outputs.append(fgbg.get_layer('conv2d_14').output)
+			outputs.append(fgbg.get_layer('conv2d_14').output)
+			#outputs = [fgbg.get_layer('trans').output]
+			#outputs = [fgbg.outputs[0]]
+			#outputs.append(fgbg.get_layer('mask_src').output)
+			#outputs.append(fgbg.get_layer('tgt_mask').output)
 			model = Model(fgbg.inputs, outputs)
-			'''
+			#model_disc = Model(disc.inputs, disc.get_layer('responses').output)
 
-		fgbg.summary()
-
-		np.random.rand(17)
-		n_batches = 10
+		model.summary()
+	
+		np.random.seed(17)
+		n_batches = 20
 		for j in xrange(n_batches):	
 			print j
 			X,Y = next(feed)		
-			pred = fgbg.predict(X)
-			#sio.savemat('results/vggnorm/' + str(j) + '.mat',{'X': X[0],'Y': Y, 'pred': pred[0], 'mask_src': pred[1],
-			#			'fg_stack': pred[2], 'bg_src': pred[3], 'bg_tgt': pred[4], 'fg_tgt': pred[5], 'fg_mask_tgt': pred[6], 
-			#			'prior': X[2][:,:,:,0]}) #, 'flow': pred[7]})	
+			pred = model.predict(X)
+			#pred_disc = model_disc.predict([Y,X[2]])
+			
+			sio.savemat('results/test/' + str(j) + '.mat',{'X': X[0],'Y': Y, 'pred': pred[0], 'mask_src': pred[1],
+						'fg_stack': pred[2], 'bg_src': pred[3], 'bg_tgt': pred[4], 'fg_tgt': pred[5], 'fg_mask_tgt': pred[6], 
+						'prior': X[3][:,:,:,0]}) #,'disc': pred_disc})	
 
-			sio.savemat('results/cycle/' + str(j) + '.mat', {'X': X[0], 'Y': Y, 'pred0': pred[0], 'pred1': pred[1]})
 
 if __name__ == "__main__":
 	train('golfswinghd',sys.argv[1])

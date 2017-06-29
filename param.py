@@ -15,7 +15,7 @@ def getGeneralParams():
 
 	param['test_interval'] = 100
 	param['test_save_interval'] = 1000
-	param['model_save_interval'] = 5000
+	param['model_save_interval'] = 2000
 	param['project_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/pose2image'
 
 	param['batch_size'] = 4
@@ -44,12 +44,19 @@ def getDatasetParams(dataset):
 		param['info_pth'] = '../../datasets/Penn_Action/labels'
 		param['img_sfx'] = '.jpg'
 
-	if(dataset == 'yoga'):
-		param['vid_pth'] = '../../datasets/yoga/frames'
-		param['info_pth'] = '../../datasets/yoga/videoinfo'
+	if(dataset == 'workout'):
+		param['vid_pth'] = '../../datasets/workout-warp/frames'
+		param['info_pth'] = '../../datasets/workout-warp/videoinfo'
 		param['img_sfx'] = '.jpg'
 		param['n_test_vids'] = 5
-		param['test_vids'] = None
+		param['test_vids'] = [28,16,38,9,24]
+
+	if(dataset == 'tennis'):
+		param['vid_pth'] = '../../datasets/tennis-warp/frames'
+		param['info_pth'] = '../../datasets/tennis-warp/videoinfo'
+		param['img_sfx'] = '.jpg'
+		param['n_test_vids'] = 4
+		param['test_vids'] = [44,45,25,22]
 
 	if(dataset == 'famous'):
 		param['vid_pth'] = '../../datasets/famous/frames'

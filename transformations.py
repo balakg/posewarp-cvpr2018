@@ -79,7 +79,7 @@ def make_tform(ttype, src, dst):
     params, params_explicit = MFUNCS[ttype](src, dst)
     return Transformation(ttype, params, params_explicit)
 
-def make_similarity(src, dst):
+def make_similarity(src, dst,flip=False):
     '''
     Determine parameters of 2D similarity transformation in the order:
         a0, a1, b0, b1
@@ -109,21 +109,28 @@ def make_similarity(src, dst):
     A = np.zeros((rows*2, 4))
     A[:rows,0] = 1
     A[:rows,1] = xs
-    A[:rows,3] = - ys
+    A[:rows,3] = -ys
     A[rows:,2] = 1
     A[rows:,3] = xs
     A[rows:,1] = ys
+    
+    if(flip):
+      A[:rows,3] *= -1.0
+      A[rows:,1] *= -1.0
+
     b = np.zeros((rows*2,))
     b[:rows] = dst[:,0]
     b[rows:] = dst[:,1]
     params = np.linalg.lstsq(A, b)[0]
+    '''
     #: determine explicit params
     a0, b0 = params[0], params[2]
     alpha = math.atan2(params[3], params[1])
     m = params[1] / math.cos(alpha)
     params_explicit = np.array([a0, b0, m, alpha])
-    
-    return params, params_explicit
+    '''    
+
+    return params #, params_explicit
 
 def similarity_transform(coords, params, inverse=False):
     '''

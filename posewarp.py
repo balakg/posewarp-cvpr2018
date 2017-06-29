@@ -31,10 +31,10 @@ def train(model_name,gpu_id):
 	workout_params = param.getDatasetParams('workout')
 	tennis_params = param.getDatasetParams('tennis')
 
-	lift_train,lift_test = datareader.makeWarpExampleList(lift_params,20000,20000,2,1)
-	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,50000,50000,2,2)
-	workout_train,workout_test = datareader.makeWarpExampleList(workout_params,25000,25000,2,3)
-	tennis_train,tennis_test = datareader.makeWarpExampleList(tennis_params,20000,20000,2,4)
+	lift_train,lift_test = datareader.makeWarpExampleList(lift_params,20000,2000,2,1)
+	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,50000,5000,2,2)
+	workout_train,workout_test = datareader.makeWarpExampleList(workout_params,25000,2500,2,3)
+	tennis_train,tennis_test = datareader.makeWarpExampleList(tennis_params,20000,2000,2,4)
 
 	warp_train = lift_train + golf_train + workout_train + tennis_train
 	warp_test = lift_test + golf_test + workout_test + tennis_test

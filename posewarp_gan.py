@@ -22,7 +22,7 @@ def createFeeds(params):
 	workout_params = param.getDatasetParams('workout')
 	tennis_params = param.getDatasetParams('tennis')
 
-	lift_warp_train,lift_warp_test = datareader.makeWarpExampleList(lift_params,25000,2500,2,1)
+	lift_warp_train,lift_warp_test = datareader.makeWarpExampleList(lift_params,20000,2000,2,1)
 	golf_warp_train,golf_warp_test = datareader.makeWarpExampleList(golf_params,50000,5000,2,2)
 	workout_warp_train,workout_warp_test = datareader.makeWarpExampleList(workout_params,25000,2500,2,3)
 	tennis_warp_train,tennis_warp_test = datareader.makeWarpExampleList(tennis_params,20000,2000,2,4)
@@ -73,7 +73,7 @@ def train(model_name,gpu_id):
 			networks.make_trainable(vgg_model,False)
 			response_weights = sio.loadmat('mean_response.mat')
 			generator = networks.network_fgbg(params,vgg_model,response_weights)
-			generator.load_weights('../results/networks/fgbg_flip11/150000.h5')
+			generator.load_weights('../results/networks/fgbgx/100000.h5')
 
 			#mask_model = Model(generator.input, generator.get_layer('fg_mask_tgt').output)
 
@@ -100,7 +100,7 @@ def train(model_name,gpu_id):
 			networks.make_trainable(discriminator,True)	
 			#mask = np.tile(mask, [2,1,1,1])
 	
-			X_img_disc = np.concatenate((Y,gen)) #* np.tile(mask,[1,1,1,3])
+			X_img_disc = np.concatenate((Y,gen)) # * np.tile(mask,[1,1,1,3])
 			#X_src_pose_disc = np.concatenate((X[1],X[1]))
 			X_tgt_pose_disc = np.concatenate((X[2],X[2]))
 
@@ -113,7 +113,12 @@ def train(model_name,gpu_id):
 			inputs = [X_img_disc,X_tgt_pose_disc]
 			d_loss = discriminator.train_on_batch(inputs,L)
 			networks.make_trainable(discriminator,False)
-			
+		
+
+			if(step < 10):
+				step += 1
+				continue
+	
 			#TRAIN GAN
 			#L = np.zeros([batch_size,2])
 			#L[:,0] = 1 #Pretend these are real.
