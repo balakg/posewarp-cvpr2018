@@ -63,28 +63,24 @@ def train(model_name,gpu_id):
 		coord = tf.train.Coordinator()
 		threads = tf.train.start_queue_runners(coord=coord)
 
-		#disc_loss_weight = 0.1
-		#vgg_loss_weight = 1.0
-		disc_lr = 1e-4
 		gan_lr = 1e-4
+		disc_lr = 1e-4
+		disc_loss = 0.01
 
 		with tf.device(gpu):
 			vgg_model = myVGG.vgg_norm()
 			networks.make_trainable(vgg_model,False)
 			response_weights = sio.loadmat('mean_response.mat')
 			generator = networks.network_fgbg(params,vgg_model,response_weights)
-			generator.load_weights('../results/networks/fgbgx/100000.h5')
+			generator.load_weights('../results/networks/fgbg_boundary/128000.h5')
 
 			#mask_model = Model(generator.input, generator.get_layer('fg_mask_tgt').output)
 
 			discriminator = networks.discriminator(params)
-			#discriminator.compile(loss='binary_crossentropy', optimizer=Adam(lr=disc_lr))
-			discriminator.compile(loss='mse', optimizer=Adam(lr=disc_lr))
+			discriminator.compile(loss='binary_crossentropy', optimizer=Adam(lr=disc_lr))
+			#discriminator.compile(loss='mse', optimizer=Adam(lr=disc_lr))
 
-			gan_warp = networks.gan(generator,discriminator,params,vgg_model,response_weights)
-
-			#gan_warp.compile(optimizer=Adam(lr=gan_lr),loss=['mse','binary_crossentropy'],loss_weights=[vgg_loss_weight,disc_loss_weight])
-			#gan_warp.compile(optimizer=Adam(lr=gan_lr),loss=['mse','mse'], loss_weights=[vgg_loss_weight,disc_loss_weight])
+			gan_warp = networks.gan(generator,discriminator,params,vgg_model,response_weights,disc_loss,gan_lr)
 
 
 		step = 0	
@@ -96,33 +92,37 @@ def train(model_name,gpu_id):
 				gen = generator.predict(X)	
 				#mask = mask_model.predict(X)
 
+
 			#Train discriminator
 			networks.make_trainable(discriminator,True)	
-			#mask = np.tile(mask, [2,1,1,1])
+			#mask = np.tile(X[-1], [2,1,1,1])
 	
-			X_img_disc = np.concatenate((Y,gen)) # * np.tile(mask,[1,1,1,3])
-			#X_src_pose_disc = np.concatenate((X[1],X[1]))
+			X_img_disc = np.concatenate((Y,gen))# * np.tile(mask,[1,1,1,3])
+			X_src_pose_disc = np.concatenate((X[1],X[1]))
 			X_tgt_pose_disc = np.concatenate((X[2],X[2]))
 
-			#L = np.zeros([2*batch_size,2])
-			#L[0:batch_size,0] = 1
-			#L[batch_size:,1] = 1
-			L = np.zeros([2*batch_size])
-			L[0:batch_size] = 1
+			#sio.savemat('test.mat', {'X': X_img_disc, 'pose': X_tgt_pose_disc})
+			#return
 
-			inputs = [X_img_disc,X_tgt_pose_disc]
+			L = np.zeros([2*batch_size,2])
+			L[0:batch_size,0] = 1
+			L[batch_size:,1] = 1
+			#L = np.zeros([2*batch_size])
+			#L[0:batch_size] = 1
+
+			inputs = [X_img_disc,X_src_pose_disc,X_tgt_pose_disc]
 			d_loss = discriminator.train_on_batch(inputs,L)
 			networks.make_trainable(discriminator,False)
 		
-
-			if(step < 10):
+			if(step < 2):
+				util.printProgress(step,0,[0,d_loss])
 				step += 1
 				continue
 	
 			#TRAIN GAN
-			#L = np.zeros([batch_size,2])
-			#L[:,0] = 1 #Pretend these are real.
-			L = np.ones([batch_size])
+			L = np.zeros([batch_size,2])
+			L[:,0] = 1 #Pretend these are real.
+			#L = np.ones([batch_size])
 			X,Y = next(warp_train_feed)
 			g_loss = gan_warp.train_on_batch(X,[Y,L])
 			util.printProgress(step,0,[g_loss[1],d_loss])

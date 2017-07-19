@@ -1,6 +1,6 @@
 def getGeneralParams():
 	param = {}
-	dn = 1 #downsample images from 256 to 128 for now
+	dn = 1
 	param['IMG_HEIGHT'] = 256/dn 
 	param['IMG_WIDTH'] = 256/dn
 	param['obj_scale_factor'] = 1.14/dn
@@ -15,7 +15,7 @@ def getGeneralParams():
 
 	param['test_interval'] = 100
 	param['test_save_interval'] = 1000
-	param['model_save_interval'] = 2000
+	param['model_save_interval'] = 500
 	param['project_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/pose2image'
 
 	param['batch_size'] = 4
@@ -48,15 +48,15 @@ def getDatasetParams(dataset):
 		param['vid_pth'] = '../../datasets/workout-warp/frames'
 		param['info_pth'] = '../../datasets/workout-warp/videoinfo'
 		param['img_sfx'] = '.jpg'
-		param['n_test_vids'] = 5
-		param['test_vids'] = [28,16,38,9,24]
+		param['n_test_vids'] = 3
+		param['test_vids'] = [28,16,38] #9,24
 
 	if(dataset == 'tennis'):
 		param['vid_pth'] = '../../datasets/tennis-warp/frames'
 		param['info_pth'] = '../../datasets/tennis-warp/videoinfo'
 		param['img_sfx'] = '.jpg'
-		param['n_test_vids'] = 4
-		param['test_vids'] = [44,45,25,22]
+		param['n_test_vids'] = 2
+		param['test_vids'] = [44,25] #22, 45
 
 	if(dataset == 'famous'):
 		param['vid_pth'] = '../../datasets/famous/frames'
@@ -64,4 +64,12 @@ def getDatasetParams(dataset):
 		param['img_sfx'] = '.jpg'
 		param['n_test_vids'] = 1
 		param['test_vids'] = None
+
+	if(dataset == 'test-aux'):
+		param['vid_pth'] = '../../datasets/warp-test-aux/frames'
+		param['info_pth'] = '../../datasets/warp-test-aux/videoinfo'
+		param['img_sfx'] = '.png'
+		param['n_test_vids'] = 9
+		param['test_vids'] = None
+
 	return param

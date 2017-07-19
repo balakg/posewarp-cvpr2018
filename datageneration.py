@@ -7,7 +7,6 @@ import transformations
 
 
 limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
-#limbs = [[0,1,2,3],[2,3,4], [5,6,7], [8,9,10],[11,12,13], [2,5,8,11]]
 
 def randScale(param):
 	rnd = np.random.rand()
@@ -31,7 +30,7 @@ def randSat(param):
 	return np.random.rand()*(max_sat-min_sat) + min_sat
 
 
-def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel_color=None):
+def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel_color=None,return_pose_vectors=False):
     
 	img_width = param['IMG_WIDTH']
 	img_height = param['IMG_HEIGHT']
@@ -47,10 +46,9 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel
 		X_mask_src = np.zeros((batch_size,img_height,img_width,len(limbs)+1))
 		X_pose_src = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
 		X_pose_tgt = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
-		X_trans1 = np.zeros((batch_size,2,3,11))
-
-		#X_posevec_src = np.zeros((batch_size,n_joints,2))
-		#X_posevec_tgt = np.zeros((batch_size,n_joints,2))
+		X_trans = np.zeros((batch_size,2,3,11))
+		X_posevec_src = np.zeros((batch_size,n_joints,2))
+		X_posevec_tgt = np.zeros((batch_size,n_joints,2))
 
 		Y = np.zeros((batch_size,img_height,img_width,3))
 	
@@ -97,28 +95,30 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel
 			src_limb_masks = np.log(src_limb_masks + 1e-10)
 			src_bg_mask = np.log(src_bg_mask+1e-10)
 
-			#tgt_limb_masks = makeLimbMasks(joints1,img_width,img_height)	
-			#tgt_bg_mask = 1.0 - np.amax(tgt_limb_masks,axis=2)
-			#tgt_limb_masks = np.log(tgt_limb_masks + 1e-10)
-			#tgt_bg_mask = np.log(tgt_bg_mask+1e-10)
+			#X_mask_tgt[i,:,:,:] = np.expand_dims(makeLimbMasks(joints1,img_width,img_height)[:,:,0],2)	
 
 			X_src[i,:,:,:] = I0
 			X_pose_src[i,:,:,:] = posemap0
 			X_pose_tgt[i,:,:,:] = posemap1
 			X_mask_src[i,:,:,:] = np.concatenate((np.expand_dims(src_bg_mask,2),src_limb_masks),axis=2)
+			#X_mask_tgt[i,:,:,:] = np.concatenate((np.expand_dims(tgt_bg_mask,2),tgt_limb_masks),axis=2)
 
-			X_trans1[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
-			X_trans1[i,:,:,1:] = getLimbTransforms(joints0,joints1)
+			X_trans[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
+			X_trans[i,:,:,1:] = getLimbTransforms(joints0,joints1)
 
-			#X_posevec_src[i,:,:] = joints0
-			#X_posevec_tgt[i,:,:] = joints1
+			X_posevec_src[i,:,:] = joints0
+			X_posevec_tgt[i,:,:] = joints1
 
 			Y[i,:,:,:] = I1
 	
 		#yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_mask_tgt,X_trans1,X_trans2],Y)
-		yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans1],Y)
 
-def transferExampleGenerator(examples0,examples1,param,rflip=1.0,do_augment=True):
+		if(not return_pose_vectors):
+			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
+		else:
+			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans,X_posevec_src,X_posevec_tgt],Y)
+
+def transferExampleGenerator(examples0,examples1,param,rflip=0):
     
 	img_width = param['IMG_WIDTH']
 	img_height = param['IMG_HEIGHT']
@@ -132,11 +132,12 @@ def transferExampleGenerator(examples0,examples1,param,rflip=1.0,do_augment=True
 
 		for i in xrange(batch_size):
 			X_src = np.zeros((batch_size,img_height,img_width,3))
-			X_mask = np.zeros((batch_size,img_height,img_width,11))
-			X_pose = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints*2))
+			X_mask_src = np.zeros((batch_size,img_height,img_width,len(limbs)+1))
+			X_pose_src = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
+			X_pose_tgt = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
 			X_trans = np.zeros((batch_size,2,3,11))	
 			Y = np.zeros((batch_size,img_height,img_width,3))
-	
+
 			for i in xrange(batch_size):
 				if(np.random.rand() < rflip):
 					example0 = examples0[np.random.randint(0,len(examples0))] 
@@ -167,30 +168,24 @@ def transferExampleGenerator(examples0,examples1,param,rflip=1.0,do_augment=True
 				I0 = (I0/255.0 - 0.5)*2.0
 				I1 = (I1/255.0 - 0.5)*2.0
 
-				if(do_augment):	
-					rscale,rshift,rdegree,rsat = randAugmentations(param)		
-					I0,joints0 = augment(I0,joints0,rscale,rshift,rdegree,rsat,img_height,img_width)	
-					I1,joints1 = augment(I1,joints1,rscale,rshift,rdegree,rsat,img_height,img_width)	
-
 				posemap0 = makeJointHeatmaps(img_height,img_width,joints0,sigma_joint,pose_dn)
 				posemap1 = makeJointHeatmaps(img_height,img_width,joints1,sigma_joint,pose_dn)
 
 				src_limb_masks = makeLimbMasks(joints0,img_width,img_height)	
-				bg_mask = 1.0 - np.amax(src_limb_masks,axis=2)
-
+				src_bg_mask = 1.0 - np.amax(src_limb_masks,axis=2)
 				src_limb_masks = np.log(src_limb_masks + 1e-10)
-				bg_mask = np.log(bg_mask+1e-10)
-
+				src_bg_mask = np.log(src_bg_mask+1e-10)
 
 				X_src[i,:,:,:] = I0
-				X_pose[i,:,:,:] = np.concatenate((posemap0,posemap1),axis=2)
-				X_mask[i,:,:,:] = np.concatenate((np.expand_dims(bg_mask,2),src_limb_masks),axis=2)
+				X_pose_src[i,:,:,:] = posemap0
+				X_pose_tgt[i,:,:,:] = posemap1
+				X_mask_src[i,:,:,:] = np.concatenate((np.expand_dims(src_bg_mask,2),src_limb_masks),axis=2)
 				X_trans[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
 				X_trans[i,:,:,1:] = getLimbTransforms(joints0,joints1)
 				Y[i,:,:,:] = I1
+	
+			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
 
-			yield ([X_src,X_pose,X_mask,X_trans],Y)
-			#yield ([X_src,X_pose,X_mask,X_trans,X_tgt_mask],Y)
 
 '''
 def actionExampleGenerator(example0,examples1,param):
@@ -456,12 +451,13 @@ def makeJointHeatmaps(height,width,joints,sigma,pose_dn):
 	sigma = sigma**2
 	joints = joints/pose_dn
 
-	H = np.zeros((height,width,joints.shape[0]))
+	H = np.zeros((height,width,14)) #len(limbs)-1))
 
 	for i in xrange(H.shape[2]):
 		if(joints[i,0] <= 0 or joints[i,1] <= 0  or joints[i,0] >= width-1 or
 			joints[i,1] >= height-1):
-			continue	
+			continue
+	
 		H[:,:,i] = makeGaussianMap(width,height,joints[i,:],sigma,sigma,0.0)
 
 	return H
@@ -535,7 +531,7 @@ def getLimbTransforms(joints1,joints2):
 		Ms[:,:,ctr] = np.array([[tform[1],-tform[3],tform[0]],[tform[3],tform[1],tform[2]]])
 		ctr+=1
 
-		'''	
+		'''
 		if(i >= 1 and i <= 4):
 			tform = transformations.make_similarity(p2,p1,True)	
 			Ms[:,:,ctr] = np.array([[tform[1],tform[3],tform[0]],[tform[3],-tform[1],tform[2]]])

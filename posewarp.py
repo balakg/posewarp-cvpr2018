@@ -36,6 +36,7 @@ def train(model_name,gpu_id):
 	workout_train,workout_test = datareader.makeWarpExampleList(workout_params,25000,2500,2,3)
 	tennis_train,tennis_test = datareader.makeWarpExampleList(tennis_params,20000,2000,2,4)
 
+
 	warp_train = lift_train + golf_train + workout_train + tennis_train
 	warp_test = lift_test + golf_test + workout_test + tennis_test
 
@@ -56,8 +57,10 @@ def train(model_name,gpu_id):
 			vgg_model = myVGG.vgg_norm()
 			networks.make_trainable(vgg_model,False)
 			response_weights = sio.loadmat('mean_response.mat')
-			model = networks.network_fgbg(params,vgg_model,response_weights,True)
-			#model.load_weights('../results/networks/fgbg_flip11/150000.h5')
+			model = networks.network_fgbg(params,vgg_model,response_weights,do_dropout=False)
+			#model.load_weights('../results/networks/fgbg_l1/74000.h5')
+		#model.summary()
+		#return
 
 		'''
 		step = 0
@@ -92,8 +95,8 @@ def train(model_name,gpu_id):
 		sio.savemat('mean_response4.mat', responses)
 
 		'''
-		
-		step = 0
+	
+		step = 74001
 		while(True):
 			X,Y = next(train_feed)			
 
@@ -116,7 +119,6 @@ def train(model_name,gpu_id):
 				model.save(network_dir + '/' + str(step) + '.h5')			
 
 			step += 1	
-
 
 
 if __name__ == "__main__":

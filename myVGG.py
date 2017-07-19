@@ -8,18 +8,15 @@ def vgg_norm():
 	x2 = Conv2D(64, (3,3), activation='relu', padding='same', name='block1_conv2')(x1)
 	x3 = AveragePooling2D((2,2),strides=(2,2),name='block1_pool')(x2)
 
-
 	x4 = Conv2D(128, (3,3), activation='relu', padding='same', name='block2_conv1')(x3)
 	x5 = Conv2D(128, (3,3), activation='relu', padding='same', name='block2_conv2')(x4)
 	x6 = AveragePooling2D((2,2),strides=(2,2),name='block2_pool')(x5)
-
 
 	x7 = Conv2D(256, (3,3), activation='relu', padding='same', name='block3_conv1')(x6)
 	x8 = Conv2D(256, (3,3), activation='relu', padding='same', name='block3_conv2')(x7)
 	x9 = Conv2D(256, (3,3), activation='relu', padding='same', name='block3_conv3')(x8)
 	x10 = Conv2D(256, (3,3), activation='relu', padding='same', name='block3_conv4')(x9)
 	x11 = AveragePooling2D((2,2),strides=(2,2),name='block3_pool')(x10)
-
 
 	x12 = Conv2D(512, (3,3), activation='relu', padding='same', name='block4_conv1')(x11)
 	x13 = Conv2D(512, (3,3), activation='relu', padding='same', name='block4_conv2')(x12)

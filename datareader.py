@@ -79,6 +79,8 @@ def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=2,class_i
 			joints = X[:,:,frames[j]]-1.0
 			box_j = box[frames[j],:]
 			scale = getPersonScale(joints)
+			#pos = (np.amax(joints,axis=0)+np.amin(joints,axis=0))/2.0
+			#pos = pos.tolist()
 			pos = [(box_j[0] + box_j[2]/2.0), (box_j[1] + box_j[3]/2.0)] 
 			l += [I_name_j] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
 
@@ -90,7 +92,7 @@ def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=2,class_i
 		elif(class_id == 3):
 			l += [0,0,1]
 		'''
-		l += [class_id]
+		#l += [class_id]
 		
 		if(i < n_test_examples):
 			ex_test.append(l)
