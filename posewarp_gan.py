@@ -74,12 +74,8 @@ def train(model_name,gpu_id):
 			generator = networks.network_fgbg(params,vgg_model,response_weights)
 			generator.load_weights('../results/networks/fgbg_boundary/128000.h5')
 
-			#mask_model = Model(generator.input, generator.get_layer('fg_mask_tgt').output)
-
 			discriminator = networks.discriminator(params)
 			discriminator.compile(loss='binary_crossentropy', optimizer=Adam(lr=disc_lr))
-			#discriminator.compile(loss='mse', optimizer=Adam(lr=disc_lr))
-
 			gan_warp = networks.gan(generator,discriminator,params,vgg_model,response_weights,disc_loss,gan_lr)
 
 
@@ -107,13 +103,13 @@ def train(model_name,gpu_id):
 			L = np.zeros([2*batch_size,2])
 			L[0:batch_size,0] = 1
 			L[batch_size:,1] = 1
-			#L = np.zeros([2*batch_size])
-			#L[0:batch_size] = 1
 
 			inputs = [X_img_disc,X_src_pose_disc,X_tgt_pose_disc]
 			d_loss = discriminator.train_on_batch(inputs,L)
 			networks.make_trainable(discriminator,False)
-		
+
+			#Not sure this does anything, but I train the discriminator a couple
+			#of iterations before starting the gan		
 			if(step < 2):
 				util.printProgress(step,0,[0,d_loss])
 				step += 1
@@ -122,7 +118,6 @@ def train(model_name,gpu_id):
 			#TRAIN GAN
 			L = np.zeros([batch_size,2])
 			L[:,0] = 1 #Pretend these are real.
-			#L = np.ones([batch_size])
 			X,Y = next(warp_train_feed)
 			g_loss = gan_warp.train_on_batch(X,[Y,L])
 			util.printProgress(step,0,[g_loss[1],d_loss])
