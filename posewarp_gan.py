@@ -2,9 +2,7 @@ import tensorflow as tf
 import os
 import numpy as np
 import sys
-import cv2
 import datareader
-import paDataReader
 import datageneration
 import networks
 import scipy.io as sio

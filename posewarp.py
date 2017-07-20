@@ -2,18 +2,15 @@ import tensorflow as tf
 import os
 import numpy as np
 import sys
-import cv2
 import datareader
 import datageneration
 import networks
 import scipy.io as sio
 import param
 import util
-import paDataReader
 from keras.models import load_model,Model
 from keras.optimizers import Adam
 import myVGG
-import pickle
 
 def train(model_name,gpu_id):	
 
