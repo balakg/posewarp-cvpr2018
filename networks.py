@@ -45,34 +45,6 @@ def make_trainable(net,val):
 	for l in net.layers:
 		l.trainable = val
 
-'''
-def head_discriminator(param):
-
-	IMG_HEIGHT = param['IMG_HEIGHT']
-	IMG_WIDTH = param['IMG_WIDTH']
-	n_joints = param['n_joints']
-	pose_dn = param['posemap_downsample']
-
-	x_src = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	x_tgt_pose = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
-
-	x = myConv(x_src,64,ks=5,strides=2)
-	x = concatenate([x,x_tgt_pose])
-	x = myConv(x,128,ks=5,strides=2)
-	x = myConv(x,128,ks=5,strides=2)
-	x = myConv(x,256,ks=5,strides=2)
-	x = myConv(x,256,strides=2) #8
-	x = myConv(x,256)
-
-	x = Flatten()(x)
-
-	x = myDense(x,10)
-	y = myDense(x,2,activation='softmax')
-
-	model = Model(inputs=[x_src,x_tgt_pose],outputs=y, name='discriminator')
-	return model
-'''
-
 def discriminator(param):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
@@ -112,26 +84,13 @@ def gan(generator,discriminator,param,feat_net,feat_weights,disc_loss,lr):
 	pose_tgt = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
 	mask_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
 	trans_in = Input(shape=(2,3,11))
-	#mask_tgt_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,1))
 
 	make_trainable(discriminator, False)
-	#generator_mask = Model(generator.input, [generator.output, generator.get_layer('fg_tgt_masked').output])	
 	y_gen = generator([src_in,pose_src,pose_tgt,mask_in,trans_in])
-
-	'''
-	def applyHeadMask(args):
-		I = args[0]
-		mask = args[1]
-		mask_rep = K.repeat_elements(mask,3,3)	
-		src_masked =  tf.multiply(mask_rep,I)
-		return src_masked
-	'''
-
-	#head_tgt = Lambda(applyHeadMask,output_shape=(256,256,3))([y_gen,mask_tgt_in])
 	y_class = discriminator([y_gen,pose_src,pose_tgt])
-	#y_class = discriminator([head_tgt,pose_tgt])
 
-
+	#Need to put this loss function in here for now because it relies on the extra
+	#variable "feat_weights"
 	def vggLoss(y_true,y_pred):
 		y_true_feat = feat_net(Lambda(vgg_preprocess)(y_true))
 		y_pred_feat = feat_net(Lambda(vgg_preprocess)(y_pred))
