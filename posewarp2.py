@@ -32,7 +32,7 @@ def train(model_name,gpu_id):
 	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,25000,2500,2,2)
 	workout_train,workout_test = datareader.makeWarpExampleList(workout_params,12500,1250,2,3)
 	tennis_train,tennis_test = datareader.makeWarpExampleList(tennis_params,10000,1000,2,4)
-	
+
 	warp_train = lift_train + golf_train + workout_train + tennis_train
 	warp_test = lift_test + golf_test + workout_test + tennis_test
 
@@ -50,52 +50,13 @@ def train(model_name,gpu_id):
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			vgg_model = myVGG.vgg_norm()
-			networks.make_trainable(vgg_model,False)
-			response_weights = sio.loadmat('mean_response.mat')
-			model = networks.network_fgbg(params,vgg_model,response_weights,do_dropout=False,loss='l1')
-			#model.load_weights('../results/networks/fgbg_noisebg/27000.h5')
+			model = networks.motionNet(params)
 
-		#model.summary()
-		#return
-
-		'''
-		step = 0
-		mean_response = []
-		std_response = []
-		for step in xrange(1000):
-			print step
-			X,Y = next(train_feed)			
-			pred_step = vgg_model.predict(util.vgg_preprocess(X[0]))
-
-			for i in xrange(len(pred_step)):
-				mean_step = np.mean(pred_step[i],axis=(0,1,2))
-				std_step = np.std(pred_step[i],axis=(0,1,2))
-
-				if(step == 0):
-					mean_response.append(mean_step)
-					std_response.append(std_step)
-				else:
-					mean_response[i] += mean_step
-					std_response[i] += std_step
-
-			step += 1		
-		
-		for i in xrange(len(mean_response)):
-			mean_response[i]/= (1000.0)
-			std_response[i]/= (1000.0)
-
-		responses = {}
-		for i in xrange(12):
-			responses[str(i)] = (mean_response[i],std_response[i])
-
-		sio.savemat('mean_response_new.mat', responses)
-
-		return
-		'''
 		step = 0
 		while(True):
 			X,Y = next(train_feed)			
+
+			Y = Y * np.tile(X[-1],[1,1,1,3])
 
 			with tf.device(gpu):
 				train_loss = model.train_on_batch(X,Y)
@@ -112,7 +73,7 @@ def train(model_name,gpu_id):
 				test_loss /= (n_batches)
 				util.printProgress(step,1,test_loss)
 
-			if(step % params['model_save_interval']==0 or step == 200):
+			if(step % params['model_save_interval']==0):
 				model.save(network_dir + '/' + str(step) + '.h5')			
 
 			step += 1	

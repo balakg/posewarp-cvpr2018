@@ -47,8 +47,9 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel
 		X_pose_src = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
 		X_pose_tgt = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
 		X_trans = np.zeros((batch_size,2,3,11))
-		X_posevec_src = np.zeros((batch_size,n_joints,2))
-		X_posevec_tgt = np.zeros((batch_size,n_joints,2))
+		#X_mask_tgt = np.zeros((batch_size,img_height,img_width,1))
+		#X_posevec_src = np.zeros((batch_size,n_joints*2))
+		#X_posevec_tgt = np.zeros((batch_size,n_joints*2))
 
 		Y = np.zeros((batch_size,img_height,img_width,3))
 	
@@ -70,7 +71,6 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel
 			else:
 				pos = np.array(example[61:63])
 				scale = scale1	
-
 	
 			I0,joints0 = centerAndScaleImage(I0,img_width,img_height,pos,scale,joints0)
 			I1,joints1 = centerAndScaleImage(I1,img_width,img_height,pos,scale,joints1)
@@ -91,33 +91,33 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel
 			posemap1 = makeJointHeatmaps(img_height,img_width,joints1,sigma_joint,pose_dn)
 
 			src_limb_masks = makeLimbMasks(joints0,img_width,img_height)	
-			src_bg_mask = 1.0 - np.amax(src_limb_masks,axis=2)
-			src_limb_masks = np.log(src_limb_masks + 1e-10)
-			src_bg_mask = np.log(src_bg_mask+1e-10)
+			src_bg_mask = np.expand_dims(1.0 - np.amax(src_limb_masks,axis=2),2)
+			src_masks = np.concatenate((src_bg_mask,src_limb_masks),axis=2)
+			src_masks = np.log(src_masks + 1e-10)
 
-			#X_mask_tgt[i,:,:,:] = np.expand_dims(makeLimbMasks(joints1,img_width,img_height)[:,:,0],2)	
-
+			#tgt_limb_masks = makeLimbMasks(joints1,img_width,img_height)	
+			#X_mask_tgt[i,:,:,:] = np.expand_dims(np.amax(tgt_limb_masks,axis=2),axis=2)
 			X_src[i,:,:,:] = I0
 			X_pose_src[i,:,:,:] = posemap0
 			X_pose_tgt[i,:,:,:] = posemap1
-			X_mask_src[i,:,:,:] = np.concatenate((np.expand_dims(src_bg_mask,2),src_limb_masks),axis=2)
-			#X_mask_tgt[i,:,:,:] = np.concatenate((np.expand_dims(tgt_bg_mask,2),tgt_limb_masks),axis=2)
+			X_mask_src[i,:,:,:] = src_masks
 
 			X_trans[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
 			X_trans[i,:,:,1:] = getLimbTransforms(joints0,joints1)
 
-			X_posevec_src[i,:,:] = joints0
-			X_posevec_tgt[i,:,:] = joints1
+			#X_posevec_src[i,:] = joints0.flatten()
+			#X_posevec_tgt[i,:] = joints1.flatten()
 
 			Y[i,:,:,:] = I1
 	
-		#yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_mask_tgt,X_trans1,X_trans2],Y)
+		yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
 
-		if(not return_pose_vectors):
-			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
-		else:
-			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans,X_posevec_src,X_posevec_tgt],Y)
+		#if(not return_pose_vectors):
+		#	yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans,X_mask_tgt],Y)
+		#else:
+		#	yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans,X_mask_tgt,X_posevec_src,X_posevec_tgt],Y)
 
+'''
 def transferExampleGenerator(examples0,examples1,param,rflip=0):
     
 	img_width = param['IMG_WIDTH']
@@ -185,7 +185,7 @@ def transferExampleGenerator(examples0,examples1,param,rflip=0):
 				Y[i,:,:,:] = I1
 	
 			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
-
+'''
 
 '''
 def actionExampleGenerator(example0,examples1,param):
@@ -515,7 +515,7 @@ def getLimbTransforms(joints1,joints2):
 	n_limbs = len(limbs)
 	n_joints = joints1.shape[0]
 
-	Ms = np.zeros((2,3,10)) #+4))
+	Ms = np.zeros((2,3,10))
 	ctr = 0
 	for i in xrange(n_limbs):	
 
@@ -537,6 +537,7 @@ def getLimbTransforms(joints1,joints2):
 			Ms[:,:,ctr] = np.array([[tform[1],tform[3],tform[0]],[tform[3],-tform[1],tform[2]]])
 			ctr+=1
 		'''
+		
 		#M = np.array([[tform[1], tform[2], tform[0]],[tform[5],tform[6],tform[4]]])
 		#Ms[:,:,i] = M
 

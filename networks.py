@@ -232,7 +232,8 @@ def makeFlipWeights(args):
 	src = args[0]
 	tgt = args[1]
 
-	x = concatenate([Flatten()(src), Flatten()(tgt)])
+	x = concatenate([src, tgt])
+	x = myDense(x,10)
 	x = myDense(x,10)
 	x = myDense(x,4,activation='sigmoid')
 	return x
@@ -250,13 +251,14 @@ def makeWarpedStack(args):
 		src_masked =  tf.multiply(mask_i,src_in)
 
 		if(i == 0):
-			warps = src_masked
+			src_masked = tf.add(src_masked,tf.multiply(1-mask_i,tf.random_uniform(tf.shape(src_in),-0.2,0.2)))
+			warps = src_masked	
 			idx += 1
 		else:
 			warp_i = affineWarp(src_masked,trans_in[:,:,:,idx])
 			idx += 1
 			warps = tf.concat([warps,warp_i],3)
-
+			
 			'''
 			if(i >= 2 and i <= 5):
 				warp_i_flip = affineWarp(src_masked,trans_in[:,:,:,idx])
@@ -268,8 +270,8 @@ def makeWarpedStack(args):
 				warp_i_flip = tf.multiply(warp_i_flip,weight)
 				warp_i = tf.add(warp_i, warp_i_flip)
 			
-			#warps = tf.concat([warps,warp_i],3)
-			'''		
+			warps = tf.concat([warps,warp_i],3)
+			'''
 	return warps
 
 
@@ -295,24 +297,24 @@ def unet(x_in,pose_in,nf_enc,nf_dec,do_dropout):
 	x6 = myConv(x5,nf_enc[9],strides=2)#8
 	x = myConv(x6,nf_enc[10])
 
-	'''
-	if(x_emb_prev is not None):
-		x = concatenate([x_emb,x_emb_prev])
-		x = myConv(x,256)
-	else:
-		x = x_emb
-	'''
-
 	skips = [x5,x4,x3,x2,x0]
+	skip_nf = [nf_enc[8],nf_enc[6],nf_enc[4],nf_enc[2],nf_enc[0]]
+
 	for i in xrange(5):
 		x = UpSampling2D()(x)
-		x = concatenate([x,skips[i]])
-		x = myConv(x,nf_dec[i],dropout=(do_dropout and (i<2)))
+		
+		nf = min(128,skip_nf[i])
+
+		x_skip = myConv(skips[i],nf)
+		x_skip = myConv(x_skip,nf)
+
+		x = concatenate([x,x_skip])
+		x = myConv(x,nf_dec[i]) 
 
 	return x
 
 
-def network_fgbg(param,feat_net=None, feat_weights=None,do_dropout=True,loss='vgg'):
+def network_fgbg(param,feat_net=None, feat_weights=None,do_dropout=False,loss='vgg'):
 
 	IMG_HEIGHT = param['IMG_HEIGHT']
 	IMG_WIDTH = param['IMG_WIDTH']
@@ -324,30 +326,40 @@ def network_fgbg(param,feat_net=None, feat_weights=None,do_dropout=True,loss='vg
 	pose_tgt = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
 	src_mask_prior = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
 	trans_in = Input(shape=(2,3,11))
+	#tgt_mask_prior = Input(shape=(IMG_HEIGHT,IMG_WIDTH,1))
 
+	#1. FG/BG separation
 	x = unet(src_in,pose_src,[64]*2+[128]*9,[128]*4+[64],do_dropout)
 	src_mask_delta = myConv(x,11,activation='linear',ki='zeros')
 	src_mask = keras.layers.add([src_mask_delta,src_mask_prior])
 	src_mask = Activation('softmax',name='mask_src')(src_mask)
 
-	#flip_weights = Lambda(makeFlipWeights,name='flip_weights')([posevec_src,posevec_tgt])
+	#2. Separate into fg limbs and background
 	warped_stack = Lambda(makeWarpedStack)([src_mask,src_in,trans_in])
-
 	fg_stack = Lambda(lambda arg: arg[:,:,:,3:],output_shape=(256,256,30),name='fg_stack')(warped_stack)	
 	bg_src = Lambda(lambda arg: arg[:,:,:,0:3],output_shape=(256,256,3),name='bg_src')(warped_stack)
 	bg_src_mask = Lambda(lambda arg: tf.expand_dims(arg[:,:,:,0],3))(src_mask)
 
+	#3. BG synthesis
 	nf_dec = [256,256,128,128,64]
 	x = unet(concatenate([bg_src,bg_src_mask]),pose_src,[64]*2+[128]*2+[256]*7,nf_dec,do_dropout)
 	bg_tgt = myConv(x,3,activation='tanh',name='bg_tgt')
 
-	x = unet(fg_stack,pose_tgt,[64]*2+[128]*2+[256]*7,nf_dec,do_dropout)
+	#4. FG synthesis
+	pose_both = concatenate([pose_src,pose_tgt])
+	x = unet(fg_stack,pose_both,[64]*2+[128]*2+[256]*7,nf_dec,do_dropout)
 	fg_tgt = myConv(x,3,activation='tanh',name='fg_tgt')
-	fg_mask = myConv(x,1,activation='sigmoid',name='fg_mask_tgt')
 
+	fg_mask = myConv(x,1,activation='sigmoid',name='fg_mask_tgt')
 	fg_mask = concatenate([fg_mask,fg_mask,fg_mask])
 	bg_mask = Lambda(lambda arg: 1-arg)(fg_mask)	
 
+	#5. Merge bg and fg
+	#fg_mask_delta = myConv(x,1,activation='linear',ki='zeros')
+	#fg_mask = keras.layers.add([fg_mask_delta,tgt_mask_prior])
+	#fg_mask = Activation('sigmoid',name='fg_mask_tgt')(fg_mask)
+	#fg_mask = concatenate([fg_mask,fg_mask,fg_mask])
+	#bg_mask = Lambda(lambda arg: 1-arg)(fg_mask)
 	fg_tgt = keras.layers.multiply([fg_tgt,fg_mask],name='fg_tgt_masked')
 	bg_tgt = keras.layers.multiply([bg_tgt,bg_mask],name='bg_tgt_masked')
 	y = keras.layers.add([fg_tgt,bg_tgt])
@@ -357,7 +369,8 @@ def network_fgbg(param,feat_net=None, feat_weights=None,do_dropout=True,loss='vg
 		y_pred_feat = feat_net(Lambda(vgg_preprocess)(y_pred))
 
 		loss = []
-		for j in xrange(12):
+		n_layers = 12
+		for j in xrange(n_layers):
 			std = feat_weights[str(j)][1]
 			std = tf.expand_dims(tf.expand_dims(tf.expand_dims(std,0),0),0)
 			weights = tf.tile(std, [tf.shape(std)[0],tf.shape(std)[1],tf.shape(std)[2],1])
@@ -370,17 +383,60 @@ def network_fgbg(param,feat_net=None, feat_weights=None,do_dropout=True,loss='vg
 			else:
 				loss = tf.add(loss,loss_j)
 
-		return loss/12.0
+		return loss/(1.0*n_layers)
 
 
 	model = Model(inputs=[src_in,pose_src,pose_tgt,src_mask_prior,trans_in],outputs=[y])
-	#model = Model(inputs=[src_in,pose_src,pose_tgt,src_mask_prior,trans_in,posevec_src,posevec_tgt],outputs=[y])
 
 	if(loss == 'l1'):
 		model.compile(optimizer=Adam(lr=1e-4),loss='mae')	
 	else:
 		model.compile(optimizer=Adam(lr=1e-4),loss=[vggLoss])
 
+	return model
+
+
+
+def motionNet(param):
+
+	IMG_HEIGHT = param['IMG_HEIGHT']
+	IMG_WIDTH = param['IMG_WIDTH']
+	n_joints = param['n_joints']
+	pose_dn = param['posemap_downsample']
+
+	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
+	pose_src = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
+	pose_tgt = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
+	tgt_mask_prior = Input(shape=(IMG_HEIGHT,IMG_WIDTH,1))
+
+	x = myConv(src_in,64,ks=3,strides=2) #128
+	x = concatenate([pose_src,pose_tgt])
+	x = myConv(x,128,ks=3,strides=2) #64	
+	x = myConv(x,128,ks=3,strides=2) #32
+	x = myConv(x,256,ks=3,strides=2) #16
+	x = myConv(x,256,ks=3,strides=2) #8
+	x = myConv(x,256,ks=3,strides=2) #4
+
+	x = Flatten()(x)
+	x = myDense(x,512)
+	x = myDense(x,512)
+	x = myDense(x,256*256*2,activation='linear')
+	x = Lambda(lambda arg: arg + 128.0)(x)	
+	x = Reshape((256,256,2),name='flow')(x)
+
+	def call_interpolate(arg):
+		x_s_flat = tf.reshape(arg[0][:,:,:,0],[-1])
+		y_s_flat = tf.reshape(arg[0][:,:,:,1],[-1])
+		return interpolate([arg[1],x_s_flat,y_s_flat])	
+
+	x = Lambda(call_interpolate)([x,src_in])	
+
+	tgt_mask = concatenate([tgt_mask_prior,tgt_mask_prior,tgt_mask_prior])
+	y = keras.layers.multiply([x,tgt_mask])
+	
+
+	model = Model(inputs=[src_in,pose_src,pose_tgt,tgt_mask_prior],outputs=[y])
+	model.compile(optimizer=Adam(lr=1e-4),loss='mae')	
 	return model
 
 
