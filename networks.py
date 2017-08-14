@@ -20,12 +20,12 @@ def myConv(x_in,nf,ks=3,strides=1,activation='lrelu',ki='he_normal',name=None,dr
 	if(name):
 		if(activation == 'lrelu'):
 			x_out = LeakyReLU(0.2,name=name)(x_out)
-		else:
+		elif(activation != 'none'):
 			x_out = Activation(activation,name=name)(x_out)
 	else:
 		if(activation == 'lrelu'):
 			x_out = LeakyReLU(0.2)(x_out)
-		else:
+		elif(activation != 'none'):
 			x_out = Activation(activation)(x_out)
 
 	return x_out
@@ -53,20 +53,37 @@ def discriminator(param):
 	pose_dn = param['posemap_downsample']
 
 	x_src = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	x_src_pose = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn, n_joints))
-	x_tgt_pose = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn, n_joints))
+	x_src_pose = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn, 10))
+	x_tgt_pose = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn, 10))
 
-	x = myConv(x_src,64,ks=5,strides=2)
+
+	'''
+	x = myConv(x_src,128,ks=5,strides=2)
 	x = concatenate([x,x_src_pose,x_tgt_pose])
 	x = myConv(x,128,ks=5,strides=2)
 	x = myConv(x,128,ks=5,strides=2)
 	x = myConv(x,256,ks=5,strides=2)
-	x = myConv(x,256,strides=2) #8
-	x = myConv(x,256)
+	x = myConv(x,256,ks=5,strides=2)
+	x = myConv(x,256) #8
+	'''
+
+	x = myConv(x_src,128)#256
+	x = myConv(x,128,strides=2)
+	x = concatenate([x,x_src_pose,x_tgt_pose])
+	x = myConv(x,128) #128
+	x = myConv(x,128,strides=2)
+	x = myConv(x,128) #64
+	x = myConv(x,128,strides=2)
+	x = myConv(x,256) #32
+	x = myConv(x,256,strides=2)
+	x = myConv(x,256) #16
+	x = myConv(x,256,strides=2)
+	x = myConv(x,256) #8
 
 	x = Flatten()(x)
 
-	x = myDense(x,10)
+	x = myDense(x,128)
+	x = myDense(x,128)
 	y = myDense(x,2,activation='softmax')
 
 	model = Model(inputs=[x_src,x_src_pose,x_tgt_pose],outputs=y, name='discriminator')
@@ -80,8 +97,8 @@ def gan(generator,discriminator,param,feat_net,feat_weights,disc_loss,lr):
 	pose_dn = param['posemap_downsample']
 
 	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	pose_src = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
-	pose_tgt = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
+	pose_src = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,10))
+	pose_tgt = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,10))
 	mask_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
 	trans_in = Input(shape=(2,3,11))
 
@@ -251,7 +268,7 @@ def makeWarpedStack(args):
 		src_masked =  tf.multiply(mask_i,src_in)
 
 		if(i == 0):
-			src_masked = tf.add(src_masked,tf.multiply(1-mask_i,tf.random_uniform(tf.shape(src_in),-0.2,0.2)))
+			src_masked = tf.add(src_masked,tf.multiply(1-mask_i,tf.random_uniform(tf.shape(src_in),-0.1,0.1)))
 			warps = src_masked	
 			idx += 1
 		else:
@@ -282,34 +299,47 @@ def vgg_preprocess(arg):
 	b = z[:,:,:,2] - 123.68
 	return tf.stack([r,g,b],axis=3)
 
-def unet(x_in,pose_in,nf_enc,nf_dec,do_dropout):
+def unet(x_in,pose_in,nf_enc,nf_dec,extra_conv=False):
 
-	x0 = myConv(x_in,nf_enc[0],ks=7) #256
-	x1 = myConv(x0,nf_enc[1],strides=2)#128
-	x1 = concatenate([x1,pose_in])
-	x2 = myConv(x1,nf_enc[2])
-	x3 = myConv(x2,nf_enc[3],strides=2)#64
-	x3 = myConv(x3,nf_enc[4])
-	x4 = myConv(x3,nf_enc[5],strides=2)#32
-	x4 = myConv(x4,nf_enc[6])
-	x5 = myConv(x4,nf_enc[7],strides=2)#16
-	x5 = myConv(x5,nf_enc[8])
-	x6 = myConv(x5,nf_enc[9],strides=2)#8
-	x = myConv(x6,nf_enc[10])
+	skips = []
+	x = myConv(x_in,nf_enc[0],ks=7,activation='none') #256
+	skips.append(x)
+	x = LeakyReLU(0.2)(x)
+	x = myConv(x,nf_enc[1],strides=2)#128
+	x = concatenate([x,pose_in])
+	x = myConv(x,nf_enc[2],activation='none')
+	skips.append(x)
+	x = LeakyReLU(0.2)(x)
+	x = myConv(x,nf_enc[3],strides=2)#64
+	x = myConv(x,nf_enc[4],activation='none')
+	skips.append(x)
+	x = LeakyReLU(0.2)(x)
+	x = myConv(x,nf_enc[5],strides=2)#32
+	x = myConv(x,nf_enc[6],activation='none')
+	skips.append(x)
+	x = LeakyReLU(0.2)(x)
+	x = myConv(x,nf_enc[7],strides=2)#16
+	x = myConv(x,nf_enc[8],activation='none')
+	skips.append(x)
+	x = LeakyReLU(0.2)(x)
+	x = myConv(x,nf_enc[9],strides=2)#8
+	x = myConv(x,nf_enc[10])
 
-	skips = [x5,x4,x3,x2,x0]
+	skips.reverse()
+
+	#skips = [x5,x4,x3,x2,x0]
 	skip_nf = [nf_enc[8],nf_enc[6],nf_enc[4],nf_enc[2],nf_enc[0]]
 
 	for i in xrange(5):
 		x = UpSampling2D()(x)
 		
-		nf = min(128,skip_nf[i])
-
-		x_skip = myConv(skips[i],nf)
-		x_skip = myConv(x_skip,nf)
-
-		x = concatenate([x,x_skip])
-		x = myConv(x,nf_dec[i]) 
+		#x_skip = myConv(x_skip,nf)
+		#x = concatenate([x,skips[i]])
+		x = myConv(x,nf_dec[i],activation='none')
+		#x_skip = myConv(skips[i],nf_dec[i],activation='none')	
+		
+		x = keras.layers.add([x,skips[i]])
+		x = LeakyReLU(0.2)(x)
 
 	return x
 
@@ -322,17 +352,29 @@ def network_fgbg(param,feat_net=None, feat_weights=None,do_dropout=False,loss='v
 	pose_dn = param['posemap_downsample']
 
 	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	pose_src = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
-	pose_tgt = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,n_joints))
+	pose_src = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,10))
+	pose_tgt = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,10))
 	src_mask_prior = Input(shape=(IMG_HEIGHT,IMG_WIDTH,11))	
 	trans_in = Input(shape=(2,3,11))
+	#pose_vec_src = Input(shape=(28,))
+	#pose_vec_tgt = Input(shape=(28,))
+	#trans_switch = Input(shape=(2,3,11))
 	#tgt_mask_prior = Input(shape=(IMG_HEIGHT,IMG_WIDTH,1))
 
 	#1. FG/BG separation
-	x = unet(src_in,pose_src,[64]*2+[128]*9,[128]*4+[64],do_dropout)
+	x = unet(src_in,pose_src,[64]*2+[128]*9,[128]*4+[64])
 	src_mask_delta = myConv(x,11,activation='linear',ki='zeros')
 	src_mask = keras.layers.add([src_mask_delta,src_mask_prior])
 	src_mask = Activation('softmax',name='mask_src')(src_mask)
+
+	'''
+	x = concatenate([pose_vec_src,pose_vec_tgt])
+	#x = Dense(32,activation='relu',kernel_initializer=keras.initializers.RandomNormal(mean=0.0, stddev=0.000001, seed=None))(x)
+	x = Dense(2*3*11,activation='linear',kernel_initializer=keras.initializers.RandomNormal(mean=0.0, stddev=1e-5, seed=None))(x)
+	x = Reshape((2,3,11),name='trans_delta')(x)
+	x = Lambda(lambda arg: arg[0] * arg[1])([x,trans_switch])
+	trans = keras.layers.add([x,trans_in])
+	'''
 
 	#2. Separate into fg limbs and background
 	warped_stack = Lambda(makeWarpedStack)([src_mask,src_in,trans_in])
@@ -341,13 +383,13 @@ def network_fgbg(param,feat_net=None, feat_weights=None,do_dropout=False,loss='v
 	bg_src_mask = Lambda(lambda arg: tf.expand_dims(arg[:,:,:,0],3))(src_mask)
 
 	#3. BG synthesis
-	nf_dec = [256,256,128,128,64]
-	x = unet(concatenate([bg_src,bg_src_mask]),pose_src,[64]*2+[128]*2+[256]*7,nf_dec,do_dropout)
+	x = unet(concatenate([bg_src,bg_src_mask]),pose_src,[64]*2+[128]*9,[128]*4+[64],extra_conv=True)
 	bg_tgt = myConv(x,3,activation='tanh',name='bg_tgt')
 
-	#4. FG synthesis
+	#4. FG synthesis	
+	nf_dec = [256,256,256,128,64]
 	pose_both = concatenate([pose_src,pose_tgt])
-	x = unet(fg_stack,pose_both,[64]*2+[128]*2+[256]*7,nf_dec,do_dropout)
+	x = unet(fg_stack,pose_both,[64]*2+[128]*2+[256]*7,nf_dec,extra_conv=True)
 	fg_tgt = myConv(x,3,activation='tanh',name='fg_tgt')
 
 	fg_mask = myConv(x,1,activation='sigmoid',name='fg_mask_tgt')
@@ -386,7 +428,7 @@ def network_fgbg(param,feat_net=None, feat_weights=None,do_dropout=False,loss='v
 		return loss/(1.0*n_layers)
 
 
-	model = Model(inputs=[src_in,pose_src,pose_tgt,src_mask_prior,trans_in],outputs=[y])
+	model = Model(inputs=[src_in,pose_src,pose_tgt,src_mask_prior,trans_in], outputs=[y]) #,pose_vec_src,pose_vec_tgt,trans_switch],outputs=[y])
 
 	if(loss == 'l1'):
 		model.compile(optimizer=Adam(lr=1e-4),loss='mae')	

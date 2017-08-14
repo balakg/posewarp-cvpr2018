@@ -56,21 +56,9 @@ def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=2,class_i
 
 		n_frames = X.shape[2]
 
-		'''	
-		if(entire_vid):
-			frames = np.arange(n_frames)
-			frames.sort()
-		else:	
-		'''	
-		
 		frames = np.random.choice(n_frames,seq_len,replace=False)
-		
-		'''
-		if(np.random.rand() < 0.5):
-			frames.sort()
-		else:		
-			frames[::-1].sort()		
-		'''
+		while(n_frames > 100 and abs(frames[0] - frames[1]) <= 2):
+			frames = np.random.choice(n_frames,seq_len,replace=False)
 
 		l = []
 		for j in xrange(len(frames)):

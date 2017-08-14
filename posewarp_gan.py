@@ -20,13 +20,14 @@ def createFeeds(params):
 	workout_params = param.getDatasetParams('workout')
 	tennis_params = param.getDatasetParams('tennis')
 
-	lift_warp_train,lift_warp_test = datareader.makeWarpExampleList(lift_params,20000,2000,2,1)
-	golf_warp_train,golf_warp_test = datareader.makeWarpExampleList(golf_params,50000,5000,2,2)
-	workout_warp_train,workout_warp_test = datareader.makeWarpExampleList(workout_params,25000,2500,2,3)
-	tennis_warp_train,tennis_warp_test = datareader.makeWarpExampleList(tennis_params,20000,2000,2,4)
 
-	warp_train = lift_warp_train + golf_warp_train + workout_warp_train + tennis_warp_train
-	warp_test = lift_warp_test + golf_warp_test + workout_warp_test + tennis_warp_test
+	lift_train,lift_test = datareader.makeWarpExampleList(lift_params,10000,1000,2,1)
+	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,25000,2500,2,2)
+	workout_train,workout_test = datareader.makeWarpExampleList(workout_params,12500,1250,2,3)
+	tennis_train,tennis_test = datareader.makeWarpExampleList(tennis_params,10000,1000,2,4)
+
+	warp_train = lift_train + golf_train + workout_train + tennis_train
+	warp_test = lift_test + golf_test + workout_test + tennis_test
 
 	warp_train_feed = datageneration.warpExampleGenerator(warp_train,params)
 	warp_test_feed = datageneration.warpExampleGenerator(warp_test,params)
@@ -63,14 +64,14 @@ def train(model_name,gpu_id):
 
 		gan_lr = 1e-4
 		disc_lr = 1e-4
-		disc_loss = 0.01
+		disc_loss = 0.1
 
 		with tf.device(gpu):
 			vgg_model = myVGG.vgg_norm()
 			networks.make_trainable(vgg_model,False)
 			response_weights = sio.loadmat('mean_response.mat')
 			generator = networks.network_fgbg(params,vgg_model,response_weights)
-			generator.load_weights('../results/networks/fgbg_boundary/128000.h5')
+			generator.load_weights('../results/networks/fgbg_small/100000.h5')
 
 			discriminator = networks.discriminator(params)
 			discriminator.compile(loss='binary_crossentropy', optimizer=Adam(lr=disc_lr))
@@ -108,7 +109,7 @@ def train(model_name,gpu_id):
 
 			#Not sure this does anything, but I train the discriminator a couple
 			#of iterations before starting the gan		
-			if(step < 2):
+			if(step < 5):
 				util.printProgress(step,0,[0,d_loss])
 				step += 1
 				continue
@@ -120,23 +121,21 @@ def train(model_name,gpu_id):
 			g_loss = gan_warp.train_on_batch(X,[Y,L])
 			util.printProgress(step,0,[g_loss[1],d_loss])
 
-
-			'''
 			#Test
 			if(step % params['test_interval'] == 0):
 				n_batches = 8
-				test_loss = np.zeros(2)			
+				test_loss = np.zeros(1)			
 				for j in xrange(n_batches):	
 					X_warp,Y_warp = next(warp_test_feed)
-					L = np.zeros([batch_size,2])
-					L[:,1] = 1 #Fake images
+					test_loss += np.array(generator.test_on_batch(X_warp,Y_warp))
+					#L = np.zeros([batch_size,2])
+					#L[:,1] = 1 #Fake images
 
-					test_loss_j = gan_warp.test_on_batch(X_warp, [Y_warp,L])
-					test_loss += np.array(test_loss_j[1:3])
+					#test_loss_j = gan_warp.test_on_batch(X_warp, [Y_warp,L])
+					#test_loss += np.array(test_loss_j[1:3])
 	
 				test_loss /= (n_batches)
 				util.printProgress(step,1,test_loss)
-			'''			
 
 			if(step % params['model_save_interval']==0): 
 				gan_warp.save(network_dir + '/' + str(step) + '.h5')			

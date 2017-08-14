@@ -28,16 +28,16 @@ def train(model_name,gpu_id):
 	workout_params = param.getDatasetParams('workout')
 	tennis_params = param.getDatasetParams('tennis')
 
-	lift_train,lift_test = datareader.makeWarpExampleList(lift_params,10000,1000,2,1)
-	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,25000,2500,2,2)
+	lift_train,lift_test = datareader.makeWarpExampleList(lift_params,9000,1000,2,1)
+	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,22000,2500,2,2)
 	workout_train,workout_test = datareader.makeWarpExampleList(workout_params,12500,1250,2,3)
 	tennis_train,tennis_test = datareader.makeWarpExampleList(tennis_params,10000,1000,2,4)
 	
 	warp_train = lift_train + golf_train + workout_train + tennis_train
 	warp_test = lift_test + golf_test + workout_test + tennis_test
 
-	train_feed = datageneration.warpExampleGenerator(warp_train,params)
-	test_feed = datageneration.warpExampleGenerator(warp_test,params)
+	train_feed = datageneration.warpExampleGenerator(warp_train,params,return_pose_vectors=False)
+	test_feed = datageneration.warpExampleGenerator(warp_test,params,return_pose_vectors=False)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
@@ -53,8 +53,8 @@ def train(model_name,gpu_id):
 			vgg_model = myVGG.vgg_norm()
 			networks.make_trainable(vgg_model,False)
 			response_weights = sio.loadmat('mean_response.mat')
-			model = networks.network_fgbg(params,vgg_model,response_weights,do_dropout=False,loss='l1')
-			#model.load_weights('../results/networks/fgbg_noisebg/27000.h5')
+			model = networks.network_fgbg(params,vgg_model,response_weights,do_dropout=False,loss='vgg')
+			#model.load_weights('../results/networks/fgbg_extraconv/197000.h5')
 
 		#model.summary()
 		#return
@@ -96,12 +96,19 @@ def train(model_name,gpu_id):
 		step = 0
 		while(True):
 			X,Y = next(train_feed)			
+			'''
+			if(step <= 200):
+				X_switch = np.zeros((4,2,3,11))
+			else:
+				X_switch = np.ones((4,2,3,11))		
+			X.append(X_switch)
+			'''
 
 			with tf.device(gpu):
 				train_loss = model.train_on_batch(X,Y)
 
 			util.printProgress(step,0,train_loss)
-
+	
 			if(step % params['test_interval'] == 0):
 				n_batches = 8
 				test_loss = np.zeros(1)
@@ -112,7 +119,7 @@ def train(model_name,gpu_id):
 				test_loss /= (n_batches)
 				util.printProgress(step,1,test_loss)
 
-			if(step % params['model_save_interval']==0 or step == 200):
+			if(step % params['model_save_interval']==0):
 				model.save(network_dir + '/' + str(step) + '.h5')			
 
 			step += 1	

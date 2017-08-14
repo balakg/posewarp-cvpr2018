@@ -33,8 +33,8 @@ def train(dataset,gpu_id):
 	_,aux_test = datareader.makeWarpExampleList(aux_params,0,2000,2,5)
 
 
-	test = aux_test #lift_test + golf_test+workout_test + tennis_test + aux_test
-	feed = datageneration.warpExampleGenerator(test,params,do_augment=False)
+	test = lift_test + golf_test+workout_test + tennis_test + aux_test
+	feed = datageneration.warpExampleGenerator(test,params,do_augment=False,return_pose_vectors=True)
 	
 
 	config = tf.ConfigProto()
@@ -51,8 +51,8 @@ def train(dataset,gpu_id):
 			vgg_model = myVGG.vgg_norm()
 			networks.make_trainable(vgg_model,False)
 			response_weights = sio.loadmat('mean_response.mat')
-			fgbg = networks.network_fgbg(params,vgg_model,response_weights,True)
-			fgbg.load_weights('../results/networks/fgbg_extraconv/1000.h5')	#128000
+			fgbg = networks.network_fgbg(params,vgg_model,response_weights)
+			fgbg.load_weights('../results/networks/delta/300.h5')
 			#disc = networks.discriminator(params)
 			#gan = networks.gan(fgbg,disc,params,vgg_model,response_weights,0.01,1e-4)
 			#gan.load_weights('../results/networks/gan/10000.h5')
@@ -64,7 +64,7 @@ def train(dataset,gpu_id):
 			outputs.append(fgbg.get_layer('bg_tgt').output)
 			outputs.append(fgbg.get_layer('fg_tgt').output)
 			outputs.append(fgbg.get_layer('fg_mask_tgt').output)
-			#outputs.append(fgbg.get_layer('flip_weights').output)
+			outputs.append(fgbg.get_layer('trans_delta').output)
 			#outputs = [fgbg.get_layer('trans').output]
 			#outputs.append(fgbg.get_layer('mask_src').output)
 			model = Model(fgbg.inputs, outputs)
@@ -77,12 +77,15 @@ def train(dataset,gpu_id):
 		for j in xrange(n_batches):	
 			print j
 			X,Y = next(feed)		
+			X_switch = np.ones((4,2,3,11))
+			X.append(X_switch)
+
 			pred = model.predict(X)
 			#pred_disc = model_disc.predict([Y,X[2]])
 	
-			sio.savemat('results/extraconv/' + str(j) + '.mat',{'X': X[0],'Y': Y, 'pred': pred[0], 'mask_src': pred[1],
+			sio.savemat('results/delta/' + str(j) + '.mat',{'X': X[0],'Y': Y, 'pred': pred[0], 'mask_src': pred[1],
 						'fg_stack': pred[2], 'bg_src': pred[3], 'bg_tgt': pred[4], 'fg_tgt': pred[5], 'fg_mask_tgt': pred[6], 
-						'prior': X[3][:,:,:,0]})	
+						'prior': X[3][:,:,:,0], 'pose_src': X[-2], 'pose_tgt': X[-1], 'prior_other': X[3][:,:,:,1:3], 'trans': pred[-1]})	
 
 
 if __name__ == "__main__":

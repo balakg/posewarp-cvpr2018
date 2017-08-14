@@ -30,7 +30,8 @@ def randSat(param):
 	return np.random.rand()*(max_sat-min_sat) + min_sat
 
 
-def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel_color=None,return_pose_vectors=False):
+def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,
+			skel_color=None,return_pose_vectors=False):
     
 	img_width = param['IMG_WIDTH']
 	img_height = param['IMG_HEIGHT']
@@ -44,12 +45,12 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel
 
 		X_src = np.zeros((batch_size,img_height,img_width,3))
 		X_mask_src = np.zeros((batch_size,img_height,img_width,len(limbs)+1))
-		X_pose_src = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
-		X_pose_tgt = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
+		X_pose_src = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,len(limbs)))
+		X_pose_tgt = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,len(limbs)))
 		X_trans = np.zeros((batch_size,2,3,11))
 		#X_mask_tgt = np.zeros((batch_size,img_height,img_width,1))
-		#X_posevec_src = np.zeros((batch_size,n_joints*2))
-		#X_posevec_tgt = np.zeros((batch_size,n_joints*2))
+		X_posevec_src = np.zeros((batch_size,n_joints*2))
+		X_posevec_tgt = np.zeros((batch_size,n_joints*2))
 
 		Y = np.zeros((batch_size,img_height,img_width,3))
 	
@@ -105,17 +106,17 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,skel
 			X_trans[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
 			X_trans[i,:,:,1:] = getLimbTransforms(joints0,joints1)
 
-			#X_posevec_src[i,:] = joints0.flatten()
-			#X_posevec_tgt[i,:] = joints1.flatten()
+			X_posevec_src[i,:] = joints0.flatten()
+			X_posevec_tgt[i,:] = joints1.flatten()
 
 			Y[i,:,:,:] = I1
 	
-		yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
+		#yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
 
-		#if(not return_pose_vectors):
-		#	yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans,X_mask_tgt],Y)
-		#else:
-		#	yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans,X_mask_tgt,X_posevec_src,X_posevec_tgt],Y)
+		if(not return_pose_vectors):
+			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
+		else:
+			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans,X_posevec_src,X_posevec_tgt],Y)
 
 '''
 def transferExampleGenerator(examples0,examples1,param,rflip=0):
@@ -451,6 +452,7 @@ def makeJointHeatmaps(height,width,joints,sigma,pose_dn):
 	sigma = sigma**2
 	joints = joints/pose_dn
 
+	'''
 	H = np.zeros((height,width,14)) #len(limbs)-1))
 
 	for i in xrange(H.shape[2]):
@@ -459,6 +461,17 @@ def makeJointHeatmaps(height,width,joints,sigma,pose_dn):
 			continue
 	
 		H[:,:,i] = makeGaussianMap(width,height,joints[i,:],sigma,sigma,0.0)
+	'''
+	H = np.zeros((height,width,10))
+
+	limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
+	for i in xrange(H.shape[2]):
+		for j in xrange(len(limbs[i])):
+			joint = limbs[i][j]
+			if(joints[joint,0] <= 0 or joints[joint,1] <= 0 or joints[joint,0] >= width-1 or
+				joints[joint,1] >= height-1):
+				continue
+			H[:,:,i] += makeGaussianMap(width,height,joints[joint,:],sigma,sigma,0.0)
 
 	return H
 
