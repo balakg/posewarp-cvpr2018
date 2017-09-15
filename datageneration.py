@@ -45,10 +45,9 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,
 
 		X_src = np.zeros((batch_size,img_height,img_width,3))
 		X_mask_src = np.zeros((batch_size,img_height,img_width,len(limbs)+1))
-		X_pose_src = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,len(limbs)))
-		X_pose_tgt = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,len(limbs)))
+		X_pose_src = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,14))
+		X_pose_tgt = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,14))
 		X_trans = np.zeros((batch_size,2,3,11))
-		#X_mask_tgt = np.zeros((batch_size,img_height,img_width,1))
 		X_posevec_src = np.zeros((batch_size,n_joints*2))
 		X_posevec_tgt = np.zeros((batch_size,n_joints*2))
 
@@ -72,7 +71,7 @@ def warpExampleGenerator(examples,param,do_augment=True,draw_skeleton=False,
 			else:
 				pos = np.array(example[61:63])
 				scale = scale1	
-	
+
 			I0,joints0 = centerAndScaleImage(I0,img_width,img_height,pos,scale,joints0)
 			I1,joints1 = centerAndScaleImage(I1,img_width,img_height,pos,scale,joints1)
 
@@ -409,6 +408,7 @@ def augSaturation(I,rsat):
 	I[I > 1] = 1
 	return I
 
+'''
 def makeVelocityFields(height,width,transforms):
 
 	xv,yv = np.meshgrid(np.array(range(width)),np.array(range(height)),sparse=False,indexing='xy')
@@ -421,6 +421,7 @@ def makeVelocityFields(height,width,transforms):
 		V[:,:,2*i+1] = np.reshape(p_new[1,:],(width,height))
 
 	return V
+'''
 
 '''
 def makeVelocityHeatmap(height,width,joints0,joints1,sigma):
@@ -452,7 +453,6 @@ def makeJointHeatmaps(height,width,joints,sigma,pose_dn):
 	sigma = sigma**2
 	joints = joints/pose_dn
 
-	'''
 	H = np.zeros((height,width,14)) #len(limbs)-1))
 
 	for i in xrange(H.shape[2]):
@@ -461,17 +461,6 @@ def makeJointHeatmaps(height,width,joints,sigma,pose_dn):
 			continue
 	
 		H[:,:,i] = makeGaussianMap(width,height,joints[i,:],sigma,sigma,0.0)
-	'''
-	H = np.zeros((height,width,10))
-
-	limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
-	for i in xrange(H.shape[2]):
-		for j in xrange(len(limbs[i])):
-			joint = limbs[i][j]
-			if(joints[joint,0] <= 0 or joints[joint,1] <= 0 or joints[joint,0] >= width-1 or
-				joints[joint,1] >= height-1):
-				continue
-			H[:,:,i] += makeGaussianMap(width,height,joints[joint,:],sigma,sigma,0.0)
 
 	return H
 
