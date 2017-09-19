@@ -16,7 +16,7 @@ def getPersonScale(joints):
 	size = np.max([2.5 * torso_size,calf_size*5,peak_to_peak*1.1]) 
 	return (size/200.0)
 
-def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=2,class_id=0):
+def makeWarpExampleList(param,n_train_examples,n_test_examples,entire_vid=False,class_id=0):
 
 	vid_pth = param['vid_pth']
 	info_pth = param['info_pth']
@@ -50,15 +50,18 @@ def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=2,class_i
 			vid = train_vids[np.random.randint(0,n_vids-n_test_vids)]
 
 		vid_name = vid_names[vid]
+
 		info = sio.loadmat(os.path.join(info_pth, vid_name + '.mat'))		
 		box = info['data']['bbox'][0][0]
 		X = info['data']['X'][0][0]
 
 		n_frames = X.shape[2]
 
-		frames = np.random.choice(n_frames,seq_len,replace=False)
-		while(n_frames > 100 and abs(frames[0] - frames[1]) <= 2):
-			frames = np.random.choice(n_frames,seq_len,replace=False)
+		frames = np.arange(n_frames)
+		if(entire_vid is False):
+			frames = np.random.choice(n_frames,2,replace=False)
+			while(n_frames > 100 and abs(frames[0] - frames[1]) <= 2):
+				frames = np.random.choice(n_frames,2,replace=False)
 
 		l = []
 		for j in xrange(len(frames)):
@@ -66,10 +69,12 @@ def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=2,class_i
 			joints = X[:,:,frames[j]]-1.0
 			box_j = box[frames[j],:]
 			scale = getPersonScale(joints)
-			#pos = (np.amax(joints,axis=0)+np.amin(joints,axis=0))/2.0
-			#pos = pos.tolist()
 			pos = [(box_j[0] + box_j[2]/2.0), (box_j[1] + box_j[3]/2.0)] 
-			l += [I_name_j] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
+			lj = [I_name_j] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
+			if(entire_vid):
+				l.append(lj)
+			else:
+				l += lj	
 
 		if(i < n_test_examples):
 			ex_test.append(l)
@@ -77,76 +82,6 @@ def makeWarpExampleList(param,n_train_examples,n_test_examples,seq_len=2,class_i
 			ex_train.append(l)
 
 	return ex_train,ex_test
-
-
-def makeActionExampleList(param,vid_src=None,vid_tgt=None,src_frame=False):
-
-	vid_pth = param['vid_pth']
-	info_pth = param['info_pth']
-	n_test_vids = param['n_test_vids']
-	img_sfx = param['img_sfx']
-	test_vids = param['test_vids']
-
-	vid_names = [each for each in os.listdir(vid_pth)
-                if os.path.isdir(os.path.join(vid_pth,each))]
-
-	n_vids = len(vid_names)
-
-	np.random.seed(17)
-	if(test_vids):
-		test_vids = test_vids
-		train_vids = list(set(range(n_vids)) - set(test_vids))	
-	else:
-		random_order = np.random.permutation(n_vids).tolist()
-		test_vids = random_order[0:n_test_vids]
-		train_vids = random_order[n_test_vids:]
-
-	np.random.seed(20)
-
-	vid = test_vids[np.random.randint(0,n_test_vids)]
-	vid_name = vid_names[vid]
-
-	info = sio.loadmat(os.path.join(info_pth, vid_name + '.mat'))		
-	box = info['data']['bbox'][0][0]
-	X = info['data']['X'][0][0]
-	n_frames = X.shape[2]
-
-	if(src_frame is None):
-		src_frame = np.random.randint(0,n_frames)
-	
-	I_name = os.path.join(vid_pth,vid_name,str(src_frame+1)+img_sfx)
-	joints = X[:,:,src_frame]-1.0
-	box = box[src_frame,:]
-	scale = getPersonScale(joints)
-	pos = [(box[0] + box[2]/2.0), (box[1] + box[3]/2.0)] 
-	ex_src = [I_name] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
-
-	'''
-	#Choose target video
-	if(vid_tgt):
-		vid_name = vid_tgt
-	else:
-		vid = np.random.randint(0,len(vid_names))
-		vid_name = vid_names[vid]
-	'''	
-	
-	info = sio.loadmat(os.path.join(info_pth, vid_name + '.mat'))		
-	box = info['data']['bbox'][0][0]
-	X = info['data']['X'][0][0]
-	n_frames = X.shape[2]
-
-	ex_pose = []	
-	for j in xrange(n_frames):	
-		I_name = os.path.join(vid_pth,vid_name,str(j+1)+img_sfx)
-		joints = X[:,:,j]-1.0
-		box_j = box[j,:]
-		scale = getPersonScale(joints)
-		pos = [(box_j[0] + box_j[2]/2.0), (box_j[1] + box_j[3]/2.0)] 
-		l = [I_name] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
-		ex_pose.append(l)
-
-	return ex_src,ex_pose
-
 
 
 '''
