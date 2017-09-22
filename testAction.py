@@ -2,66 +2,71 @@ import tensorflow as tf
 import os
 import numpy as np
 import sys
-import cv2
 import datareader
 import datageneration
-import paDataReader
 import networks
 import scipy.io as sio
 import param
 from keras.models import load_model,Model
-from keras.optimizers import Adam
-from keras.applications.vgg19 import VGG19
-import h5py
 import util
+import myVGG
+from keras.backend.tensorflow_backend import set_session
+
+def convert(I):
+	I = (I + 1.0)/2.0
+	J = np.stack([I[:,:,2],I[:,:,1],I[:,:,0]],2)
+	return J
 
 def train(dataset,gpu_id):	
 
 	params = param.getGeneralParams()
 	gpu = '/gpu:' + str(gpu_id)
-
-	golf_params = param.getDatasetParams('golfswinghd')
-
-	golf_src,golf_pose = datareader.makeActionExampleList(golf_params,src_frame=0)
-	
-	feed = datageneration.actionExampleGenerator(golf_src,golf_pose,params)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
 	config.allow_soft_placement = True
+	set_session(tf.Session(config=config))
+
+	with tf.device(gpu):
+		vgg_model = myVGG.vgg_norm()
+		networks.make_trainable(vgg_model,False)
+		response_weights = sio.loadmat('mean_response.mat')
+		fgbg = networks.network_fgbg(params,vgg_model,response_weights)
+		#fgbg.load_weights('../results/networks/fgbg_vgg/140000.h5')
+		disc = networks.discriminator(params)
+		gan = networks.gan(fgbg,disc,params,vgg_model,response_weights,0.01,1e-4)
+		gan.load_weights('../results/networks/fgbg_gan/2000.h5')
+
+		outputs = [fgbg.outputs[0]]
+		#outputs.append(fgbg.get_layer('mask_src').output)
+		#outputs.append(fgbg.get_layer('fg_stack').output)
+		#outputs.append(fgbg.get_layer('bg_src').output)
+		#outputs.append(fgbg.get_layer('bg_tgt').output)
+		#outputs.append(fgbg.get_layer('fg_tgt').output)
+		outputs.append(fgbg.get_layer('fg_mask_tgt').output)
+		model = Model(fgbg.inputs, outputs)
+
+
+	test = datareader.makeActionExampleList('test_vids.txt',1)
+	feed = datageneration.warpExampleGenerator(test,params,do_augment=False,return_pose_vectors=True)
+
 	
-	with tf.Session(config=config) as sess:
+	n_frames = len(test)
 
-		sess.run(tf.global_variables_initializer())
-		coord = tf.train.Coordinator()
-		threads = tf.train.start_queue_runners(coord=coord)
+	true_action = np.zeros((256,256,3,n_frames))
+	pred_action = np.zeros((256,256,3,n_frames))
+	mask = np.zeros((256,256,1,n_frames))
 
-		with tf.device(gpu):
-			vgg_model = VGG19(weights='imagenet',include_top=False,input_shape=(256,256,3))
-			networks.make_trainable(vgg_model,False)
-			fgbg = networks.network_fgbg(params,vgg_model)
-			fgbg.load_weights('../results/networks/fgbg/40000.h5')
-	
-			'''
-			outputs = [fgbg.outputs[0]]
-			outputs.append(fgbg.get_layer('mask_src').output)
-			outputs.append(fgbg.get_layer('fg_stack').output)
-			outputs.append(fgbg.get_layer('bg_src').output)
-			outputs.append(fgbg.get_layer('bg_tgt').output)
-			outputs.append(fgbg.get_layer('fg_tgt').output)
-			outputs.append(fgbg.get_layer('fg_mask_tgt').output)
-			'''
+	for i in xrange(n_frames):
+		print i
+		X,Y = next(feed)		
+		pred = model.predict(X[:-2])
+		true_action[:,:,:,i] = convert(np.reshape(Y,(256,256,3)))		
+		pred_action[:,:,:,i] = convert(np.reshape(pred[0],(256,256,3)))
+		mask[:,:,:,i] = pred[1]		
 
-			#model = Model(fgbg.inputs, outputs)
+	sio.savemat('results/action/1_gan.mat',{'true': true_action, 'pred': pred_action, 'mask': mask})
 
-		for j in xrange(len(golf_pose)):	
-			print j
-			X,Y = next(feed)			
-			pred = fgbg.predict(X[0:-1])[0]
-
-			sio.savemat('results/action2/' + str(j) + '.mat', {'pred': pred,'X':X[0], 'Y':Y, 'joints': X[-1]});
-
-				
 
 if __name__ == "__main__":
 	train('golfswinghd',sys.argv[1])

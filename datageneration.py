@@ -46,6 +46,8 @@ def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=Fals
 	scale_factor = param['obj_scale_factor']	
 	batch_size = param['batch_size']
 
+	ex_idx = 0
+
 	while True:
 
 		X_src = np.zeros((batch_size,img_height,img_width,3))
@@ -58,11 +60,14 @@ def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=Fals
 		Y = np.zeros((batch_size,img_height,img_width,3))
 	
 		for i in xrange(batch_size):
-			example = examples[np.random.randint(0,len(examples))]	
+			example = examples[ex_idx]	
+			ex_idx = (ex_idx+1)%len(examples)
 
 			I0,joints0,scale0,pos0 = readExampleInfo(example[:32])
 			I1,joints1,scale1,pos1 = readExampleInfo(example[32:])
 
+			#pos = pos0		
+			#scale=scale_factor/scale0
 			if(scale0 > scale1):
 				pos = pos0
 				scale = scale_factor/scale0
@@ -175,7 +180,7 @@ def transferExampleGenerator(examples0,examples1,param,rflip=0):
 			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
 '''
 
-
+'''
 def actionExampleGenerator(examples,param,return_pose_vectors=False):
     
 	img_width = param['IMG_WIDTH']
@@ -217,7 +222,7 @@ def actionExampleGenerator(examples,param,return_pose_vectors=False):
 				yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
 			else:
 				yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans,X_posevec_src,X_posevec_tgt],Y)
-
+'''
 
 '''
 def poseExampleGenerator(examples,param):
@@ -262,7 +267,6 @@ def poseExampleGenerator(examples,param):
 			Y[i,:,:,:] = posemap
 
 		yield ([X_src,X_mask],Y)
-'''
 
 def drawLimbsOnImage(I,joints,color=(0,0,255)):	
 
@@ -281,6 +285,7 @@ def drawLimbsOnImage(I,joints,color=(0,0,255)):
 		cv2.line(I,p1,p2,color,2) #colors[i],2)
 	
 	return I
+'''
 
 def randAugmentations(param):
 

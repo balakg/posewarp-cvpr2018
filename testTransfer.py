@@ -5,7 +5,6 @@ import sys
 import cv2
 import datareader
 import datageneration
-import paDataReader
 import networks
 import scipy.io as sio
 import param
@@ -26,13 +25,12 @@ def train(dataset,gpu_id):
 	tennis_params = param.getDatasetParams('tennis')
 	aux_params = param.getDatasetParams('test-aux')
 
-	_,lift_test = datareader.makeWarpExampleList(lift_params,0,2000,2,1)
 	_,golf_test = datareader.makeWarpExampleList(golf_params,0,5000,2,2)
 	_,workout_test = datareader.makeWarpExampleList(workout_params,0,2000,2,3)
 	_,tennis_test = datareader.makeWarpExampleList(tennis_params,0,2000,2,4)
 	_,aux_test = datareader.makeWarpExampleList(aux_params,0,2000,2,5)
 
-	test = lift_test + golf_test+workout_test + tennis_test + aux_test
+	test = golf_test + workout_test + tennis_test + aux_test
 
 	feed = datageneration.transferExampleGenerator(test,test,params)	
 
@@ -52,11 +50,11 @@ def train(dataset,gpu_id):
 			response_weights = sio.loadmat('mean_response.mat')
 
 
-			fgbg = networks.network_fgbg(params,vgg_model,response_weights,True,loss='vgg')
-			gen = networks.network_fgbg(params,vgg_model,response_weights,True,loss='vgg')
+			fgbg = networks.network_fgbg(params,vgg_model,response_weights,loss='vgg')
+			#fgbg.load_weights('../results/networks/fgbg/170000.h5')
 			disc = networks.discriminator(params)
-			gan = networks.gan(gen,disc,params,vgg_model,response_weights,0.01,1e-4)
-			gan.load_weights('../results/networks/gan/10000.h5')
+			gan = networks.gan(fgbg,disc,params,vgg_model,response_weights,0.01,1e-4)
+			gan.load_weights('../results/networks/wgan/1000.h5')
 		
 	
 		np.random.seed(17)
@@ -64,9 +62,9 @@ def train(dataset,gpu_id):
 		for j in xrange(n_batches):	
 			print j
 			X,Y = next(feed)		
-			pred = gan.predict(X)[0]
+			pred = fgbg.predict(X)
 
-			sio.savemat('results/transfer/' + str(j) + '.mat',{'X': X[0],'Y': Y, 'pred':pred}) 
+			sio.savemat('results/transfer3/' + str(j) + '.mat',{'X': X[0],'Y': Y, 'pred':pred}) 
 
 if __name__ == "__main__":
 	train('golfswinghd',sys.argv[1])

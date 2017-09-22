@@ -12,7 +12,6 @@ import keras
 def myConv(x_in,nf,ks=3,strides=1,activation='lrelu',ki='he_normal',name=None,dropout=False):
 
 	x_out = Conv2D(nf,kernel_size=ks, padding='same',kernel_initializer=ki,strides=strides)(x_in)
-	#x_out = BatchNormalization()(x_out)
 
 	if(dropout):
 		x_out = Dropout(0.2)(x_out)
@@ -46,7 +45,7 @@ def vggLoss(feat_net,feat_weights):
 
 		loss = []
 		for j in xrange(12):
-			std = feat_weights[str(j)][1]
+			std = feat_weights[str(j)][1]+0.1
 			std = tf.expand_dims(tf.expand_dims(tf.expand_dims(std,0),0),0)
 			d = tf.subtract(y_true_feat[j],y_pred_feat[j])
 			loss_j = tf.reduce_mean(tf.abs(tf.divide(d,std)))
@@ -377,30 +376,6 @@ def network_fgbg(param,feat_net=None, feat_weights=None,loss='vgg'):
 
 	return model
 
-def network_transform(param,feat_net=None, feat_weights=None,loss='vgg'):
-
-	IMG_HEIGHT = param['IMG_HEIGHT']
-	IMG_WIDTH = param['IMG_WIDTH']
-	n_joints = param['n_joints']
-	pose_dn = param['posemap_downsample']
-
-	src_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,3))
-	pose_src = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,10))
-	pose_tgt = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,10))
-	flow_in = Input(shape=(IMG_HEIGHT,IMG_WIDTH,2))
-
-	x = unet(src_in,concatenate([pose_src,pose_tgt]),[64]*2+[128]*9,[128]*4+[64])	
-	flow_delta = myConv(x,2,activation='linear',ki=RandomNormal(mean=0.0,stddev=0.0001),name='flow_delta')
-	flow = keras.layers.add([flow_in,flow_delta],name='flow')
-	
-	nf_dec = [256,256,256,128,64]
-	y1 = Dense2DSpatialTransformer(name='fg_warp')([src_in,flow])	
-	y2 = unet(y1,concatenate([pose_src,pose_tgt]),[64]*2+[128]*2+[256]*7,nf_dec)
-
-	model = Model(inputs=[src_in,pose_src,pose_tgt,flow_in], outputs=[y1,y2])
-	model.compile(optimizer=Adam(lr=1e-4),loss=['mae',vggLoss(feat_net,feat_weights)])
-
-	return model
 
 def network_pix2pix(param,feat_net=None, feat_weights=None, loss='vgg'):
 

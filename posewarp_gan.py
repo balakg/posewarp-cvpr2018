@@ -19,9 +19,9 @@ def createFeeds(params):
 	workout_params = param.getDatasetParams('workout')
 	tennis_params = param.getDatasetParams('tennis')
 
-	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,22000,2200,2,2)
-	workout_train,workout_test = datareader.makeWarpExampleList(workout_params,12500,1250,2,3)
-	tennis_train,tennis_test = datareader.makeWarpExampleList(tennis_params,10000,1000,2,4)
+	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,22000,2200,False,1)
+	workout_train,workout_test = datareader.makeWarpExampleList(workout_params,12500,1250,False,2)
+	tennis_train,tennis_test = datareader.makeWarpExampleList(tennis_params,10000,1000,False,3)
 
 	warp_train = golf_train + workout_train + tennis_train
 	warp_test = golf_test + workout_test + tennis_test
@@ -56,8 +56,8 @@ def train(model_name,gpu_id):
 		coord = tf.train.Coordinator()
 		threads = tf.train.start_queue_runners(coord=coord)
 
-		gan_lr = 1e-4
-		disc_lr = 1e-4
+		gan_lr = 5e-5
+		disc_lr = 5e-5
 		disc_loss = 0.1
 
 		with tf.device(gpu):
@@ -65,7 +65,7 @@ def train(model_name,gpu_id):
 			networks.make_trainable(vgg_model,False)
 			response_weights = sio.loadmat('mean_response.mat')
 			generator = networks.network_fgbg(params,vgg_model,response_weights)
-			generator.load_weights('../results/networks/fgbg/68000.h5')
+			generator.load_weights('../results/networks/fgbg_vgg/140000.h5')
 
 			discriminator = networks.discriminator(params)
 			discriminator.compile(loss='binary_crossentropy', optimizer=Adam(lr=disc_lr))
@@ -83,12 +83,9 @@ def train(model_name,gpu_id):
 			#Train discriminator
 			networks.make_trainable(discriminator,True)	
 	
-			X_tgt_img_disc = np.concatenate((Y,gen))# * np.tile(mask,[1,1,1,3])
+			X_tgt_img_disc = np.concatenate((Y,gen))
 			X_src_pose_disc = np.concatenate((X[1],X[1]))
 			X_tgt_pose_disc = np.concatenate((X[2],X[2]))
-
-			#sio.savemat('test.mat', {'X': X_img_disc, 'pose': X_tgt_pose_disc})
-			#return
 
 			L = np.zeros([2*batch_size,2])
 			L[0:batch_size,0] = 1
@@ -98,8 +95,7 @@ def train(model_name,gpu_id):
 			d_loss = discriminator.train_on_batch(inputs,L)
 			networks.make_trainable(discriminator,False)
 
-			#Not sure this does anything, but I train the discriminator a couple
-			#of iterations before starting the gan		
+			#Train the discriminator a couple of iterations before starting the gan		
 			if(step < 5):
 				util.printProgress(step,0,[0,d_loss])
 				step += 1

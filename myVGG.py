@@ -35,13 +35,6 @@ def vgg_norm():
 	
 	for i in xrange(len(model.layers)):
 		weights = model_orig.layers[i].get_weights()
-		'''	
-		if(len(weights) == 2):
-			#weights[0] /= norms[i]
-			#weights[1] /= norms[i]		
-			print weights[0].shape
-			print weights[1].shape
-		'''
 		model.layers[i].set_weights(weights)
 	
 	#responses = sio.loadmat('mean_response.mat')
