@@ -4,7 +4,7 @@ import cv2
 import scipy.io as sio
 from scipy import interpolate
 import transformations
-
+import datareader
 
 limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
 
@@ -109,6 +109,15 @@ def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=Fals
 			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
 		else:
 			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans,X_posevec_src,X_posevec_tgt],Y)
+
+
+def createFeed(params,ex_file,n_examples,do_augment=True,return_pose_vectors=False):
+
+	ex_list = datareader.makeWarpExampleList(ex_file,n_examples)
+	feed = warpExampleGenerator(ex_list,params,do_augment,return_pose_vectors)
+
+	return feed
+
 
 '''
 def transferExampleGenerator(examples0,examples1,param,rflip=0):

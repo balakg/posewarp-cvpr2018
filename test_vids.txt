@@ -1,0 +1,27 @@
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/Extreme Tennis Topspin Forehand - Slow Motion Study
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/Max Mirni
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/sarah_beth_power
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/Get a Killer, Consistent Return of Serve
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/Open Stance vs. Closed Stance Tennis Forehand
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/Standing Yoga Poses for Hips - Day 10 - The 30 Days of Yoga Challenge
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/Juan Martin del Potro Serve In Super Slow Motion 2 - 2013 Cincinnati Open
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/Return of Serve Intermediate Instruction
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/bri_yoga_squat
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/10 Minute Standing Pilates Workout - No Equipment Needed
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/Tennis Tip_ Proper Weight Transfer On Topspin Groundstrokes
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/five_parks_invigorating
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/Refresh, Relax, and Restore_ Stretching, Pilates, Yoga Workout for Tight Muscles
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/test/frames/3 standing yoga poses to improve your balance
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/GREG NORMAN 2014 GOLF SWING AFTER CHAINSAW INJURY - HANDS AT IMPACT (CLOSE UP) SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Jason Day and Rory McIlroy's swing comparison at Dell Match Play_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/ZACH JOHNSON 120fps DRIVER FACE-ON SLOW MOTION & REGULAR GOLF SWING - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JERRY KELLY - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/AI MIYAZATO 120fps SLOW MOTION FACE ON DRIVER GOLF SWING 2015 CME GROUP TOUR CHAMPIONSHIP 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Oliver Goss golf swings (long iron and driver) - Emirates Australian Open 2015._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/TOM LEHMAN 120fps DUAL FACE ON DRIVER GOLF SWINGS 1080 HD_2
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Trevor Immelman golf swing (driver) face-on view, British Masters, October 2016._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHARLEY HULL 4K UHD SLOW MOTION FACE ON DRIVER GOLF SWING_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHARLES HOWELL III - DRIVER SWING SYNCED FULL & SLOW MOTION TIBURON GOLF COURSE 1080p HD_2
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Michael Moore, Tim Wood, Geoff Drakeford golf swings (drivers) Emirates Australian Open, 2015._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BRITTANY LANG - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/RORY SABBATINI - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION - 1080p HD_1

@@ -2,7 +2,6 @@ import tensorflow as tf
 import os
 import numpy as np
 import sys
-import datareader
 import datageneration
 import networks
 import scipy.io as sio
@@ -12,25 +11,6 @@ import myVGG
 from keras.models import load_model,Model
 from keras.optimizers import Adam,RMSprop
 from keras.backend.tensorflow_backend import set_session
-
-def createFeeds(params):
-
-	golf_params = param.getDatasetParams('golfswinghd')
-	workout_params = param.getDatasetParams('workout')
-	tennis_params = param.getDatasetParams('tennis')
-	
-	golf_train,golf_test = datareader.makeWarpExampleList(golf_params,22000,2200,False,2)
-	workout_train,workout_test = datareader.makeWarpExampleList(workout_params,12500,1250,False,3)
-	tennis_train,tennis_test = datareader.makeWarpExampleList(tennis_params,10000,1000,False,4)
-
-	warp_train = golf_train + workout_train + tennis_train
-	warp_test = golf_test + workout_test + tennis_test
-
-	warp_train_feed = datageneration.warpExampleGenerator(warp_train,params)
-	warp_test_feed = datageneration.warpExampleGenerator(warp_test,params)
-
-	return warp_train_feed,warp_test_feed
-
 
 def train(model_name,gpu_id):	
 
@@ -42,8 +22,9 @@ def train(model_name,gpu_id):
 	if not os.path.isdir(network_dir):
 		os.mkdir(network_dir)
 
-	warp_train_feed,warp_test_feed = createFeeds(params)
-
+	train_feed=datageneration.createFeed(params,"train_vids.txt",50000)
+	test_feed=datageneration.createFeed(params,"test_vids.txt",5000)
+	
 	batch_size = params['batch_size']
 
 	config = tf.ConfigProto()
@@ -55,14 +36,14 @@ def train(model_name,gpu_id):
 	disc_lr = 5e-5
 	disc_loss = 0.1
 
-	vgg_model_num = 120000
+	vgg_model_num = 184000
 
 	with tf.device(gpu):
 		vgg_model = myVGG.vgg_norm()
 		networks.make_trainable(vgg_model,False)
 		response_weights = sio.loadmat('mean_response.mat')
 		generator = networks.network_fgbg(params,vgg_model,response_weights)
-		generator.load_weights('../results/networks/fgbg_vgg/' + str(vgg_model_num) + '.h5')
+		generator.load_weights('../results/networks/fgbg_vgg_new/' + str(vgg_model_num) + '.h5')
 
 		discriminator = networks.discriminator(params)
 		discriminator.compile(loss=networks.wass,optimizer=RMSprop(disc_lr))
@@ -76,7 +57,7 @@ def train(model_name,gpu_id):
 				weights = [np.clip(w, -0.01, 0.01) for w in weights]
 				l.set_weights(weights)
 
-			X,Y = next(warp_train_feed)
+			X,Y = next(train_feed)
 
 			with tf.device(gpu):
 				gen = generator.predict(X)	
@@ -97,7 +78,7 @@ def train(model_name,gpu_id):
 	
 		#TRAIN GAN
 		L = -1*np.ones(batch_size)
-		X,Y = next(warp_train_feed)
+		X,Y = next(train_feed)
 		g_loss = gan.train_on_batch(X,[Y,L])
 		util.printProgress(step,0,[g_loss[1],d_loss])
 

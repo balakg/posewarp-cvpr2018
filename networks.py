@@ -78,17 +78,17 @@ def discriminator(param):
 	x = myConv(x_tgt,64,ks=5,strides=2) #128
 	x = concatenate([x,x_src_pose,x_tgt_pose])
 	x = myConv(x,128,ks=5,strides=2) #64
-	x = myConv(x,256,ks=5,strides=2) #32
-	x = myConv(x,256,ks=5,strides=2) #16
+	x = myConv(x,256,strides=2) #32
+	x = myConv(x,256,strides=2) #16
 	x = myConv(x,256,strides=2) #8
-	x = myConv(x,256,strides=2) #4
+	x = myConv(x,256) #8
 
 	x = Flatten()(x)
 
-	x = myDense(x,512)
-	x = myDense(x,512)
-	y = myDense(x,2,activation='softmax')
-	#y = myDense(x,1,activation='linear') #for wgan
+	x = myDense(x,256)
+	x = myDense(x,256)
+	#y = myDense(x,2,activation='softmax')
+	y = myDense(x,1,activation='linear') #for wgan
 
 	model = Model(inputs=[x_tgt,x_src_pose,x_tgt_pose],outputs=y, name='discriminator')
 	return model
@@ -111,12 +111,12 @@ def gan(generator,discriminator,param,feat_net,feat_weights,disc_loss,lr):
 
 	make_trainable(discriminator, False)
 	y_gen = generator([src_in,pose_src,pose_tgt,mask_in,trans_in])
-	#y_gen = generator([src_in, pose_src,pose_tgt])
 	y_class = discriminator([y_gen,pose_src,pose_tgt])
 
 	gan = Model(inputs=[src_in,pose_src,pose_tgt,mask_in,trans_in],outputs=[y_gen,y_class], name='gan')
-	gan.compile(optimizer=Adam(lr=lr),loss=[vggLoss(feat_net,feat_weights), 'binary_crossentropy'], loss_weights=[1.0,disc_loss])
-	#gan.compile(optimizer=RMSprop(lr=lr),loss=[vggLoss(feat_net,feat_weights), wass], loss_weights=[1.0,disc_loss])
+	#gan.compile(optimizer=Adam(lr=lr),loss=[vggLoss(feat_net,feat_weights), 'binary_crossentropy'], 
+	#				loss_weights=[1.0,disc_loss])
+	gan.compile(optimizer=RMSprop(lr=lr),loss=[vggLoss(feat_net,feat_weights), wass], loss_weights=[1.0,disc_loss])
 
 	return gan
 
@@ -268,33 +268,6 @@ def vgg_preprocess(arg):
 	return tf.stack([r,g,b],axis=3)
 
 def unet(x_in,pose_in,nf_enc,nf_dec):
-
-	'''
-	skips = []
-	x = myConv(x_in,nf_enc[0],ks=7,activation='none') #256
-	skips.append(x)
-	x = LeakyReLU(0.2)(x)
-	x = myConv(x,nf_enc[1],strides=2)#128
-	x = concatenate([x,pose_in])
-	x = myConv(x,nf_enc[2],activation='none')
-	skips.append(x)
-	x = LeakyReLU(0.2)(x)
-	x = myConv(x,nf_enc[3],strides=2)#64
-	x = myConv(x,nf_enc[4],activation='none')
-	skips.append(x)
-	x = LeakyReLU(0.2)(x)
-	x = myConv(x,nf_enc[5],strides=2)#32
-	x = myConv(x,nf_enc[6],activation='none')
-	skips.append(x)
-	x = LeakyReLU(0.2)(x)
-	x = myConv(x,nf_enc[7],strides=2)#16
-	x = myConv(x,nf_enc[8],activation='none')
-	skips.append(x)
-	x = LeakyReLU(0.2)(x)
-	x = myConv(x,nf_enc[9],strides=2)#8
-	x = myConv(x,nf_enc[10])
-	skips.reverse()
-	'''
 
 	x0 = myConv(x_in,nf_enc[0],ks=7) #256
 	x1 = myConv(x0,nf_enc[1],strides=2)#128

@@ -2,7 +2,6 @@ import tensorflow as tf
 import os
 import numpy as np
 import sys
-import datareader
 import datageneration
 import networks
 import scipy.io as sio
@@ -23,11 +22,8 @@ def train(model_name,gpu_id):
 	if not os.path.isdir(network_dir):
 		os.mkdir(network_dir)
 
-	train = datareader.makeWarpExampleList('train_vids.txt',50000)
-	test = datareader.makeWarpExampleList('test_vids.txt',5000)
-
-	train_feed = datageneration.warpExampleGenerator(train,params,return_pose_vectors=False)
-	test_feed = datageneration.warpExampleGenerator(test,params,return_pose_vectors=False)
+	train_feed=datageneration.createFeed(params,"train_vids.txt",50000)
+	test_feed=datageneration.createFeed(params,"test_vids.txt",5000)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
@@ -37,7 +33,7 @@ def train(model_name,gpu_id):
 	with tf.device(gpu):
 		vgg_model = myVGG.vgg_norm()
 		networks.make_trainable(vgg_model,False)
-		response_weights = sio.loadmat('mean_response_new.mat')
+		response_weights = sio.loadmat('mean_response.mat')
 		model = networks.network_fgbg(params,vgg_model,response_weights,loss='vgg')
 		#model = networks.network_pix2pix(params,vgg_model,response_weights,loss='l1')
 		#model.load_weights('../results/networks/fgbg_vgg_new/80000.h5')
