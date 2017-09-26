@@ -14,10 +14,10 @@ def getGeneralParams():
 	param['n_joints'] = 14
 
 	param['test_interval'] = 500
-	param['model_save_interval'] = 500
+	param['model_save_interval'] = 5000
 	param['project_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/pose2image'
 
-	param['batch_size'] = 2
+	param['batch_size'] = 1
 	param['seq_len'] = 2
 	return param
 

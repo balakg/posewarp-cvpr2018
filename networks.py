@@ -87,8 +87,8 @@ def discriminator(param):
 
 	x = myDense(x,256)
 	x = myDense(x,256)
-	#y = myDense(x,2,activation='softmax')
-	y = myDense(x,1,activation='linear') #for wgan
+	y = myDense(x,2,activation='softmax')
+	#y = myDense(x,1,activation='linear') #for wgan
 
 	model = Model(inputs=[x_tgt,x_src_pose,x_tgt_pose],outputs=y, name='discriminator')
 	return model
@@ -114,9 +114,9 @@ def gan(generator,discriminator,param,feat_net,feat_weights,disc_loss,lr):
 	y_class = discriminator([y_gen,pose_src,pose_tgt])
 
 	gan = Model(inputs=[src_in,pose_src,pose_tgt,mask_in,trans_in],outputs=[y_gen,y_class], name='gan')
-	#gan.compile(optimizer=Adam(lr=lr),loss=[vggLoss(feat_net,feat_weights), 'binary_crossentropy'], 
-	#				loss_weights=[1.0,disc_loss])
-	gan.compile(optimizer=RMSprop(lr=lr),loss=[vggLoss(feat_net,feat_weights), wass], loss_weights=[1.0,disc_loss])
+	gan.compile(optimizer=Adam(lr=lr),loss=[vggLoss(feat_net,feat_weights), 'binary_crossentropy'], 
+					loss_weights=[1.0,disc_loss])
+	#gan.compile(optimizer=RMSprop(lr=lr),loss=[vggLoss(feat_net,feat_weights), wass], loss_weights=[1.0,disc_loss])
 
 	return gan
 
@@ -361,9 +361,7 @@ def network_pix2pix(param,feat_net=None, feat_weights=None, loss='vgg'):
 	pose_src = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,14))
 	pose_tgt = Input(shape=(IMG_HEIGHT/pose_dn,IMG_WIDTH/pose_dn,14))
 
-	x = unet(src_in,concatenate([pose_src,pose_tgt]),[64]+[128]*3+[256]*7,
-				[256,256,256,128,64])
-
+	x = unet(src_in,concatenate([pose_src,pose_tgt]),[64]+[128]*3+[256]*7,[256,256,256,128,64])
 	y = myConv(x,3,activation='tanh')
 
 	model = Model(inputs=[src_in,pose_src,pose_tgt], outputs=[y])

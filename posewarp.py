@@ -34,8 +34,8 @@ def train(model_name,gpu_id):
 		vgg_model = myVGG.vgg_norm()
 		networks.make_trainable(vgg_model,False)
 		response_weights = sio.loadmat('mean_response.mat')
-		model = networks.network_fgbg(params,vgg_model,response_weights,loss='vgg')
-		#model = networks.network_pix2pix(params,vgg_model,response_weights,loss='l1')
+		#model = networks.network_fgbg(params,vgg_model,response_weights,loss='vgg')
+		model = networks.network_pix2pix(params,vgg_model,response_weights,loss='l1')
 		#model.load_weights('../results/networks/fgbg_vgg_new/80000.h5')
 
 	#model.summary()
@@ -44,7 +44,7 @@ def train(model_name,gpu_id):
 		X,Y = next(train_feed)			
 		
 		with tf.device(gpu):
-			train_loss = model.train_on_batch(X,Y)
+			train_loss = model.train_on_batch(X[0:3],Y)
 		util.printProgress(step,0,train_loss)
 	
 		if(step % params['test_interval'] == 0):
@@ -52,7 +52,7 @@ def train(model_name,gpu_id):
 			test_loss = 0
 			for j in xrange(n_batches):	
 				X,Y = next(test_feed)			
-				test_loss += np.array(model.test_on_batch(X,Y))
+				test_loss += np.array(model.test_on_batch(X[0:3],Y))
 			
 			test_loss /= (n_batches)
 			util.printProgress(step,1,test_loss)

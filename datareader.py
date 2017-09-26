@@ -17,10 +17,10 @@ def getPersonScale(joints):
 	return (size/200.0)
 
 def getExampleInfo(vid_name,frame_num,box,X):
-	I_name_j = os.path.join(vid_name[:-1],str(frame_num+1)+'.jpg')
+	I_name_j = os.path.join(vid_name,str(frame_num+1)+'.jpg')
 
 	if(not os.path.isfile(I_name_j)):
-		I_name_j = os.path.join(vid_name[:-1],str(frame_num+1)+'.png')
+		I_name_j = os.path.join(vid_name,str(frame_num+1)+'.png')
 
 	joints = X[:,:,frame_num]-1.0
 	box_j = box[frame_num,:]
@@ -32,16 +32,19 @@ def getExampleInfo(vid_name,frame_num,box,X):
 def makeWarpExampleList(vid_file,n_examples):
 	
 	f = open(vid_file)
-	vid_paths = f.readlines()
+	vid_lines = f.read().splitlines()
 	f.close()
 	
-	n_vids = len(vid_paths)
+	n_vids = len(vid_lines)
 
 	ex = []
 	for i in xrange(n_examples):
-		vid_path = vid_paths[np.random.randint(0,n_vids)]
-		path,vid_name = os.path.split(vid_path)	
-		info_name = path[:-6] + 'info/' + vid_name[:-1] + '.mat'
+		vid_line = vid_lines[np.random.randint(0,n_vids)]
+		vid_path = vid_line[0:-2]
+		class_id = vid_line[-1]
+
+		path,vid_name = os.path.split(vid_path)
+		info_name = path[:-6] + 'info/' + vid_name + '.mat'
 
 		info = sio.loadmat(info_name)		
 		box = info['data']['bbox'][0][0]
@@ -56,6 +59,8 @@ def makeWarpExampleList(vid_file,n_examples):
 		l = []
 		for j in xrange(len(frames)):
 			l += getExampleInfo(vid_path,frames[j],box,X)
+		
+		l.append(class_id)
 
 		ex.append(l)
 

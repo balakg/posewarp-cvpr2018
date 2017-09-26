@@ -47,7 +47,7 @@ def train(dataset,gpu_id):
 		outputs.append(fgbg.get_layer('fg_mask_tgt').output)
 		model = Model(fgbg.inputs, outputs)
 	
-	n_batches = 20
+	n_batches = 100
 	for j in xrange(n_batches):	
 		print j
 		X,Y = next(feed)		

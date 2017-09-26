@@ -36,7 +36,7 @@ def readExampleInfo(example):
 	pos = np.array(example[29:31])
 	return (I,joints,scale,pos)
 
-def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=False):
+def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=False,return_class=False):
     
 	img_width = param['IMG_WIDTH']
 	img_height = param['IMG_HEIGHT']
@@ -57,6 +57,7 @@ def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=Fals
 		X_trans = np.zeros((batch_size,2,3,11))
 		X_posevec_src = np.zeros((batch_size,n_joints*2))
 		X_posevec_tgt = np.zeros((batch_size,n_joints*2))
+		X_class = np.zeros((batch_size,1))
 		Y = np.zeros((batch_size,img_height,img_width,3))
 	
 		for i in xrange(batch_size):
@@ -64,7 +65,8 @@ def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=Fals
 			ex_idx = (ex_idx+1)%len(examples)
 
 			I0,joints0,scale0,pos0 = readExampleInfo(example[:32])
-			I1,joints1,scale1,pos1 = readExampleInfo(example[32:])
+			I1,joints1,scale1,pos1 = readExampleInfo(example[32:64])
+			X_class[i,0] = example[-1]
 
 			#pos = pos0		
 			#scale=scale_factor/scale0
@@ -105,16 +107,21 @@ def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=Fals
 
 			Y[i,:,:,:] = I1
 		
-		if(not return_pose_vectors):
-			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
-		else:
-			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans,X_posevec_src,X_posevec_tgt],Y)
+		out = [X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans]
+		
+		if(return_pose_vectors):
+			out.append(X_posevec_src)
+			out.append(X_posevec_tgt)		
+		if(return_class):
+			out.append(X_class)
+
+		yield (out,Y)
 
 
-def createFeed(params,ex_file,n_examples,do_augment=True,return_pose_vectors=False):
+def createFeed(params,ex_file,n_examples,do_augment=True,return_pose_vectors=False,return_class=False):
 
 	ex_list = datareader.makeWarpExampleList(ex_file,n_examples)
-	feed = warpExampleGenerator(ex_list,params,do_augment,return_pose_vectors)
+	feed = warpExampleGenerator(ex_list,params,do_augment,return_pose_vectors,return_class)
 
 	return feed
 
