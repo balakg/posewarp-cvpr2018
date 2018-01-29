@@ -61,18 +61,29 @@ def train(dataset,gpu_id):
 		networks.make_trainable(vgg_model,False)
 		response_weights = sio.loadmat('mean_response.mat')
 
-		fgbg_vgg = networks.network_fgbg(params,vgg_model,response_weights)
-		fgbg_vgg.load_weights('../results/networks/fgbg_vgg/184000.h5')	
+		#fgbg_vgg = networks.network_fgbg(params,vgg_model,response_weights)
+		#fgbg_vgg.load_weights('../results/networks/fgbg_vgg/184000.h5')	
 
-		gen = networks.network_fgbg(params,vgg_model,response_weights)
-		disc = networks.discriminator(params)
-		gan = networks.gan(gen,disc,params,vgg_model,response_weights,0.1,1e-4)
-		gan.load_weights('../results/networks/fgbg_gan/7000.h5')
+		#gen = networks.network_fgbg(params,vgg_model,response_weights)
+		#disc = networks.discriminator(params)
+		#gan = networks.gan(gen,disc,params,vgg_model,response_weights,0.1,1e-4)
+		#gan.load_weights('../results/networks/fgbg_gan/7000.h5')
 			
-		fgbg_l1 = networks.network_fgbg(params,vgg_model,response_weights,loss='l1')
-		fgbg_l1.load_weights('../results/networks/fgbg_l1/100000.h5')	
+		#fgbg_l1 = networks.network_fgbg(params,vgg_model,response_weights,loss='l1')
+		#fgbg_l1.load_weights('../results/networks/fgbg_l1/100000.h5')	
 	
 		#mask_model = Model(fgbg_vgg.inputs,fgbg_vgg.get_layer('fg_mask_tgt').output)
+
+		ed_vgg = networks.network_pix2pix(params,vgg_model,response_weights)
+		ed_vgg.load_weights('../results/networks/ed_vgg/135000.h5')	
+
+		gen = networks.network_pix2pix(params,vgg_model,response_weights)
+		disc = networks.discriminator(params)
+		gan = networks.gan(gen,disc,params,vgg_model,response_weights,0.1,1e-4)
+		gan.load_weights('../results/networks/ed_gan/2000.h5')
+			
+		ed_l1 = networks.network_pix2pix(params,vgg_model,response_weights,loss='l1')
+		ed_l1.load_weights('../results/networks/ed_l1/80000.h5')	
 	
 	n_examples = 500
 	
@@ -84,9 +95,9 @@ def train(dataset,gpu_id):
 		print j
 		X,Y = next(feed)		
 
-		pred_l1 = fgbg_l1.predict(X[:-3])
-		pred_vgg = fgbg_vgg.predict(X[:-3])
-		pred_gan = gen.predict(X[:-3])
+		pred_l1 = ed_l1.predict(X[:3]) #X[:-3])
+		pred_vgg = ed_vgg.predict(X[:3]) #X[:-3])
+		pred_gan = gen.predict(X[:3]) #[:-3])
 
 		'''
 		#mask = mask_model.predict(X[:-3])
@@ -115,8 +126,8 @@ def train(dataset,gpu_id):
 		poses[j,0:28] = X[-3]
 		poses[j,28:] = X[-2]
 		classes[j] = int(X[-1])
-		sio.savemat('results/comparison/' + str(j) + '.mat', {'X': X[0], 'Y': Y, 'pred_l1': pred_l1, 'pred_vgg': pred_vgg, 'pred_gan': pred_gan})
-		sio.savemat('results/comparison_fgbg.mat',{'metrics': metrics, 'poses': poses, 'classes': classes})
+		sio.savemat('results/comparison/pix2pix/' + str(j) + '.mat', {'X': X[0], 'Y': Y, 'pred_l1': pred_l1, 'pred_vgg': pred_vgg, 'pred_gan': pred_gan})
+		sio.savemat('results/comparison_pix2pix.mat',{'metrics': metrics, 'poses': poses, 'classes': classes})
 
 
 if __name__ == "__main__":

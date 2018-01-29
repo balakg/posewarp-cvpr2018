@@ -10,7 +10,7 @@ def vgg_preprocess(x):
 
 	return x
 
-def printProgress(step,test,train_loss):
+def printProgress(step,test,train_loss,time=None):
 	s = str(step) + "," + str(test)
 
 	if(isinstance(train_loss,list) or isinstance(train_loss,np.ndarray)):
@@ -18,6 +18,9 @@ def printProgress(step,test,train_loss):
 			s += "," + str(train_loss[i])
 	else:
 		s += "," + str(train_loss)
+
+	if(time is not None):
+		s += "," + str(time)
 
 	print s
 	sys.stdout.flush()

@@ -21,7 +21,7 @@ def train(dataset,gpu_id):
 	gpu = '/gpu:' + str(gpu_id)
 
 	np.random.seed(17)
-	feed = datageneration.createFeed(params,'test_vids.txt',5000,False,True)
+	feed = datageneration.createFeed(params,'test_vids.txt',False,True)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
@@ -32,11 +32,11 @@ def train(dataset,gpu_id):
 		vgg_model = myVGG.vgg_norm()
 		networks.make_trainable(vgg_model,False)
 		response_weights = sio.loadmat('mean_response.mat')
-		fgbg = networks.network_fgbg(params,vgg_model,response_weights)
-		#fgbg.load_weights('../results/networks/fgbg_vgg_new/184000.h5')
-		disc = networks.discriminator(params)
-		gan = networks.gan(fgbg,disc,params,vgg_model,response_weights,0.01,1e-4)
-		gan.load_weights('../results/networks/fgbg_gan/7000.h5')
+		fgbg = networks.network_fgbg(params)
+		fgbg.load_weights('../results/networks/fgbg_vgg/20000.h5')
+		#disc = networks.discriminator(params)
+		#gan = networks.gan(fgbg,disc,params,vgg_model,response_weights,0.01,1e-4)
+		#gan.load_weights('../results/networks/fgbg_gan/7000.h5')
 
 		outputs = [fgbg.outputs[0]]
 		outputs.append(fgbg.get_layer('mask_src').output)
@@ -47,13 +47,13 @@ def train(dataset,gpu_id):
 		outputs.append(fgbg.get_layer('fg_mask_tgt').output)
 		model = Model(fgbg.inputs, outputs)
 	
-	n_batches = 100
+	n_batches = 10
 	for j in xrange(n_batches):	
 		print j
 		X,Y = next(feed)		
 		pred = model.predict(X[:-2])
 	
-		sio.savemat('results/gan7000/' + str(j) + '.mat',{'X': X[0],'Y': Y, 'pred': pred[0], 'mask_src': pred[1],
+		sio.savemat('results/fgbg_vgg/' + str(j) + '.mat',{'X': X[0],'Y': Y, 'pred': pred[0], 'mask_src': pred[1],
 					'fg_stack': pred[2], 'bg_src': pred[3], 'bg_tgt': pred[4], 'fg_tgt': pred[5], 'fg_mask_tgt': pred[6], 
 					'prior': X[3], 'pose_src': X[-2], 'pose_tgt': X[-1]})	
 

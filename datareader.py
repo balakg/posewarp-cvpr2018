@@ -4,31 +4,51 @@ import scipy.io as sio
 import os
 import json
 
-def getPersonScale(joints):
-	torso_size = (-joints[0][1] + (joints[8][1] + joints[11][1])/2.0)
-	peak_to_peak = np.ptp(joints,axis=0)[1]
-	#rarm_length = np.sqrt((joints[2][0] - joints[4][0])**2 + (joints[2][1]-joints[4][1])**2)			
-	#larm_length = np.sqrt((joints[5][0] - joints[7][0])**2 + (joints[5][1]-joints[7][1])**2)
-	rcalf_size = np.sqrt((joints[9][1] - joints[10][1])**2 + (joints[9][0] - joints[10][0])**2)
-	lcalf_size = np.sqrt((joints[12][1] - joints[13][1])**2 + (joints[12][0] - joints[13][0])**2)
-	calf_size = (lcalf_size + rcalf_size)/2.0
+def makeVidInfoList(vid_file):
+	
+	f = open(vid_file)
+	vid_lines = f.read().splitlines()
+	f.close()
+	
+	n_vids = len(vid_lines)
 
-	size = np.max([2.5 * torso_size,calf_size*5,peak_to_peak*1.1]) 
-	return (size/200.0)
+	vid_info = []
+		
+	for i in xrange(n_vids):
+		vid_line = vid_lines[i] #np.random.randint(0,n_vids)]
+		vid_path = vid_line
+		#class_id = vid_line[-1]
 
-def getExampleInfo(vid_name,frame_num,box,X):
-	I_name_j = os.path.join(vid_name,str(frame_num+1)+'.jpg')
+		path,vid_name = os.path.split(vid_path)
+		info_name = path[:-6] + 'info/' + vid_name + '.mat'
 
-	if(not os.path.isfile(I_name_j)):
-		I_name_j = os.path.join(vid_name,str(frame_num+1)+'.png')
+		info = sio.loadmat(info_name)		
+		box = info['data']['bbox'][0][0]
+		X = info['data']['X'][0][0]
 
-	joints = X[:,:,frame_num]-1.0
-	box_j = box[frame_num,:]
-	scale = getPersonScale(joints)
-	pos = [(box_j[0] + box_j[2]/2.0), (box_j[1] + box_j[3]/2.0)] 
-	lj = [I_name_j] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
-	return lj
+		vid_info.append([info,box,X,vid_path])
 
+		'''
+		n_frames = X.shape[2]
+		frames = np.random.choice(n_frames,2,replace=False)
+
+		#print i,n_examples
+		while(abs(frames[0] - frames[1])/(n_frames*1.0) <= 0.02):
+			frames = np.random.choice(n_frames,2,replace=False)
+
+		l = []
+		for j in xrange(len(frames)):
+			l += getExampleInfo(vid_path,frames[j],box,X)
+		
+		l.append(class_id)
+
+		ex.append(l)
+		'''
+
+	return vid_info
+
+
+'''
 def makeWarpExampleList(vid_file,n_examples):
 	
 	f = open(vid_file)
@@ -53,7 +73,8 @@ def makeWarpExampleList(vid_file,n_examples):
 		n_frames = X.shape[2]
 		frames = np.random.choice(n_frames,2,replace=False)
 
-		while(n_frames > 100 and abs(frames[0] - frames[1]) <= 2):
+		#print i,n_examples
+		while(abs(frames[0] - frames[1])/(n_frames*1.0) <= 0.02):
 			frames = np.random.choice(n_frames,2,replace=False)
 
 		l = []
@@ -65,6 +86,8 @@ def makeWarpExampleList(vid_file,n_examples):
 		ex.append(l)
 
 	return ex
+'''
+
 
 def makeActionExampleList(vid_file,example_num):
 	

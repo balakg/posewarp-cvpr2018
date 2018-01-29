@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import json
 import cv2
@@ -8,26 +9,30 @@ import datareader
 
 limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
 
-def randScale(param):
-	rnd = np.random.rand()
-	return ( param['scale_max']-param['scale_min']) * rnd + param['scale_min']
+def getPersonScale(joints):
+	torso_size = (-joints[0][1] + (joints[8][1] + joints[11][1])/2.0)
+	peak_to_peak = np.ptp(joints,axis=0)[1]
+	#rarm_length = np.sqrt((joints[2][0] - joints[4][0])**2 + (joints[2][1]-joints[4][1])**2)			
+	#larm_length = np.sqrt((joints[5][0] - joints[7][0])**2 + (joints[5][1]-joints[7][1])**2)
+	rcalf_size = np.sqrt((joints[9][1] - joints[10][1])**2 + (joints[9][0] - joints[10][0])**2)
+	lcalf_size = np.sqrt((joints[12][1] - joints[13][1])**2 + (joints[12][0] - joints[13][0])**2)
+	calf_size = (lcalf_size + rcalf_size)/2.0
 
-def randRot( param ):
-	return (np.random.rand()-0.5)*2 * param['max_rotate_degree']
+	size = np.max([2.5 * torso_size,calf_size*5,peak_to_peak*1.1]) 
+	return (size/200.0)
 
-def randShift( param ):
-	shift_px = param['max_px_shift']
+def getExampleInfo(vid_name,frame_num,box,X):
+	I_name_j = os.path.join(vid_name,str(frame_num+1)+'.jpg')
 
-	x_shift = int(shift_px * (np.random.rand()-0.5))
-	y_shift = int(shift_px * (np.random.rand()-0.5))
-	return x_shift, y_shift
+	if(not os.path.isfile(I_name_j)):
+		I_name_j = os.path.join(vid_name,str(frame_num+1)+'.png')
 
-def randSat(param):
-
-	min_sat = 1 - param['max_sat_factor']
-	max_sat = 1 + param['max_sat_factor']
-
-	return np.random.rand()*(max_sat-min_sat) + min_sat
+	joints = X[:,:,frame_num]-1.0
+	box_j = box[frame_num,:]
+	scale = getPersonScale(joints)
+	pos = [(box_j[0] + box_j[2]/2.0), (box_j[1] + box_j[3]/2.0)] 
+	lj = [I_name_j] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
+	return lj
 
 def readExampleInfo(example):
 	I = cv2.imread(example[0])
@@ -36,7 +41,8 @@ def readExampleInfo(example):
 	pos = np.array(example[29:31])
 	return (I,joints,scale,pos)
 
-def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=False,return_class=False):
+
+def warpExampleGenerator(vid_info_list,param,do_augment=True,return_pose_vectors=False,return_class=False):
     
 	img_width = param['IMG_WIDTH']
 	img_height = param['IMG_HEIGHT']
@@ -45,8 +51,6 @@ def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=Fals
 	n_joints = param['n_joints']
 	scale_factor = param['obj_scale_factor']	
 	batch_size = param['batch_size']
-
-	ex_idx = 0
 
 	while True:
 
@@ -57,16 +61,31 @@ def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=Fals
 		X_trans = np.zeros((batch_size,2,3,11))
 		X_posevec_src = np.zeros((batch_size,n_joints*2))
 		X_posevec_tgt = np.zeros((batch_size,n_joints*2))
-		X_class = np.zeros((batch_size,1))
+		#X_class = np.zeros((batch_size,1))
 		Y = np.zeros((batch_size,img_height,img_width,3))
 	
 		for i in xrange(batch_size):
-			example = examples[ex_idx]	
-			ex_idx = (ex_idx+1)%len(examples)
+				
+			#1. choose random video.
+			vid = np.random.choice(len(vid_info_list),1)[0]		
+			vid_info = vid_info_list[vid][0]
+			vid_bbox = vid_info_list[vid][1]
+			vid_X = vid_info_list[vid][2]
+			vid_path = vid_info_list[vid][3]	
+			#vid_class = vid_info_list[vid][4]			
 
-			I0,joints0,scale0,pos0 = readExampleInfo(example[:32])
-			I1,joints1,scale1,pos1 = readExampleInfo(example[32:64])
-			X_class[i,0] = example[-1]
+			#2. choose pair of frames
+			n_frames = vid_X.shape[2]	
+			frames = np.random.choice(n_frames,2,replace=False)
+			while(abs(frames[0] - frames[1])/(n_frames*1.0) <= 0.02):
+				frames = np.random.choice(n_frames,2,replace=False)
+
+			example0 = getExampleInfo(vid_path,frames[0],vid_bbox,vid_X)
+			example1 = getExampleInfo(vid_path,frames[1],vid_bbox,vid_X)
+			
+			I0,joints0,scale0,pos0 = readExampleInfo(example0)
+			I1,joints1,scale1,pos1 = readExampleInfo(example1)
+			#X_class[i,0] = vid_class
 
 			#pos = pos0		
 			#scale=scale_factor/scale0
@@ -85,6 +104,8 @@ def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=Fals
 
 			if(do_augment):
 				rflip,rscale,rshift,rdegree,rsat = randAugmentations(param)				
+				#rshift2 = randShift(param)
+				#rshift0 = (rshift[0] + rshift2[0], rshift[1]+rshift2[1])
 				I0,joints0 = augment(I0,joints0,rflip,rscale,rshift,rdegree,rsat,img_height,img_width)	
 				I1,joints1 = augment(I1,joints1,rflip,rscale,rshift,rdegree,rsat,img_height,img_width)	
 
@@ -118,16 +139,19 @@ def warpExampleGenerator(examples,param,do_augment=True,return_pose_vectors=Fals
 		yield (out,Y)
 
 
-def createFeed(params,ex_file,n_examples,do_augment=True,return_pose_vectors=False,return_class=False):
-
-	ex_list = datareader.makeWarpExampleList(ex_file,n_examples)
-	feed = warpExampleGenerator(ex_list,params,do_augment,return_pose_vectors,return_class)
+def createFeed(params,vid_file,do_augment=True,return_pose_vectors=False,return_class=False,transfer=False):
+	#ex_list = datareader.makeWarpExampleList(ex_file,n_examples)
+	vid_info_list = datareader.makeVidInfoList(vid_file)
+	
+	if(transfer):
+		feed = transferExampleGenerator(ex_list,ex_list,params)
+	else:
+		feed = warpExampleGenerator(vid_info_list,params,do_augment,return_pose_vectors,return_class)
 
 	return feed
 
 
-'''
-def transferExampleGenerator(examples0,examples1,param,rflip=0):
+def transferExampleGenerator(examples0,examples1,param):
     
 	img_width = param['IMG_WIDTH']
 	img_height = param['IMG_HEIGHT']
@@ -148,18 +172,13 @@ def transferExampleGenerator(examples0,examples1,param,rflip=0):
 			Y = np.zeros((batch_size,img_height,img_width,3))
 
 			for i in xrange(batch_size):
-				if(np.random.rand() < rflip):
-					example0 = examples0[np.random.randint(0,len(examples0))] 
+				example0 = examples0[np.random.randint(0,len(examples0))] 
+				example1 = examples1[np.random.randint(0,len(examples1))] 
+				while(example0[-1] == example1[-1]):
 					example1 = examples1[np.random.randint(0,len(examples1))] 
-				else:	
-					example0 = examples1[np.random.randint(0,len(examples1))] 
-					example1 = examples0[np.random.randint(0,len(examples0))] 
 
-				I0 = cv2.imread(example0[0])
-				I1 = cv2.imread(example1[0])
-				
-				joints0 = np.reshape(np.array(example0[1:29]), (14,2))
-				joints1 = np.reshape(np.array(example1[1:29]), (14,2))
+				I0,joints0,scale0,pos0 = readExampleInfo(example0[:32])
+				I1,joints1,scale1,pos1 = readExampleInfo(example1[32:64])
 
 				scale0 = scale_factor/example0[31]
 				scale1 = scale_factor/example1[31]
@@ -181,20 +200,20 @@ def transferExampleGenerator(examples0,examples1,param,rflip=0):
 				posemap1 = makeJointHeatmaps(img_height,img_width,joints1,sigma_joint,pose_dn)
 
 				src_limb_masks = makeLimbMasks(joints0,img_width,img_height)	
-				src_bg_mask = 1.0 - np.amax(src_limb_masks,axis=2)
-				src_limb_masks = np.log(src_limb_masks + 1e-10)
-				src_bg_mask = np.log(src_bg_mask+1e-10)
+				src_bg_mask = np.expand_dims(1.0 - np.amax(src_limb_masks,axis=2),2)
+				src_masks = np.log(np.concatenate((src_bg_mask,src_limb_masks),axis=2)+1e-10)
 
 				X_src[i,:,:,:] = I0
 				X_pose_src[i,:,:,:] = posemap0
 				X_pose_tgt[i,:,:,:] = posemap1
-				X_mask_src[i,:,:,:] = np.concatenate((np.expand_dims(src_bg_mask,2),src_limb_masks),axis=2)
+				X_mask_src[i,:,:,:] = src_masks
 				X_trans[i,:,:,0] = np.array([[1.0,0.0,0.0],[0.0,1.0,0.0]])
 				X_trans[i,:,:,1:] = getLimbTransforms(joints0,joints1)
 				Y[i,:,:,:] = I1
 	
 			yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans],Y)
-'''
+
+
 
 '''
 def actionExampleGenerator(examples,param,return_pose_vectors=False):
@@ -302,6 +321,26 @@ def drawLimbsOnImage(I,joints,color=(0,0,255)):
 	
 	return I
 '''
+
+def randScale(param):
+	rnd = np.random.rand()
+	return ( param['scale_max']-param['scale_min']) * rnd + param['scale_min']
+
+def randRot( param ):
+	return (np.random.rand()-0.5)*2 * param['max_rotate_degree']
+
+def randShift( param ):
+	shift_px = param['max_px_shift']
+	x_shift = int(shift_px * (np.random.rand()-0.5))
+	y_shift = int(shift_px * (np.random.rand()-0.5))
+	return x_shift, y_shift
+
+def randSat(param):
+	min_sat = 1 - param['max_sat_factor']
+	max_sat = 1 + param['max_sat_factor']
+
+	return np.random.rand()*(max_sat-min_sat) + min_sat
+
 
 def randAugmentations(param):
 
