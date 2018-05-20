@@ -9,31 +9,6 @@ import datareader
 
 limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
 
-def getPersonScale(joints):
-	torso_size = (-joints[0][1] + (joints[8][1] + joints[11][1])/2.0)
-	peak_to_peak = np.ptp(joints,axis=0)[1]
-	#rarm_length = np.sqrt((joints[2][0] - joints[4][0])**2 + (joints[2][1]-joints[4][1])**2)			
-	#larm_length = np.sqrt((joints[5][0] - joints[7][0])**2 + (joints[5][1]-joints[7][1])**2)
-	rcalf_size = np.sqrt((joints[9][1] - joints[10][1])**2 + (joints[9][0] - joints[10][0])**2)
-	lcalf_size = np.sqrt((joints[12][1] - joints[13][1])**2 + (joints[12][0] - joints[13][0])**2)
-	calf_size = (lcalf_size + rcalf_size)/2.0
-
-	size = np.max([2.5 * torso_size,calf_size*5,peak_to_peak*1.1]) 
-	return (size/200.0)
-
-def getExampleInfo(vid_name,frame_num,box,X):
-	I_name_j = os.path.join(vid_name,str(frame_num+1)+'.jpg')
-
-	if(not os.path.isfile(I_name_j)):
-		I_name_j = os.path.join(vid_name,str(frame_num+1)+'.png')
-
-	joints = X[:,:,frame_num]-1.0
-	box_j = box[frame_num,:]
-	scale = getPersonScale(joints)
-	pos = [(box_j[0] + box_j[2]/2.0), (box_j[1] + box_j[3]/2.0)] 
-	lj = [I_name_j] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
-	return lj
-
 def readExampleInfo(example):
 	I = cv2.imread(example[0])
 	joints = np.reshape(np.array(example[1:29]), (14,2))
@@ -259,69 +234,6 @@ def actionExampleGenerator(examples,param,return_pose_vectors=False):
 				yield ([X_src,X_pose_src,X_pose_tgt,X_mask_src,X_trans,X_posevec_src,X_posevec_tgt],Y)
 '''
 
-'''
-def poseExampleGenerator(examples,param):
-    
-	img_width = param['IMG_WIDTH']
-	img_height = param['IMG_HEIGHT']
-	pose_dn = param['posemap_downsample']
-	sigma_joint = param['sigma_joint']
-	n_joints = param['n_joints']
-	scale_factor = param['obj_scale_factor']	
-	batch_size = param['batch_size']
-
-	while True:
-
-		X_src = np.zeros((batch_size,img_height,img_width,3))
-		X_mask = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,1))
-		Y = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
-
-		for i in xrange(batch_size):
-			example = examples[np.random.randint(0,len(examples))]	
-			I = readImage(example[0])
-
-			joints = np.reshape(np.array(example[1:29]), (14,2))
-			pos = np.array(example[29:31])	
-			scale = 1.15/(example[31])
-
-			I,joints = centerAndScaleImage(I,img_width,img_height,pos,scale,joints)
-
-			rscale,rshift,rdegree,rsat = randAugmentations(param)
-	
-			I,joints = augment(I,joints,rscale,rshift,rdegree,rsat,img_height,img_width)	
-
-			posemap = makeJointHeatmaps(img_height,img_width,joints,sigma_joint,pose_dn)
-		
-			fg_mask = makeGaussianMap(img_width/pose_dn,img_height/pose_dn,
-									np.array([img_width/(2.0*pose_dn),img_height/(2.0*pose_dn)]),
-									   21.0**2,21**2,0.0)
-			
-			X_src[i,:,:,:] = I
-			X_mask[i,:,:,0] = fg_mask
-			
-			Y[i,:,:,:] = posemap
-
-		yield ([X_src,X_mask],Y)
-
-def drawLimbsOnImage(I,joints,color=(0,0,255)):	
-
-	n_limbs = len(limbs)
-
-	#if(color is None):
-	#	colors = [(0,0,0),(255,0,0),(0,255,0),(255,0,0),(0,255,0),(0,0,255), (255,255,0),(0,0,255),(255,255,0)]
-
-	for i in xrange(n_limbs):	
-		n_joints_for_limb = len(limbs[i])
-		if(n_joints_for_limb != 2):
-			continue
-
-		p1 = (int(joints[limbs[i][0],0]),int(joints[limbs[i][0],1]))
-		p2 = (int(joints[limbs[i][1],0]),int(joints[limbs[i][1],1]))
-		cv2.line(I,p1,p2,color,2) #colors[i],2)
-	
-	return I
-'''
-
 def randScale(param):
 	rnd = np.random.rand()
 	return ( param['scale_max']-param['scale_min']) * rnd + param['scale_min']
@@ -338,18 +250,15 @@ def randShift( param ):
 def randSat(param):
 	min_sat = 1 - param['max_sat_factor']
 	max_sat = 1 + param['max_sat_factor']
-
 	return np.random.rand()*(max_sat-min_sat) + min_sat
 
 
 def randAugmentations(param):
-
 	rflip = np.random.rand()
 	rscale = randScale(param)
 	rshift = randShift(param)
 	rdegree = randRot(param)
-	rsat = randSat(param)
-	
+	rsat = randSat(param)	
 	return rflip,rscale,rshift,rdegree,rsat
 
 
@@ -359,9 +268,7 @@ def augment(I,joints,rflip,rscale,rshift,rdegree,rsat,img_height,img_width):
 	I,joints = augShift(I,img_width,img_height,rshift,joints)
 	I,joints = augRotate(I,img_width,img_height,rdegree,joints)
 	I = augSaturation(I,rsat)
-
 	return I,joints
-
 
 def centerAndScaleImage(I,img_width,img_height,pos,scale,joints):
 
@@ -443,70 +350,33 @@ def augSaturation(I,rsat):
 	I[I > 1] = 1
 	return I
 
-'''
-def makeVelocityFields(height,width,transforms):
-
-	xv,yv = np.meshgrid(np.array(range(width)),np.array(range(height)),sparse=False,indexing='xy')
-	p = np.vstack((xv.flatten(),yv.flatten(),np.ones(height*width)))
-	V = np.zeros((height,width,transforms.shape[2]*2))
-
-	for i in xrange(transforms.shape[2]):
-		p_new = np.dot(transforms[:,:,i],p)
-		V[:,:,2*i] = np.reshape(p_new[0,:],(width,height))
-		V[:,:,2*i+1] = np.reshape(p_new[1,:],(width,height))
-
-	return V
-'''
-
-'''
-def makeVelocityHeatmap(height,width,joints0,joints1,sigma):
-
-	sigma = (2*sigma)**2
-
-	H = np.zeros((height,width,2))
-
-	xv,yv = np.meshgrid(np.array(range(width)),np.array(range(height)),
-						sparse=False,indexing='xy')
-	H[:,:,0] = xv
-	H[:,:,1] = yv	
-
-	for i in xrange(joints1.shape[0]):
-		if(joints1[i,0] <= 0 or joints1[i,1] <= 0  or joints1[i,0] >= width-1 or
-			joints1[i,1] >= height-1):
-			continue	
-
-		H[:,:,0] += makeGaussianMap(width,height,joints1[i,:],sigma,sigma,0.0) * (joints0[i,0]-joints1[i,0])
-		H[:,:,1] += makeGaussianMap(width,height,joints1[i,:],sigma,sigma,0.0) * (joints0[i,1]-joints1[i,1])
-
-	return H
-'''
-
 def makeJointHeatmaps(height,width,joints,sigma,pose_dn):
 
 	height = height/pose_dn
 	width = width/pose_dn
-	sigma = sigma**2
+	n_joints = joints.shape[0]
+	var = sigma**2
 	joints = joints/pose_dn
 
-	H = np.zeros((height,width,14)) #len(limbs)-1))
+	H = np.zeros((height,width,n_joints))
 
-	for i in xrange(H.shape[2]):
+	for i in xrange(n_joints):
 		if(joints[i,0] <= 0 or joints[i,1] <= 0  or joints[i,0] >= width-1 or
 			joints[i,1] >= height-1):
 			continue
 	
-		H[:,:,i] = makeGaussianMap(width,height,joints[i,:],sigma,sigma,0.0)
+		H[:,:,i] = makeGaussianMap(width,height,joints[i,:],var,var,0.0)
 
 	return H
 
-def makeGaussianMap(img_width,img_height,center,sigma_x,sigma_y,theta):
+def makeGaussianMap(img_width,img_height,center,var_x,var_y,theta):
 
 	xv,yv = np.meshgrid(np.array(range(img_width)),np.array(range(img_height)),
 						sparse=False,indexing='xy')
 	
-	a = np.cos(theta)**2/(2*sigma_x) + np.sin(theta)**2/(2*sigma_y)
-	b = -np.sin(2*theta)/(4*sigma_x) + np.sin(2*theta)/(4*sigma_y)
-	c = np.sin(theta)**2/(2*sigma_x) + np.cos(theta)**2/(2*sigma_y)
+	a = np.cos(theta)**2/(2*var_x) + np.sin(theta)**2/(2*var_y)
+	b = -np.sin(2*theta)/(4*var_x) + np.sin(2*theta)/(4*var_y)
+	c = np.sin(theta)**2/(2*var_x) + np.cos(theta)**2/(2*var_y)
 
 	return np.exp(-(a*(xv-center[0])*(xv-center[0]) + 
 			2*b*(xv-center[0])*(yv-center[1]) + 
@@ -520,8 +390,7 @@ def makeLimbMasks(joints,img_width,img_height):
 
 	mask = np.zeros((img_height,img_width,n_limbs))
 
-	#Gaussian sigma perpendicular to the limb axis. I hardcoded
-	#reasonable sigmas for now.
+	#Gaussian sigma perpendicular to the limb axis.
 	sigma_perp = np.array([11,11,11,11,11,11,11,11,11,13])**2	 
 
 	for i in xrange(n_limbs):	
@@ -552,10 +421,9 @@ def getLimbTransforms(joints1,joints2):
 	n_limbs = len(limbs)
 	n_joints = joints1.shape[0]
 
-	Ms = np.zeros((2,3,10))
-	ctr = 0
-	for i in xrange(n_limbs):	
+	Ms = np.zeros((2,3,n_limbs))
 
+	for i in xrange(n_limbs):	
 		n_joints_for_limb = len(limbs[i])
 		p1 = np.zeros((n_joints_for_limb,2))
 		p2 = np.zeros((n_joints_for_limb,2))
@@ -565,17 +433,60 @@ def getLimbTransforms(joints1,joints2):
 			p2[j,:] = [joints2[limbs[i][j],0],joints2[limbs[i][j],1]]			
 
 		tform = transformations.make_similarity(p2,p1,False)
-		Ms[:,:,ctr] = np.array([[tform[1],-tform[3],tform[0]],[tform[3],tform[1],tform[2]]])
-		ctr+=1
-
-		'''
-		if(i >= 1 and i <= 4):
-			tform = transformations.make_similarity(p2,p1,True)	
-			Ms[:,:,ctr] = np.array([[tform[1],tform[3],tform[0]],[tform[3],-tform[1],tform[2]]])
-			ctr+=1
-		'''
-		
-		#M = np.array([[tform[1], tform[2], tform[0]],[tform[5],tform[6],tform[4]]])
-		#Ms[:,:,i] = M
+		Ms[:,:,i] = np.array([[tform[1],-tform[3],tform[0]],[tform[3],tform[1],tform[2]]])
 
 	return Ms
+
+
+
+#if(i == 6):
+#	mask_i = makeGaussianMap(img_width,img_height,joints[10,:],17**2,17**2,0)
+#	mask[:,:,i] = np.maximum(mask[:,:,i], mask_i/(np.amax(mask_i) + 1e-6))
+#if(i == 8):
+#	mask_i = makeGaussianMap(img_width,img_height,joints[13,:],17**2,17**2,0)
+#	mask[:,:,i] = np.maximum(mask[:,:,i], mask_i/(np.amax(mask_i) + 1e-6))
+
+'''
+def poseExampleGenerator(examples,param):
+    
+	img_width = param['IMG_WIDTH']
+	img_height = param['IMG_HEIGHT']
+	pose_dn = param['posemap_downsample']
+	sigma_joint = param['sigma_joint']
+	n_joints = param['n_joints']
+	scale_factor = param['obj_scale_factor']	
+	batch_size = param['batch_size']
+
+	while True:
+
+		X_src = np.zeros((batch_size,img_height,img_width,3))
+		X_mask = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,1))
+		Y = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
+
+		for i in xrange(batch_size):
+			example = examples[np.random.randint(0,len(examples))]	
+			I = readImage(example[0])
+
+			joints = np.reshape(np.array(example[1:29]), (14,2))
+			pos = np.array(example[29:31])	
+			scale = 1.15/(example[31])
+
+			I,joints = centerAndScaleImage(I,img_width,img_height,pos,scale,joints)
+
+			rscale,rshift,rdegree,rsat = randAugmentations(param)
+	
+			I,joints = augment(I,joints,rscale,rshift,rdegree,rsat,img_height,img_width)	
+
+			posemap = makeJointHeatmaps(img_height,img_width,joints,sigma_joint,pose_dn)
+		
+			fg_mask = makeGaussianMap(img_width/pose_dn,img_height/pose_dn,
+									np.array([img_width/(2.0*pose_dn),img_height/(2.0*pose_dn)]),
+									   21.0**2,21**2,0.0)
+			
+			X_src[i,:,:,:] = I
+			X_mask[i,:,:,0] = fg_mask
+			
+			Y[i,:,:,:] = posemap
+
+		yield ([X_src,X_mask],Y)
+'''

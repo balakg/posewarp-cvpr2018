@@ -47,7 +47,7 @@ def train(model_name,gpu_id):
 		start = time.time()
 		
 		#X,Y = next(test_feed)			
-		#sio.savemat('data/data' + str(step) + '.mat',{'X':X[0],'Y':Y, 'ps': X[1], 'pt': X[2]})
+		#sio.savemat('data/data' + str(step) + '.mat',{'X':X[0],'Y':Y, 'ps': X[1], 'pt': X[2], 'mask': X[3]})
 		#return
 
 		X,Y = next(train_feed)			
