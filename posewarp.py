@@ -25,8 +25,9 @@ def train(model_name,gpu_id):
 		os.mkdir(network_dir)
 
 	train_feed=datageneration.createFeed(params,"train_vids.txt")
-	test_feed=datageneration.createFeed(params,"test_vids.txt")
-	
+	#test_feed=datageneration.createFeed(params,"test_vids.txt")
+
+
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
 	config.allow_soft_placement = True
@@ -41,7 +42,6 @@ def train(model_name,gpu_id):
 		model.compile(optimizer=Adam(lr=1e-4),loss=[networks.vggLoss(vgg_model,response_weights)])
 
 	#model.summary()
-	#return
 
 	for step in xrange(0,250000):
 		start = time.time()
@@ -59,6 +59,7 @@ def train(model_name,gpu_id):
 
 		util.printProgress(step,0,train_loss,end-start)
 
+		'''
 		if(step % params['test_interval'] == 0):
 			n_batches = 8
 			test_loss = 0
@@ -68,6 +69,7 @@ def train(model_name,gpu_id):
 			
 			test_loss /= (n_batches)
 			util.printProgress(step,1,test_loss,0)
+		'''
 
 		if(step > 0 and step % params['model_save_interval']==0):
 			model.save(network_dir + '/' + str(step) + '.h5')			

@@ -9,6 +9,27 @@ import datareader
 
 limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
 
+def getPersonScale(joints):
+	torso_size = (-joints[0][1] + (joints[8][1] + joints[11][1])/2.0)
+	peak_to_peak = np.ptp(joints,axis=0)[1]
+	rcalf_size = np.sqrt((joints[9][1] - joints[10][1])**2 + (joints[9][0] - joints[10][0])**2)
+	lcalf_size = np.sqrt((joints[12][1] - joints[13][1])**2 + (joints[12][0] - joints[13][0])**2)
+	calf_size = (lcalf_size + rcalf_size)/2.0
+	size = np.max([2.5*torso_size,5.0*calf_size,peak_to_peak*1.1]) 
+	return (size/200.0)
+
+def getExampleInfo(vid_name,frame_num,box,X):
+	I_name_j = os.path.join(vid_name,str(frame_num+1)+'.jpg')
+	if(not os.path.isfile(I_name_j)):
+		I_name_j = os.path.join(vid_name, str(frame_num+1)+'.png')
+
+	joints = X[:,:,frame_num]-1.0
+	box_j = box[frame_num,:]
+	scale = getPersonScale(joints)
+	pos = [(box_j[0] + box_j[2]/2.0), (box_j[1] + box_j[3]/2.0)] 
+	lj = [I_name_j] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
+	return lj
+
 def readExampleInfo(example):
 	I = cv2.imread(example[0])
 	joints = np.reshape(np.array(example[1:29]), (14,2))
@@ -43,6 +64,7 @@ def warpExampleGenerator(vid_info_list,param,do_augment=True,return_pose_vectors
 				
 			#1. choose random video.
 			vid = np.random.choice(len(vid_info_list),1)[0]		
+
 			vid_info = vid_info_list[vid][0]
 			vid_bbox = vid_info_list[vid][1]
 			vid_X = vid_info_list[vid][2]
