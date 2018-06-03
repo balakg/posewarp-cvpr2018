@@ -1,3 +1,3 @@
 # pose2image
 
-The sickest project ever.
+pose warping, cvpr 2018
