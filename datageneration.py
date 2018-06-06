@@ -16,8 +16,8 @@ def make_vid_info_list(vid_list_file):
     for i in range(n_vids):
         path, vid_name = os.path.split(vids[i])
         info_name = path[:-6] + 'info/' + vid_name + '.mat'
-
         info = sio.loadmat(info_name)
+
         box = info['data']['bbox'][0][0]
         x = info['data']['X'][0][0]
 
@@ -41,7 +41,7 @@ def read_frame(vid_name, frame_num, box, x):
     if not os.path.isfile(img_name):
         img_name = os.path.join(vid_name, str(frame_num + 1) + '.png')
 
-        img = cv2.imread(img_name)
+    img = cv2.imread(img_name)
     joints = x[:, :, frame_num] - 1.0
     box_frame = box[frame_num, :]
     scale = get_person_scale(joints)
