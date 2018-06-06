@@ -74,15 +74,15 @@ def train(dataset,gpu_id):
 	
 		#mask_model = Model(fgbg_vgg.inputs,fgbg_vgg.get_layer('fg_mask_tgt').output)
 
-		ed_vgg = networks.network_pix2pix(params,vgg_model,response_weights)
+		ed_vgg = networks.network_unet(params, vgg_model, response_weights)
 		ed_vgg.load_weights('../results/networks/ed_vgg/135000.h5')	
 
-		gen = networks.network_pix2pix(params,vgg_model,response_weights)
+		gen = networks.network_unet(params, vgg_model, response_weights)
 		disc = networks.discriminator(params)
 		gan = networks.gan(gen,disc,params,vgg_model,response_weights,0.1,1e-4)
 		gan.load_weights('../results/networks/ed_gan/2000.h5')
 			
-		ed_l1 = networks.network_pix2pix(params,vgg_model,response_weights,loss='l1')
+		ed_l1 = networks.network_unet(params, vgg_model, response_weights, loss='l1')
 		ed_l1.load_weights('../results/networks/ed_l1/80000.h5')	
 	
 	n_examples = 500

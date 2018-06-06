@@ -40,7 +40,7 @@ def train(gpu_id):
 			vgg_model = truncated_vgg.vgg_norm()
 			networks.make_trainable(vgg_model,False)
 			response_weights = sio.loadmat('mean_response.mat')
-			fgbg = networks.network_fgbg(params,vgg_model,response_weights,True)
+			fgbg = networks.network_posewarp(params, vgg_model, response_weights, True)
 	
 		np.random.seed(17)
 

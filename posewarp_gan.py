@@ -45,7 +45,7 @@ def train(model_name,gpu_id):
 			networks.make_trainable(vgg_model,False)
 			response_weights = sio.loadmat('mean_response.mat')
 			#generator = networks.network_pix2pix(params,vgg_model,response_weights)
-			generator = networks.network_fgbg(params)
+			generator = networks.network_posewarp(params)
 			generator.load_weights('../results/networks/fgbg_vgg/100000.h5')
 
 			discriminator = networks.discriminator(params)

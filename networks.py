@@ -4,9 +4,6 @@ from keras.models import Model
 from keras.layers import Conv2D, Dense, Activation, Input, UpSampling2D, Dropout
 from keras.layers import concatenate, Flatten, Reshape, Lambda
 from keras.layers import LeakyReLU, MaxPooling2D
-from keras.applications.vgg19 import VGG19
-from keras.initializers import RandomNormal
-from keras.optimizers import Adam, RMSprop
 import keras
 
 
@@ -39,8 +36,11 @@ def vgg_loss(feat_net, feat_weights):
 
         loss = []
         n_layers = 12
+        reg = 0.1
+
         for j in range(n_layers):
-            std = feat_weights[str(j)][1] + 0.1
+
+            std = feat_weights[str(j)][1] + reg
             std = tf.expand_dims(tf.expand_dims(tf.expand_dims(std, 0), 0), 0)
             d = tf.subtract(y_true_feat[j], y_pred_feat[j])
             loss_j = tf.reduce_mean(tf.abs(tf.divide(d, std)))
@@ -207,7 +207,7 @@ def interpolate(inputs):
     return output
 
 
-def affineWarp(im, theta):
+def affine_warp(im, theta):
     num_batch = tf.shape(im)[0]
     height = tf.shape(im)[1]
     width = tf.shape(im)[2]
@@ -232,7 +232,7 @@ def affineWarp(im, theta):
     return interpolate([im, x_s_flat, y_s_flat])
 
 
-def makeWarpedStack(args):
+def make_warped_stack(args):
     mask = args[0]
     src_in = args[1]
     trans_in = args[2]
@@ -242,12 +242,10 @@ def makeWarpedStack(args):
         mask_i = K.repeat_elements(tf.expand_dims(mask[:, :, :, i], 3), 3, 3)
         src_masked = tf.multiply(mask_i, src_in)
 
-        if (i == 0):
+        if i == 0:
             warps = src_masked
-            src_masked = tf.add(src_masked, tf.multiply(1 - mask_i,
-                                                        tf.random_uniform(tf.shape(src_in), -0.003, 0.003)))
         else:
-            warp_i = affineWarp(src_masked, trans_in[:, :, :, ctr])
+            warp_i = affine_warp(src_masked, trans_in[:, :, :, ctr])
             warps = tf.concat([warps, warp_i], 3)
 
         ctr += 1
@@ -291,17 +289,18 @@ def unet(x_in, pose_in, nf_enc, nf_dec):
     return x
 
 
-def network_fgbg(param):
-    IMG_HEIGHT = param['IMG_HEIGHT']
-    IMG_WIDTH = param['IMG_WIDTH']
+def network_posewarp(param):
+    img_h = param['IMG_HEIGHT']
+    img_w = param['IMG_WIDTH']
     n_joints = param['n_joints']
     pose_dn = param['posemap_downsample']
+    n_limbs = param['n_libs']
 
-    src_in = Input(shape=(IMG_HEIGHT, IMG_WIDTH, 3))
-    pose_src = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, 14))
-    pose_tgt = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, 14))
-    src_mask_prior = Input(shape=(IMG_HEIGHT, IMG_WIDTH, 11))
-    trans_in = Input(shape=(2, 3, 11))
+    src_in = Input(shape=(img_h, img_w, 3))
+    pose_src = Input(shape=(img_h / pose_dn, img_w / pose_dn, n_joints))
+    pose_tgt = Input(shape=(img_h / pose_dn, img_w / pose_dn, n_joints))
+    src_mask_prior = Input(shape=(img_h, img_w, n_limbs+1))
+    trans_in = Input(shape=(2, 3, n_limbs+1))
 
     # 1. FG/BG separation
     x = unet(src_in, pose_src, [64] * 2 + [128] * 9, [128] * 4 + [32])
@@ -310,10 +309,10 @@ def network_fgbg(param):
     src_mask = Activation('softmax', name='mask_src')(src_mask)
 
     # 2. Separate into fg limbs and background
-    warped_stack = Lambda(makeWarpedStack)([src_mask, src_in, trans_in])
-    fg_stack = Lambda(lambda arg: arg[:, :, :, 3:], output_shape=(256, 256, 30),
+    warped_stack = Lambda(make_warped_stack)([src_mask, src_in, trans_in])
+    fg_stack = Lambda(lambda arg: arg[:, :, :, 3:], output_shape=(img_h, img_w, 3*n_limbs),
                       name='fg_stack')(warped_stack)
-    bg_src = Lambda(lambda arg: arg[:, :, :, 0:3], output_shape=(256, 256, 3),
+    bg_src = Lambda(lambda arg: arg[:, :, :, 0:3], output_shape=(img_h, img_w, 3),
                     name='bg_src')(warped_stack)
     bg_src_mask = Lambda(lambda arg: tf.expand_dims(arg[:, :, :, 0], 3))(src_mask)
 
@@ -338,71 +337,17 @@ def network_fgbg(param):
     return model
 
 
-def network_pix2pix(param):
-    IMG_HEIGHT = param['IMG_HEIGHT']
-    IMG_WIDTH = param['IMG_WIDTH']
+def network_unet(param):
     n_joints = param['n_joints']
     pose_dn = param['posemap_downsample']
 
     src_in = Input(shape=(IMG_HEIGHT, IMG_WIDTH, 3))
-    pose_src = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, 14))
-    pose_tgt = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, 14))
+    pose_src = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, n_joints))
+    pose_tgt = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, n_joints))
 
-    x = unet(src_in, concatenate([pose_src, pose_tgt]), [64] + [128] * 3 + [256] * 7, [256, 256, 256, 128, 64])
+    x = unet(src_in, concatenate([pose_src, pose_tgt]), [64] + [128] * 3 + [256] * 7,
+             [256, 256, 256, 128, 64])
     y = my_conv(x, 3, activation='tanh')
 
     model = Model(inputs=[src_in, pose_src, pose_tgt], outputs=[y])
     return model
-
-
-'''
-def resBlock(x_in,nf1,nf2,strides,upsample=False):
-	x = Conv2D(nf1,kernel_size=3, padding='same',kernel_initializer='he_normal',activation='relu')(x_in)
-	x = Conv2D(nf1,kernel_size=3, padding='same',kernel_initializer='he_normal',activation='relu')(x)
-	x = keras.layers.add([x,x_in])
-	x = Conv2D(nf2,kernel_size=3, padding='same',kernel_initializer='he_normal',strides=strides)(x)
-
-	if(upsample):
-		x = UpSampling2D()(x)
-
-	return x
-
-def g1():
-
-	IA = Input(shape=(256,256,3))
-	pA = Input(shape=(256,256,14))
-	pB = Input(shape=(256,256,14))
-
-	x_in = concatenate([IA,pA,pB])
-	x1 = resBlock(x_in,31,64,strides=1)
-	x2 = resBlock(x1,64,128,strides=2) #128
-	x3 = resBlock(x2,128,256,strides=2) #64
-	x4 = resBlock(x3,256,256,strides=2) #32
-	x5 = resBlock(x4,256,256,strides=2) #16
-	x6 = resBlock(x5,256,256,strides=2) #8
-
-	#x = Flatten()(x6)
-	#x = Dense(64)(x)
-	#x = Dense(8*8*256)(x)
-	#x = Reshape((8,8,256))(x)
-
-	#x = concatenate([x,x6]) #8
-	x = resBlock(x6,256,256,strides=1,upsample=True) #16
-
-	x = concatenate([x,x5]) 
-	x = resBlock(x,512,256,strides=1,upsample=True) #32
-
-	x = concatenate([x,x4])
-	x = resBlock(x,512,256,strides=1,upsample=True) #64
-
-	x = concatenate([x,x3])
-	x = resBlock(x,512,128,strides=1,upsample=True) #128
-	
-	x = concatenate([x,x2])
-	x = resBlock(x,256,64,strides=1,upsample=True) #256
-
-	y = Conv2D(3,kernel_size=3, padding='same',kernel_initializer='he_normal',activation='tanh')(x)	
-
-	model = Model(inputs=[IA,pA,pB],outputs=y)
-	return model
-'''

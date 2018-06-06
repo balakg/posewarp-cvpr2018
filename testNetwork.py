@@ -53,7 +53,7 @@ def train(dataset,gpu_id):
 			response_weights = sio.loadmat('mean_response.mat')
 
 
-			gen = networks.network_fgbg(params,vgg_model,response_weights,True,loss='vgg')
+			gen = networks.network_posewarp(params, vgg_model, response_weights, True, loss='vgg')
 			disc = networks.discriminator(params)
 			gan = networks.gan(gen,disc,params,vgg_model,response_weights,0.01,1e-4)
 			gan.load_weights('../results/networks/gan/10000.h5')
