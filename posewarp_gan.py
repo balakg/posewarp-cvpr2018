@@ -7,7 +7,7 @@ import networks
 import scipy.io as sio
 import param
 import util
-import myVGG
+import truncated_vgg
 from keras.models import load_model,Model
 from keras.optimizers import Adam
 
@@ -41,7 +41,7 @@ def train(model_name,gpu_id):
 		disc_loss = 0.1
 
 		with tf.device(gpu):
-			vgg_model = myVGG.vgg_norm()
+			vgg_model = truncated_vgg.vgg_norm()
 			networks.make_trainable(vgg_model,False)
 			response_weights = sio.loadmat('mean_response.mat')
 			#generator = networks.network_pix2pix(params,vgg_model,response_weights)

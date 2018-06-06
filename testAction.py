@@ -9,7 +9,7 @@ import scipy.io as sio
 import param
 from keras.models import load_model,Model
 import util
-import myVGG
+import truncated_vgg
 from keras.backend.tensorflow_backend import set_session
 
 def convert(I):
@@ -28,7 +28,7 @@ def train(dataset,gpu_id):
 	set_session(tf.Session(config=config))
 
 	with tf.device(gpu):
-		vgg_model = myVGG.vgg_norm()
+		vgg_model = truncated_vgg.vgg_norm()
 		networks.make_trainable(vgg_model,False)
 		response_weights = sio.loadmat('mean_response.mat')
 		fgbg = networks.network_fgbg(params,vgg_model,response_weights)

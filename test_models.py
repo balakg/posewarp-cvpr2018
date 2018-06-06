@@ -12,7 +12,7 @@ import param
 from keras.models import load_model,Model
 import h5py
 import util
-import myVGG
+import truncated_vgg
 
 def train(gpu_id):	
 
@@ -37,7 +37,7 @@ def train(gpu_id):
 		threads = tf.train.start_queue_runners(coord=coord)
 
 		with tf.device(gpu):
-			vgg_model = myVGG.vgg_norm()
+			vgg_model = truncated_vgg.vgg_norm()
 			networks.make_trainable(vgg_model,False)
 			response_weights = sio.loadmat('mean_response.mat')
 			fgbg = networks.network_fgbg(params,vgg_model,response_weights,True)
