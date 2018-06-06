@@ -1,220 +1,252 @@
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/adriene,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/3 Musts On Your Forehand _ STROKE ESSENTIALS,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Alexander Zverev in Super Slow Motion,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Alexandr Dogopolov - Serve in Slow Motion,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Ana Ivanovic in 4k,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Andy Murray in 4k,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Andy Murray Serve In Super Slow Motion 4 - 2013 Cincinnati Open,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Backhand Drop Shot Technique _ DROP SHOTS,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Beginner Forehand Tennis Lesson_ 3 Keys (Top Speed Tennis),2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Flavia Pennetta in 4k,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Forehand Tennis Lesson_ Stop Framing Your Forehand,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Gael Monfils,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Grigor Dimitrov Serve In Super Slow Motion - 2013 Cincinnati Open,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Half Volley Lesson (Progression Drills),2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/How To Get Great Lag On Your Forehand _ Tennis Forehand Technique,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/How to Hit a Serve - Taking a Lesson from Serena Williams,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/How To Serve In Tennis In 7 Steps,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Ivo Karlovic,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Jerzy Janowicz,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Milos Raonic,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Jack Sock Serve In Super Slow Motion 2 - 2013 Cincinnati Open,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Jelena Jankovic Serve In Super Slow Motion - 2013 Cincinnati Open,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Julien Benneteau,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Maria Sharapova Serve Practice in HD,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Modern Forehand Loop vs. Traditional Racket Straight Back,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Modern Tennis Footwork _ Roger Federer Footwork Secrets Revealed,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Novak Djokovic in Super Slow Motion ,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/One-Handed Backhand Technique _ BACKHAND TECHNIQUE,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Ramkhamhaeng ptt champion women slomo forehand,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Roger Federer,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Serena Williams - Serve Practice at the Australian Open 2012 in Slow Motion HD,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Simple Tennis Forehand Tips For More Power And Topspin,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Stanislas Wawrinka Serve In Super Slow Motion - 2013 Cincinnati Open,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Svetlana Kuznetsova,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Forehand Technique _ Get Maximum Power,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Forehand Technique Tips Coach Tom Avery,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis - Forehand Volley featuring Coach Dick Gould (17 NCAA Championships),2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Lesson_ 3 Keys To Hitting A Inside Out Forehand,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Lesson - ATP PRO Technique - Forehand 5 KEY ELEMENTS - Insight Tennis,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Lesson - ATP Pro Technique - Forehand - How to Master the low ball - Insi,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/tennis tipps - forehand drive - slow motion video,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Tutorial Part 1 - The Forehand,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/TOP Shot Andrea Petkovic_ Forehand Winner Slow Motion,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Venus Williams Serve - 2013 Cincinnati Open,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Victoria Azarenka,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Victoria Azarenka in Super Slow Motion - Forehand and Backhand - BNP Paribas 201,2
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/15 Minute Senior Workout - HASfit's Low Impact Workout - Senior Exercises - Exer,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/30 Minute 5K _ 3.1 Mile INDOOR RUNNING Workout _ Sunday RUN Day with Pahla B,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/32 Minute Home Cardio Workout with No Equipment - Calorie Blasting Cardio Traini,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/adriene_yoga_camp_25,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/amy_rizzotto_goddess,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/ashleigh_sergeant_standing,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/brett_larkin,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/brett_larkin_stress,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/brett_larkin_sweaty,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/candace_10_lunch,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/candace_30,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/cat_meffan_45,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/cat_meffan_yoganuary,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/cole_chance,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/destination_satori_horse,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/dk_books_horse,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/do_you_yoga_standing,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/ekhart_hatha,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/ekhart_warrior,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/fitfluential_goddess,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/five_parks_30,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/five_parks_power_vinyasa_flow,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/five_parks_standing_toe,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Full Body Flow - Intermediate Vinyasa Flow Yoga Workout {35 min},1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/katie_brauer_60,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/heart_alchemy_power,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/i_love_yoga_squat,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/kandace_full_body,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/leisa_timms_goddess,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/margaret_kirschner_goddess,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/megs_yoga_horse,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/mother_moon_fundamentals,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/rachel_scott_paradise,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Real-Time High Intensity Cardio Workout for Lean Muscle,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/rob_power,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/rob_power_hour,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/sarah_beth,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/sarah_beth_30_power,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/sean_vigue_standing,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/silke_dewulf,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/stephanie_snyder_goddess,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/suzanne_morgan_goddess,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/tadasana_yoga,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/tim_total_body_vinyasa_flow,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/tim_total_body_vinyasa_flow2,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/uw_health_horse_stance,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Xco 2 - Reactive Impact _ Xco Workout Indoor _ Koordination,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/yans_yoga_stairs,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/yoga_journal_standing,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/yoga_tx_full_body,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/yoga_tx_full_body2,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/zao_goddess,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Zeus Fat Burning Workout from Home - No Equipment, Only 15 Minutes Needed,1
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/AI MIYAZATO - PERFECT ANGLES SIDE BY SIDE SYNCED - CME GOLF SWING REG & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/ALISON LEE 120fps FACE ON SLOW MOTION DRIVER GOLF SWING - 2015 CME GROUP TOUR CHAMPIONSHIP 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/AMELIA LEWIS - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Amy Boulden golf swing (Driver), ISPS Handa Ladies European Masters 2015_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/ANNA NORDQVIST 120fps FACE ON SLOW MOTION DRIVER GOLF SWING 2015 CME CHAMPIONSHIP 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/ANNA NORDQVIST - FACE ON DRIVER SWING REG & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/AUSTIN ERNST - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/AZAHARA MUNOZ - HANDS AT IMPACT (CLOSE UP SLOW MO) DRIVER SWING 2014 TIBURON GOLF COURSE 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BAEK KYU JUNG - HANDS THRU IMPACT (CLOSE UP SLOW MOTION) DRIVER GOLF SWING CME CHAMPIONSHIP 2014 HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BEATRIZ RECARI 120fps SLOW MOTION DRIVER GOLF SWING 2015 CME GROUP TOUR CHAMPIONSHIP 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BRITTANY LINCICOME BIG HITTER - HANDS CLOSE UP DRIVER SWING 2014 TIBURON GOLF COURSE 1080 HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CARLOTA CIGANDA 120fps SLOW MOTION FACE ON DRIVER GOLF SWING 2015 CME CHAMPIONSHIP 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CATRIONA MATTHEW - STRAIGHT FACE ON DRIVER GOLF SWING LATE 2013 - REG & SLOW MOTION - 1080p_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHARLEY HULL 120fps SLOW MOTION FACE ON DRIVER GOLF SWING 2015 CME GROUP TOUR CHAMPIONSHIP 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHELLA CHOI -  FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHRISTINA KIM - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/GERINA PILLER - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Gerina Piller golf swing (face-on view), Women's British Open practice - July 2016._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/HEE YOUNG PARK 120fps SLOW MOTION DRIVER FACE-ON GOLF SWING 2015 CME CHAMPIONSHIP 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/HYO JOO KIM 120fps FACE ON SLOW MOTION GOLF SWING - 2015 CME GROUP TOUR CHAMPIONSHIP 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/INBEE PARK 4K UHD SLOW MOTION & FULL SPEED FACE-ON DRIVER GOLF SWING 2015_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JENNY SHIN 120fps FACE ON DRIVER SLOW MOTION GOLF SWING - 2015 CME GROUP TOUR CHAMPIONSHIP 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JENNY SHIN - FACE ON DRIVER GOLF SWING 2014 CME CHAMPIONSHIP - REG & SLOW MOTION - 1080p_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JESSICA KORDA - FACE ON DRIVER GOLF SWING 2014 CME CHAMPIONSHIP - REG & SLOW MOTION - 1080p_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JULIETA GRANADA - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/KARINE ICHER - DRIVER GOLF SWING FACE-ON 2013 CME TITLEHOLDERS - REG & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/KARRIE WEBB - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LEXI THOMPSON DUAL ANGLE SLOW MOTION DRIVER GOLF SWING_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LEXI THOMPSON  - HANDS THRU IMPACT (CLOSE UP) POWER DRIVER SWING 2014 CME TIBURON GOLF COURSE 1080p_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LEXI THOMPSON  - HANDS THRU IMPACT (CLOSE UP) POWER DRIVER SWING 2014 CME TIBURON GOLF COURSE 1080p_2,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LIZETTE SALAS - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LYDIA KO vs INBEE PARK - SYNCED DRIVER GOLF SWING REGULAR & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LYDIA KO vs INBEE PARK - SYNCED DRIVER GOLF SWING REGULAR & SLOW MOTION 1080p HD_2,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MICHELLE WIE - CME SWING FOOTAGE TIBURON GOLF COURSE REGULAR & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MICHELLE WIE - CME SWING FOOTAGE TIBURON GOLF COURSE REGULAR & SLOW MOTION 1080p HD_2,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MICHELLE WIE - DRIVER GOLF SWING FACE-ON 2013 CME TITLEHOLDERS - REG & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MINJEE LEE 120fps SLOW MOTION & FULL SPEED FACE-ON DRIVER GOLF SWING 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MORGAN PRESSEL - PERFECT FACE ON DRIVER GOLF SWING 2013 - REG & SLOW MOTION - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PAULA CREAMER - STRAIGHT FACE ON DRIVER GOLF SWING LATE 2013 - REG & SLOW MOTION - 1080p_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PERNILLA LINDBERG - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PORNANONG PHATLUM - DRIVER GOLF SWING FACE-ON SLOW MOTION 2014 CME TIBURON GOLF COURSE 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SANDRA GAL - PERFECT FACE ON DRIVER GOLF SWING 2013 - REG & SLOW MOTION - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SEI YOUNG KIM 120fps FACE ON DRIVER GOLF SWING 1080 HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SEI YOUNG KIM 120fps SLOW MOTION & FULL SPEED FACE-ON GOLF SWING 2015 CME CHAMPIONSHIP 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SHANSHAN FENG - DRIVER SWING (HANDS AT IMPACT SLOW MOTION) CME CHAMPIONSHIP TIBURON GOLF COURSE_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SO YEON RYU - PERFECT FACE ON DRIVER GOLF SWING 2013 - REG & SLOW MOTION - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/STACY LEWIS - SYNCED DRIVER GOLF SWING DTL & FACE ON - REG & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SUN YOUNG YOO (HANDS CLOSE UP & SLOW MOTION) DRIVER SWING CME CHAMPIONSHIP TIBURON GOLF COURSE_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SUZANN PETTERSEN - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/2016 FRED COUPLES 120fps SLOW MOTION & REGULAR GOLF SWING FOOTAGE CHUBB CLASSIC 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Adam Scott golf swing - driver (face-on view), July 2016_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Alvaro Quiros golf swing (Driver) face-on view - BMW PGA Wentworth 2016_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Anders Forsbrand golf swing (Driver) face-on-view, July 2014._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Anders Hansen golf swing - Driver (Face-on-view), August 2014._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Andrew Johnston golf swing (driver) face-on and dtl views, British Masters October 2016._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Andy Sullivan golf swing (driver) face-on view, BMW PGA Wentworth 2016._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Ben An golf swing (Driver) face-on view - BMW PGA Wentworth 2016_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Swing Analysis_Jordan Spieth_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BERNHARD LANGER - 2015 GOLF SWING FOOTAGE IRON & DRIVER FULL & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BILLY HORSCHEL - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BRANDT SNEDEKER DRIVER SWING - (CLOSE UP HANDS) TIBURON GOLF COURSE PRACTICE SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CAMERON TRINGALE - DRIVER GOLF SWING REG & SLOW MOTION TIBURON COURSE TEMPLETON WIN WITH JASON DAY_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHARLES HOWELL III - DRIVER SWING SYNCED FULL & SLOW MOTION TIBURON GOLF COURSE 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHARLES HOWELL - SYNCED DRIVER GOLF SWING FACE-ON & DTL REG & SLOW MOTION - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHARLEY HOFFMAN 120fps FACE-ON SLOW MOTION DRIVER GOLF SWING 2015 TEMPLETON 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/COLIN MONTGOMERIE 120fps SLOW MOTION & REGULAR FACE-ON DRIVER GOLF SWING 2016 FOOTAGE 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/COLIN MONTGOMERIE 2015 SWING FOOTAGE REG & SLOW MOTION - ACE GROUP TWIN EAGLES GOLF COURSE 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CURTIS STRANGE - DRIVER GOLF SWING SYNCED FACE-ON & DTL FULL & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Darren Clarke golf swing - Driver swing (face-on view), BMW PGA Championship, May 2015._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Dustin Johnson Driver Swing slow motion face on_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/DUSTIN JOHNSON - LONG DRIVER GOLF SWING SYNCED REG & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Eduardo Molinari, golf swing - Driver (Face-on view), ISPS Handa Wales Open 2014_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Ernie Els Golf Swing (Driver face-on view) Wentworth 2014_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/GARY WOODLAND 120fps DRIVER FACE-ON SLOW MOTION & REGULAR GOLF SWING - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/GRAEME MCDOWELL - FACE ON & DTL GOLF SWING SYNCED REGULAR & SLOW MOTION 1080 HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/GRAHAM DELAET - SYNCED DRIVER GOLF SWING FACE-ON & DTL REG & SLOW MOTION  - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/GREG NORMAN - 2013_2014 DRIVER GOLF SWING SYNCED DTL FACE-ON REGULAR & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/HARRIS ENGLISH 2013 DRIVER GOLF SWING - FACE ON & SLOW MOTION  - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/HUNTER MAHAN 120fps DRIVER FACE-ON REGULAR & SLOW MOTION GOLF SWING - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/IAN POULTER - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Jason Day and Rory McIlroy's swing comparison at Dell Match Play_2,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JASON DAY PRACTICE ROUND FOOTAGE - GOLF SWING FROM WIN AT 2014 TEMPLETON SYNCED & SLOW MOTION 1080p_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JASON DUFNER - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/J B HOLMES 120fps  LONG DRIVER REGULAR & SLOW MOTION GOLF SWING - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JONAS BLIXT - LATE 2013 DRIVER GOLF SWING - FACE-ON & DTL REG & SLOW MOTION  - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JUSTIN LEONARD - DRIVER GOLF SWING REGULAR & SLOW MOTION 9TH HOLE TIBURON COURSE LATE 2014 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JUSTIN THOMAS 120fps SLOW MOTION FACE ON DRIVER GOLF SWING_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/KENNY PERRY - DRIVER GOLF SWING DTL FACE ON REG & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LEE JANZEN 120fps SLOW MOTION & REGULAR FACE-ON DRIVER GOLF SWING FOOTAGE 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Lee Slattery - Driver golf swing (face-on view), British Masters Woburn 2015_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LEE WESTWOOD - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Luke Donald golf swing (Driver) face-on view - BMW PGA Wentworth 2016_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MARK CALCAVECCHIA - DRIVER GOLF SWING FACE ON REG & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Mark James golf swing (Driver) face-on-view, July 2014._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Matteo Manassero golf swing (driver) BMW PGA Wentworth 2016 & AAM Scottish Open 2015._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MATT KUCHAR 2013 DRIVER GOLF SWING - FACE-ON & SLOW MOTION  - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Michael Moore, Tim Wood, Geoff Drakeford golf swings (drivers) Emirates Australian Open, 2015._2,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Michael Moore, Tim Wood, Geoff Drakeford golf swings (drivers) Emirates Australian Open, 2015._3,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Mikko Ilonen, Driver swing (face-on) ISPS Handa Wales Open 2013_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Nathan Holman golf swings (face-on and down-the-line), July 2016._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Nick Watney Golf Swing (Driver Swing) face-on view, July 2014_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Padraig Harrington, Driver swing (face-on) BMW PGA wentworth 2012_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PATRICK REED 120fps FACE-ON SLOW MOTION DRIVER GOLF SWING 2015 TEMPLETON 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PATRICK RODGERS 120fps DRIVER FACE-ON SLOW MOTION & REGULAR GOLF SWING - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PETER JACOBSON DRIVER & IRON GOLF SWING SYNCED REG & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Rafael Cabrera-Bello golf swing (driver) face-on view, BMW PGA Wentworth 2016._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/RETIEF GOOSEN LATE 2013 DRIVER GOLF SWING - FACE ON REGULAR & SLOW MOTION  - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Robert Rock golf swing (Driver) face-on view - BMW PGA Wentworth 2016_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/ROCCO MEDIATE DRIVER GOLF SWING 2015 FACE-ON REGULAR & SLOW MOTION TWIN EAGLES COURSE 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/RYAN PALMER GOLF SWING - FACE ON DRIVER SWINGS SYNCED FULL SPEED & SLOW MOTION 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/RYAN PALMER GOLF SWING - FACE ON DRIVER SWINGS SYNCED FULL SPEED & SLOW MOTION 1080p HD_2,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SCOTT MCCARRON 120fps SLOW MOTION & REGULAR FACE-ON DRIVER GOLF SWING FOOTAGE 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SEAN O'HAIR 2013 DRIVER GOLF SWING - FACE ON REGULAR & SLOW MOTION  - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Sebastien Gros golf swing (face-on) Driver, BMW PGA Wentworth, May 2016._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Stephen Allan golf swing (driver), Emirates Australian Open,  November 2015._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/STEVE STRICKER - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION - 1080p HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Thomas Pieters Driver Golf Swing (face-on view) - BMW PGA Championship, May 2015._1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Thorbjorn Olesen - Driver golf swing (face-on view), British Masters Woburn 2015_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Tiger Woods Fantastic Golf Swing Extreme Slow Motion 2013_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/TOM LEHMAN 120fps DUAL FACE ON DRIVER GOLF SWINGS 1080 HD_1,0
-/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Victor Dubuisson golf swing (driver) face-on view, British Masters October 2016._1,0
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/adriene
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/3 Musts On Your Forehand _ STROKE ESSENTIALS
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Alexander Zverev in Super Slow Motion
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Alexandr Dogopolov - Serve in Slow Motion
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Ana Ivanovic in 4k
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Andy Murray in 4k
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Andy Murray Serve In Super Slow Motion 4 - 2013 Cincinnati Open
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Backhand Drop Shot Technique _ DROP SHOTS
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Beginner Forehand Tennis Lesson_ 3 Keys (Top Speed Tennis)
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Classic Tennis Forehand vs Modern Forehand Technique
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Extreme Tennis Topspin Forehand - Slow Motion Study
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Flavia Pennetta in 4k
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Forehand Power _ 2 Secrets for BIG Forehand Groundstrokes
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Forehand Tennis Lesson_ Stop Framing Your Forehand
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Gael Monfils
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Grigor Dimitrov Serve In Super Slow Motion - 2013 Cincinnati Open
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Half Volley Lesson (Progression Drills)
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/How To Get Better at Tennis - Tennis Lesson
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/How To Get Great Lag On Your Forehand _ Tennis Forehand Technique
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/How to Hit a Serve - Taking a Lesson from Serena Williams
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/How To Serve In Tennis In 7 Steps
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Ivo Karlovic
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Jerzy Janowicz
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Milos Raonic
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Jack Sock Serve In Super Slow Motion 2 - 2013 Cincinnati Open
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Jelena Jankovic Serve In Super Slow Motion - 2013 Cincinnati Open
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Julien Benneteau
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Maria Sharapova Serve Practice in HD
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Modern Forehand Loop vs. Traditional Racket Straight Back
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Modern Tennis Footwork _ Roger Federer Footwork Secrets Revealed
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Novak Djokovic in Super Slow Motion 
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/One-Handed Backhand Technique _ BACKHAND TECHNIQUE
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Ramkhamhaeng ptt champion women slomo forehand
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Roger Federer
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Serena Williams - Serve Practice at the Australian Open 2012 in Slow Motion HD
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Simple Tennis Forehand Tips For More Power And Topspin
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Stanislas Wawrinka Serve In Super Slow Motion - 2013 Cincinnati Open
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Svetlana Kuznetsova
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Drills For Beginners
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Forehand Technique _ Get Maximum Power
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Forehand Technique Tips Coach Tom Avery
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis - Forehand Volley featuring Coach Dick Gould (17 NCAA Championships)
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Lesson_ 3 Keys To Hitting A Inside Out Forehand
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Lesson - ATP PRO Technique - Forehand 5 KEY ELEMENTS - Insight Tennis
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Lesson - ATP Pro Technique - Forehand - How to Master the low ball - Insi
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/tennis tipps - forehand drive - slow motion video
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tennis Tutorial Part 1 - The Forehand
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tomas Berdych
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Tommy Haas Serve In Super Slow Motion - 2013 Cincinnati Open
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/TOP Shot Andrea Petkovic_ Forehand Winner Slow Motion
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Venus Williams Serve - 2013 Cincinnati Open
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Victoria Azarenka
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Victoria Azarenka in Super Slow Motion - Forehand and Backhand - BNP Paribas 201
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/15 Minute Senior Workout - HASfit's Low Impact Workout - Senior Exercises - Exer
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/30 Minute 5K _ 3.1 Mile INDOOR RUNNING Workout _ Sunday RUN Day with Pahla B
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/32 Minute Home Cardio Workout with No Equipment - Calorie Blasting Cardio Traini
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/adriene_strength_40
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/adriene_yoga_camp_25
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/amy_rizzotto_goddess
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/ashleigh_sergeant_standing
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/brett_larkin
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/brett_larkin_stress
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/brett_larkin_sweaty
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/brittney_gentle
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/candace_10_lunch
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/candace_30
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/cat_meffan_45
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/cat_meffan_yoganuary
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/cole_chance
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/destination_satori_horse
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/dk_books_horse
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/do_you_yoga_standing
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/drishti_sg_beginners
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/ekhart_hatha
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/ekhart_warrior
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/fitfluential_goddess
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/five_parks_30
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/five_parks_power_vinyasa_flow
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/five_parks_standing_toe
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Full Body Flow - Intermediate Vinyasa Flow Yoga Workout {35 min}
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/katie_brauer_60
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Fun Indoor Cardio Workout
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/heart_alchemy_power
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/i_love_yoga_squat
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Indoor Walking Exercise - Full Length 30-Minute Power Walk (fat burning, walking
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/kandace_full_body
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/leigha_butler_hip_opening
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/leisa_timms_goddess
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/margaret_kirschner_goddess
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/megs_yoga_horse
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/mother_moon_fundamentals
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/music_easy_yoga
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/rachel_scott_paradise
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Real-Time High Intensity Cardio Workout for Lean Muscle
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/rob_power
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/rob_power_hour
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/sarah_beth
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/sarah_beth_30_power
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/sean_vigue_standing
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/silke_dewulf
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/stephanie_snyder_goddess
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/suzanne_morgan_goddess
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/tadasana_yoga
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/tim_total_body_vinyasa_flow
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/tim_total_body_vinyasa_flow2
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/uw_health_horse_stance
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Xco 2 - Reactive Impact _ Xco Workout Indoor _ Koordination
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/yans_yoga_stairs
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/yoga_for_ballet_standing
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/yogaglo_raised_hands
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/yoga_journal_standing
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/yoga_tx_full_body
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/yoga_tx_full_body2
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/zao_goddess
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Zeus Fat Burning Workout from Home - No Equipment, Only 15 Minutes Needed
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/2016 FRED COUPLES 120fps SLOW MOTION & REGULAR GOLF SWING FOOTAGE CHUBB CLASSIC 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Adam Scott golf swing - driver (face-on view), July 2016_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/AI MIYAZATO - PERFECT ANGLES SIDE BY SIDE SYNCED - CME GOLF SWING REG & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/ALISON LEE 120fps FACE ON SLOW MOTION DRIVER GOLF SWING - 2015 CME GROUP TOUR CHAMPIONSHIP 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Alvaro Quiros golf swing (Driver) face-on view - BMW PGA Wentworth 2016_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/AMELIA LEWIS - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Amy Boulden golf swing (Driver), ISPS Handa Ladies European Masters 2015_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Anders Forsbrand golf swing (Driver) face-on-view, July 2014._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Anders Hansen golf swing - Driver (Face-on-view), August 2014._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Andrew Johnston golf swing (driver) face-on and dtl views, British Masters October 2016._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Andy Sullivan golf swing (driver) face-on view, BMW PGA Wentworth 2016._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/ANNA NORDQVIST - FACE ON DRIVER SWING REG & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/ANNA NORDQVIST 120fps FACE ON SLOW MOTION DRIVER GOLF SWING 2015 CME CHAMPIONSHIP 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/AUSTIN ERNST - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/AZAHARA MUNOZ - HANDS AT IMPACT (CLOSE UP SLOW MO) DRIVER SWING 2014 TIBURON GOLF COURSE 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BAEK KYU JUNG - HANDS THRU IMPACT (CLOSE UP SLOW MOTION) DRIVER GOLF SWING CME CHAMPIONSHIP 2014 HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BEATRIZ RECARI 120fps SLOW MOTION DRIVER GOLF SWING 2015 CME GROUP TOUR CHAMPIONSHIP 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Ben An golf swing (Driver) face-on view - BMW PGA Wentworth 2016_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BERNHARD LANGER - 2015 GOLF SWING FOOTAGE IRON & DRIVER FULL & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BILLY HORSCHEL - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BRANDT SNEDEKER DRIVER SWING - (CLOSE UP HANDS) TIBURON GOLF COURSE PRACTICE SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/BRITTANY LINCICOME BIG HITTER - HANDS CLOSE UP DRIVER SWING 2014 TIBURON GOLF COURSE 1080 HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CAMERON TRINGALE - DRIVER GOLF SWING REG & SLOW MOTION TIBURON COURSE TEMPLETON WIN WITH JASON DAY_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CARLOTA CIGANDA 120fps SLOW MOTION FACE ON DRIVER GOLF SWING 2015 CME CHAMPIONSHIP 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CATRIONA MATTHEW - STRAIGHT FACE ON DRIVER GOLF SWING LATE 2013 - REG & SLOW MOTION - 1080p_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHARLES HOWELL - SYNCED DRIVER GOLF SWING FACE-ON & DTL REG & SLOW MOTION - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHARLES HOWELL III - DRIVER SWING SYNCED FULL & SLOW MOTION TIBURON GOLF COURSE 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHARLEY HOFFMAN 120fps FACE-ON SLOW MOTION DRIVER GOLF SWING 2015 TEMPLETON 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHARLEY HULL 120fps SLOW MOTION FACE ON DRIVER GOLF SWING 2015 CME GROUP TOUR CHAMPIONSHIP 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHELLA CHOI -  FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CHRISTINA KIM - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/COLIN MONTGOMERIE 120fps SLOW MOTION & REGULAR FACE-ON DRIVER GOLF SWING 2016 FOOTAGE 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/COLIN MONTGOMERIE 2015 SWING FOOTAGE REG & SLOW MOTION - ACE GROUP TWIN EAGLES GOLF COURSE 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/CURTIS STRANGE - DRIVER GOLF SWING SYNCED FACE-ON & DTL FULL & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Darren Clarke golf swing - Driver swing (face-on view), BMW PGA Championship, May 2015._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/DUSTIN JOHNSON - LONG DRIVER GOLF SWING SYNCED REG & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Dustin Johnson Driver Swing slow motion face on_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Eduardo Molinari, golf swing - Driver (Face-on view), ISPS Handa Wales Open 2014_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Ernie Els Golf Swing (Driver face-on view) Wentworth 2014_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/GARY WOODLAND 120fps DRIVER FACE-ON SLOW MOTION & REGULAR GOLF SWING - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/GERINA PILLER - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Gerina Piller golf swing (face-on view), Women's British Open practice - July 2016._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/GRAEME MCDOWELL - FACE ON & DTL GOLF SWING SYNCED REGULAR & SLOW MOTION 1080 HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/GRAHAM DELAET - SYNCED DRIVER GOLF SWING FACE-ON & DTL REG & SLOW MOTION  - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/GREG NORMAN - 2013_2014 DRIVER GOLF SWING SYNCED DTL FACE-ON REGULAR & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/HARRIS ENGLISH 2013 DRIVER GOLF SWING - FACE ON & SLOW MOTION  - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/HEE YOUNG PARK 120fps SLOW MOTION DRIVER FACE-ON GOLF SWING 2015 CME CHAMPIONSHIP 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/HUNTER MAHAN 120fps DRIVER FACE-ON REGULAR & SLOW MOTION GOLF SWING - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/HYO JOO KIM 120fps FACE ON SLOW MOTION GOLF SWING - 2015 CME GROUP TOUR CHAMPIONSHIP 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/IAN POULTER - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/INBEE PARK 4K UHD SLOW MOTION & FULL SPEED FACE-ON DRIVER GOLF SWING 2015_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/J B HOLMES 120fps  LONG DRIVER REGULAR & SLOW MOTION GOLF SWING - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Jason Day and Rory McIlroy's swing comparison at Dell Match Play_2
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JASON DAY PRACTICE ROUND FOOTAGE - GOLF SWING FROM WIN AT 2014 TEMPLETON SYNCED & SLOW MOTION 1080p_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JASON DUFNER - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JENNY SHIN - FACE ON DRIVER GOLF SWING 2014 CME CHAMPIONSHIP - REG & SLOW MOTION - 1080p_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JENNY SHIN 120fps FACE ON DRIVER SLOW MOTION GOLF SWING - 2015 CME GROUP TOUR CHAMPIONSHIP 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JESSICA KORDA - FACE ON DRIVER GOLF SWING 2014 CME CHAMPIONSHIP - REG & SLOW MOTION - 1080p_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JONAS BLIXT - LATE 2013 DRIVER GOLF SWING - FACE-ON & DTL REG & SLOW MOTION  - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JULIETA GRANADA - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JUSTIN LEONARD - DRIVER GOLF SWING REGULAR & SLOW MOTION 9TH HOLE TIBURON COURSE LATE 2014 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/JUSTIN THOMAS 120fps SLOW MOTION FACE ON DRIVER GOLF SWING_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/KARINE ICHER - DRIVER GOLF SWING FACE-ON 2013 CME TITLEHOLDERS - REG & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/KARRIE WEBB - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/KENNY PERRY - DRIVER GOLF SWING DTL FACE ON REG & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Lee Slattery - Driver golf swing (face-on view), British Masters Woburn 2015_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LEE JANZEN 120fps SLOW MOTION & REGULAR FACE-ON DRIVER GOLF SWING FOOTAGE 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LEE WESTWOOD - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LEXI THOMPSON  - HANDS THRU IMPACT (CLOSE UP) POWER DRIVER SWING 2014 CME TIBURON GOLF COURSE 1080p_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LEXI THOMPSON  - HANDS THRU IMPACT (CLOSE UP) POWER DRIVER SWING 2014 CME TIBURON GOLF COURSE 1080p_2
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LEXI THOMPSON DUAL ANGLE SLOW MOTION DRIVER GOLF SWING_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LIZETTE SALAS - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Luke Donald golf swing (Driver) face-on view - BMW PGA Wentworth 2016_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LYDIA KO vs INBEE PARK - SYNCED DRIVER GOLF SWING REGULAR & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/LYDIA KO vs INBEE PARK - SYNCED DRIVER GOLF SWING REGULAR & SLOW MOTION 1080p HD_2
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MARK CALCAVECCHIA - DRIVER GOLF SWING FACE ON REG & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Mark James golf swing (Driver) face-on-view, July 2014._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MATT KUCHAR 2013 DRIVER GOLF SWING - FACE-ON & SLOW MOTION  - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Matteo Manassero golf swing (driver) BMW PGA Wentworth 2016 & AAM Scottish Open 2015._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Michael Moore, Tim Wood, Geoff Drakeford golf swings (drivers) Emirates Australian Open, 2015._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Michael Moore, Tim Wood, Geoff Drakeford golf swings (drivers) Emirates Australian Open, 2015._2
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Michael Moore, Tim Wood, Geoff Drakeford golf swings (drivers) Emirates Australian Open, 2015._3
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MICHELLE WIE - CME SWING FOOTAGE TIBURON GOLF COURSE REGULAR & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MICHELLE WIE - CME SWING FOOTAGE TIBURON GOLF COURSE REGULAR & SLOW MOTION 1080p HD_2
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MICHELLE WIE - DRIVER GOLF SWING FACE-ON 2013 CME TITLEHOLDERS - REG & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Mikko Ilonen, Driver swing (face-on) ISPS Handa Wales Open 2013_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MINJEE LEE 120fps SLOW MOTION & FULL SPEED FACE-ON DRIVER GOLF SWING 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/MORGAN PRESSEL - PERFECT FACE ON DRIVER GOLF SWING 2013 - REG & SLOW MOTION - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Nathan Holman golf swings (face-on and down-the-line), July 2016._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Nick Watney Golf Swing (Driver Swing) face-on view, July 2014_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Padraig Harrington, Driver swing (face-on) BMW PGA wentworth 2012_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PATRICK REED 120fps FACE-ON SLOW MOTION DRIVER GOLF SWING 2015 TEMPLETON 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PATRICK RODGERS 120fps DRIVER FACE-ON SLOW MOTION & REGULAR GOLF SWING - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PAULA CREAMER - STRAIGHT FACE ON DRIVER GOLF SWING LATE 2013 - REG & SLOW MOTION - 1080p_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PERNILLA LINDBERG - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PETER JACOBSON DRIVER & IRON GOLF SWING SYNCED REG & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/PORNANONG PHATLUM - DRIVER GOLF SWING FACE-ON SLOW MOTION 2014 CME TIBURON GOLF COURSE 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Rafael Cabrera-Bello golf swing (driver) face-on view, BMW PGA Wentworth 2016._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/RETIEF GOOSEN LATE 2013 DRIVER GOLF SWING - FACE ON REGULAR & SLOW MOTION  - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Robert Rock golf swing (Driver) face-on view - BMW PGA Wentworth 2016_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/ROCCO MEDIATE DRIVER GOLF SWING 2015 FACE-ON REGULAR & SLOW MOTION TWIN EAGLES COURSE 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/RYAN PALMER GOLF SWING - FACE ON DRIVER SWINGS SYNCED FULL SPEED & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/RYAN PALMER GOLF SWING - FACE ON DRIVER SWINGS SYNCED FULL SPEED & SLOW MOTION 1080p HD_2
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SANDRA GAL - PERFECT FACE ON DRIVER GOLF SWING 2013 - REG & SLOW MOTION - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SCOTT MCCARRON 120fps SLOW MOTION & REGULAR FACE-ON DRIVER GOLF SWING FOOTAGE 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SEAN O'HAIR 2013 DRIVER GOLF SWING - FACE ON REGULAR & SLOW MOTION  - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Sebastien Gros golf swing (face-on) Driver, BMW PGA Wentworth, May 2016._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SEI YOUNG KIM 120fps FACE ON DRIVER GOLF SWING 1080 HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SEI YOUNG KIM 120fps SLOW MOTION & FULL SPEED FACE-ON GOLF SWING 2015 CME CHAMPIONSHIP 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SHANSHAN FENG - DRIVER SWING (HANDS AT IMPACT SLOW MOTION) CME CHAMPIONSHIP TIBURON GOLF COURSE_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SO YEON RYU - PERFECT FACE ON DRIVER GOLF SWING 2013 - REG & SLOW MOTION - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/STACY LEWIS - SYNCED DRIVER GOLF SWING DTL & FACE ON - REG & SLOW MOTION 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Stephen Allan golf swing (driver), Emirates Australian Open,  November 2015._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/STEVE STRICKER - SYNCED DRIVER GOLF SWING FACE-ON DTL REG & SLOW MOTION - 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SUN YOUNG YOO (HANDS CLOSE UP & SLOW MOTION) DRIVER SWING CME CHAMPIONSHIP TIBURON GOLF COURSE_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/SUZANN PETTERSEN - FACE ON DRIVER SWING REGULAR & SLOW MOTION TIBURON GOLF COURSE 2014 CME 1080p HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Swing Analysis_Jordan Spieth_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Thomas Pieters Driver Golf Swing (face-on view) - BMW PGA Championship, May 2015._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Thorbjorn Olesen - Driver golf swing (face-on view), British Masters Woburn 2015_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Tiger Woods Fantastic Golf Swing Extreme Slow Motion 2013_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/TOM LEHMAN 120fps DUAL FACE ON DRIVER GOLF SWINGS 1080 HD_1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/golfswinghd/frames/Victor Dubuisson golf swing (driver) face-on view, British Masters October 2016._1
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/[Golf with Aimee] Driver Lesson 001- Slice No More
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/10 Min Yoga for Men Beginner Routine - Easy Men's Yoga Workout - Best Yoga Worko
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Best Driver Video - Drive the Ball Without Slicing It
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Golf Instruction - How To Get That Slow Easy Swing
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Golf Lesson - SMOOTH Tempo Like The Pros
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Golf Lessons - Effortless Power
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Golf Lessons - Putting Basics
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Golf Lessons - Stop hitting the ground before the ball
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/How to Hit a Solid Iron Shot
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Morning Yoga Workout Vinyasa Flow
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Power Yoga Workout _ Full Body Yoga Class (30 minutes)
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Upper Body Yoga Workout
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Yoga Workout For Lower Body
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Djokovic Ripple of Power Forehand
+/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train/frames/Modern Tennis Forehand Technique - Balance and Stability __ Mili Split Method Co
