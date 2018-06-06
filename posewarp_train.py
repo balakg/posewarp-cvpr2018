@@ -31,7 +31,7 @@ def train(model_name, gpu_id):
 
     vgg_model = truncated_vgg.vgg_norm()
     networks.make_trainable(vgg_model, False)
-    response_weights = sio.loadmat('mean_response.mat')
+    response_weights = sio.loadmat('vgg_activation_distribution_train.mat')
     model = networks.network_posewarp(params)
     model.compile(optimizer=Adam(lr=1e-4), loss=[networks.vgg_loss(vgg_model, response_weights)])
 
