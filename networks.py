@@ -61,14 +61,14 @@ def make_trainable(net, val):
 
 
 def discriminator(param):
-    IMG_HEIGHT = param['IMG_HEIGHT']
-    IMG_WIDTH = param['IMG_WIDTH']
+    img_h = param['IMG_HEIGHT']
+    img_w = param['IMG_WIDTH']
     n_joints = param['n_joints']
     pose_dn = param['posemap_downsample']
 
-    x_tgt = Input(shape=(IMG_HEIGHT, IMG_WIDTH, 3))
-    x_src_pose = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, n_joints))
-    x_tgt_pose = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, n_joints))
+    x_tgt = Input(shape=(img_h, img_w, 3))
+    x_src_pose = Input(shape=(img_h / pose_dn, img_w / pose_dn, n_joints))
+    x_tgt_pose = Input(shape=(img_h / pose_dn, img_w / pose_dn, n_joints))
 
     x = my_conv(x_tgt, 64, ks=5)
     x = MaxPooling2D()(x) # 128
@@ -97,27 +97,27 @@ def wass(y_true, y_pred):
     return tf.reduce_mean(y_true * y_pred)
 
 
-def gan(generator, discriminator, param, feat_net, feat_weights, disc_loss, lr):
-    IMG_HEIGHT = param['IMG_HEIGHT']
-    IMG_WIDTH = param['IMG_WIDTH']
+def gan(gen_model, disc_model, param):
+
+    img_h = param['IMG_HEIGHT']
+    img_w = param['IMG_WIDTH']
     n_joints = param['n_joints']
+    n_limbs = param['n_limbs']
     pose_dn = param['posemap_downsample']
 
-    src_in = Input(shape=(IMG_HEIGHT, IMG_WIDTH, 3))
-    pose_src = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, 14))
-    pose_tgt = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, 14))
-    mask_in = Input(shape=(IMG_HEIGHT, IMG_WIDTH, 11))
-    trans_in = Input(shape=(2, 3, 11))
+    src_in = Input(shape=(img_h, img_w, 3))
+    pose_src = Input(shape=(img_h / pose_dn, img_w / pose_dn, n_joints))
+    pose_tgt = Input(shape=(img_h / pose_dn, img_w / pose_dn, n_joints))
+    mask_in = Input(shape=(img_h, img_w, n_limbs+1))
+    trans_in = Input(shape=(2, 3, n_limbs+1))
 
     make_trainable(discriminator, False)
-    # y_gen = generator([src_in,pose_src,pose_tgt])
-    y_gen = generator([src_in, pose_src, pose_tgt, mask_in, trans_in])
-    y_class = discriminator([y_gen, pose_src, pose_tgt])
+    y_gen = gen_model([src_in, pose_src, pose_tgt, mask_in, trans_in])
+    y_class = disc_model([y_gen, pose_src, pose_tgt])
 
-    # gan = Model(inputs=[src_in,pose_src,pose_tgt],outputs=[y_gen,y_class], name='gan')
-    gan = Model(inputs=[src_in, pose_src, pose_tgt, mask_in, trans_in], outputs=[y_gen, y_class], name='gan')
+    gan_model = Model(inputs=[src_in, pose_src, pose_tgt], outputs=[y_gen, y_class], name='gan')
 
-    return gan
+    return gan_model
 
 
 def _repeat(x, n_repeats):
@@ -131,10 +131,10 @@ def _repeat(x, n_repeats):
 def _meshgrid(height, width):
     x_t = tf.matmul(tf.ones(shape=tf.stack([height, 1])),
                     tf.transpose(tf.expand_dims(tf.linspace(0.0,
-                                                            tf.cast(width, tf.float32) - 1.0, width), 1), [1, 0]))
+                                    tf.cast(width, tf.float32) - 1.0, width), 1), [1, 0]))
     y_t = tf.matmul(tf.expand_dims(tf.linspace(0.0,
-                                               tf.cast(height, tf.float32) - 1.0, height), 1),
-                    tf.ones(shape=tf.stack([1, width])))
+                                    tf.cast(height, tf.float32) - 1.0, height), 1),
+                                    tf.ones(shape=tf.stack([1, width])))
     return x_t, y_t
 
 
@@ -143,7 +143,7 @@ def interpolate(inputs):
     x = inputs[1]
     y = inputs[2]
 
-    im = tf.pad(im, [[0, 0], [1, 1], [1, 1], [0, 0]], "CONSTANT")
+    im = tf.pad(im, [[0, 0], [1, 1], [1, 1], [0, 0]], "SYMMETRIC")
 
     num_batch = tf.shape(im)[0]
     height = tf.shape(im)[1]
@@ -189,9 +189,7 @@ def interpolate(inputs):
     Id = tf.gather(im_flat, idx_d)
 
     # and finally calculate interpolated values
-    x0_f = tf.cast(x0, 'float32')
     x1_f = tf.cast(x1, 'float32')
-    y0_f = tf.cast(y0, 'float32')
     y1_f = tf.cast(y1, 'float32')
 
     dx = x1_f - x
@@ -211,7 +209,6 @@ def affine_warp(im, theta):
     num_batch = tf.shape(im)[0]
     height = tf.shape(im)[1]
     width = tf.shape(im)[2]
-    channels = tf.shape(im)[3]
 
     x_t, y_t = _meshgrid(height, width)
     x_t_flat = tf.reshape(x_t, (1, -1))
@@ -294,8 +291,9 @@ def network_posewarp(param):
     img_w = param['IMG_WIDTH']
     n_joints = param['n_joints']
     pose_dn = param['posemap_downsample']
-    n_limbs = param['n_libs']
+    n_limbs = param['n_limbs']
 
+    # Inputs
     src_in = Input(shape=(img_h, img_w, 3))
     pose_src = Input(shape=(img_h / pose_dn, img_w / pose_dn, n_joints))
     pose_tgt = Input(shape=(img_h / pose_dn, img_w / pose_dn, n_joints))
@@ -303,7 +301,7 @@ def network_posewarp(param):
     trans_in = Input(shape=(2, 3, n_limbs+1))
 
     # 1. FG/BG separation
-    x = unet(src_in, pose_src, [64] * 2 + [128] * 9, [128] * 4 + [32])
+    x = unet(src_in, pose_src, [64]*2 + [128]*9, [128]*4 + [32])
     src_mask_delta = my_conv(x, 11, activation='linear')
     src_mask = keras.layers.add([src_mask_delta, src_mask_prior])
     src_mask = Activation('softmax', name='mask_src')(src_mask)
@@ -317,7 +315,7 @@ def network_posewarp(param):
     bg_src_mask = Lambda(lambda arg: tf.expand_dims(arg[:, :, :, 0], 3))(src_mask)
 
     # 3. BG/FG synthesis
-    x = unet(concatenate([bg_src, bg_src_mask]), pose_src, [64] * 2 + [128] * 9, [128] * 4 + [64])
+    x = unet(concatenate([bg_src, bg_src_mask]), pose_src, [64]*2 + [128]*9, [128]*4 + [64])
     bg_tgt = my_conv(x, 3, activation='tanh', name='bg_tgt')
 
     x = unet(fg_stack, pose_tgt, [64] + [128] * 3 + [256] * 7, [256, 256, 256, 128, 64])
