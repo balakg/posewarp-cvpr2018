@@ -12,6 +12,7 @@ def getGeneralParams():
     param['posemap_downsample'] = 2
     param['sigma_joint'] = 7/4.0
     param['n_joints'] = 14
+    param['limbs'] = [[0, 1], [2, 3], [3, 4], [5, 6], [6, 7], [8, 9], [9, 10], [11, 12], [12, 13], [2, 5, 8, 11]]
 
     param['test_interval'] = 500
     param['model_save_interval'] = 5000

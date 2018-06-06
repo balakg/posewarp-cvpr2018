@@ -48,7 +48,7 @@ def train(dataset,gpu_id):
 
 
 	test = datareader.makeActionExampleList('test_vids.txt',1)
-	feed = datageneration.warpExampleGenerator(test,params,do_augment=False,return_pose_vectors=True)
+	feed = datageneration.warp_example_generator(test, params, do_augment=False, return_pose_vectors=True)
 
 	
 	n_frames = len(test)

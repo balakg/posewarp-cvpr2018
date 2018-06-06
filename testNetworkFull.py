@@ -21,7 +21,7 @@ def train(dataset,gpu_id):
 	gpu = '/gpu:' + str(gpu_id)
 
 	np.random.seed(17)
-	feed = datageneration.createFeed(params,'test_vids.txt',False,True)
+	feed = datageneration.create_feed(params, 'test_vids.txt', False, True)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True

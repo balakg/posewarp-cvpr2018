@@ -21,8 +21,8 @@ def train(model_name,gpu_id):
 	if not os.path.isdir(network_dir):
 		os.mkdir(network_dir)
 
-	train_feed=datageneration.createFeed(params,"train_vids.txt")
-	test_feed=datageneration.createFeed(params,"test_vids.txt")
+	train_feed=datageneration.create_feed(params, "train_vids.txt")
+	test_feed=datageneration.create_feed(params, "test_vids.txt")
 
 	batch_size = params['batch_size']
 

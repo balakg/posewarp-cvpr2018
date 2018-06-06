@@ -33,8 +33,8 @@ def train(dataset,gpu_id):
 	_,aux_test = datareader.makeWarpExampleList(aux_params,0,2000,2,5)
 
 	test = lift_test + golf_test+workout_test + tennis_test + aux_test
-	feed = datageneration.warpExampleGenerator(test,params,do_augment=False,draw_skeleton=False,skel_color=(0,0,255),
-			return_pose_vectors=True)
+	feed = datageneration.warp_example_generator(test, params, do_augment=False, draw_skeleton=False, skel_color=(0, 0, 255),
+                                                 return_pose_vectors=True)
 	
 
 	config = tf.ConfigProto()

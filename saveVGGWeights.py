@@ -18,7 +18,7 @@ def main(gpu_id):
 
 	n_steps = 2000
 	train = datareader.makeWarpExampleList('train_vids.txt',n_steps)
-	train_feed = datageneration.warpExampleGenerator(train,params,return_pose_vectors=False)
+	train_feed = datageneration.warp_example_generator(train, params, return_pose_vectors=False)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True

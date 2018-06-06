@@ -23,7 +23,7 @@ def train(gpu_id):
 
 	_,test = datareader.makeWarpExampleList(test_params,0,200,2,0)
 
-	feed = datageneration.warpExampleGenerator(test,params,do_augment=False,draw_skeleton=False,skel_color=(0,0,255))
+	feed = datageneration.warp_example_generator(test, params, do_augment=False, draw_skeleton=False, skel_color=(0, 0, 255))
 	
 
 	config = tf.ConfigProto()

@@ -20,7 +20,7 @@ def train(model_name, gpu_id):
     if not os.path.isdir(network_dir):
         os.mkdir(network_dir)
 
-    train_feed = datageneration.createFeed(params, "train_vids.txt")
+    train_feed = datageneration.create_feed(params, "train_vids.txt")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
     config = tf.ConfigProto()
@@ -35,7 +35,7 @@ def train(model_name, gpu_id):
 
     # model.summary()
 
-    for step in xrange(0, 250000):
+    for step in xrange(0, 200000):
         x, y = next(train_feed)
 
         train_loss = model.train_on_batch(x, y)

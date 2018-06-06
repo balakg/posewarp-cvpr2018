@@ -31,8 +31,8 @@ def train(dataset,gpu_id):
 	test_all = lift_test + golf_test + yoga_test
 	train_all = lift_train + golf_train + yoga_train
 
-	test_feed = datageneration.warpExampleGenerator(test_all,params,drawSkeleton=False,doAugment=False)
-	train_feed = datageneration.warpExampleGenerator(test_all,params,drawSkeleton=False,doAugment=False)
+	test_feed = datageneration.warp_example_generator(test_all, params, drawSkeleton=False, doAugment=False)
+	train_feed = datageneration.warp_example_generator(test_all, params, drawSkeleton=False, doAugment=False)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
