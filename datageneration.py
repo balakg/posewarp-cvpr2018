@@ -1,36 +1,33 @@
 import os
 import numpy as np
-import json
 import cv2
-import scipy.io as sio
-from scipy import interpolate
 import transformations
 import datareader
 
 limbs = [[0,1],[2,3],[3,4],[5,6],[6,7],[8,9],[9,10],[11,12],[12,13],[2,5,8,11]]	
 
-def getPersonScale(joints):
-	torso_size = (-joints[0][1] + (joints[8][1] + joints[11][1])/2.0)
+def get_person_scale(joints):
+    torso_size = (-joints[0][1] + (joints[8][1] + joints[11][1])/2.0)
 	peak_to_peak = np.ptp(joints,axis=0)[1]
 	rcalf_size = np.sqrt((joints[9][1] - joints[10][1])**2 + (joints[9][0] - joints[10][0])**2)
 	lcalf_size = np.sqrt((joints[12][1] - joints[13][1])**2 + (joints[12][0] - joints[13][0])**2)
 	calf_size = (lcalf_size + rcalf_size)/2.0
 	size = np.max([2.5*torso_size,5.0*calf_size,peak_to_peak*1.1]) 
-	return (size/200.0)
+	return size/200.0
 
-def getExampleInfo(vid_name,frame_num,box,X):
+def get_example_info(vid_name, frame_num, box, X):
 	I_name_j = os.path.join(vid_name,str(frame_num+1)+'.jpg')
 	if(not os.path.isfile(I_name_j)):
 		I_name_j = os.path.join(vid_name, str(frame_num+1)+'.png')
 
 	joints = X[:,:,frame_num]-1.0
 	box_j = box[frame_num,:]
-	scale = getPersonScale(joints)
+	scale = get_person_scale(joints)
 	pos = [(box_j[0] + box_j[2]/2.0), (box_j[1] + box_j[3]/2.0)] 
 	lj = [I_name_j] + np.ndarray.tolist(joints.flatten()) + pos + [scale]
 	return lj
 
-def readExampleInfo(example):
+def read_example_info(example):
 	I = cv2.imread(example[0])
 	joints = np.reshape(np.array(example[1:29]), (14,2))
 	scale = example[31]
@@ -77,11 +74,11 @@ def warpExampleGenerator(vid_info_list,param,do_augment=True,return_pose_vectors
 			while(abs(frames[0] - frames[1])/(n_frames*1.0) <= 0.02):
 				frames = np.random.choice(n_frames,2,replace=False)
 
-			example0 = getExampleInfo(vid_path,frames[0],vid_bbox,vid_X)
-			example1 = getExampleInfo(vid_path,frames[1],vid_bbox,vid_X)
+			example0 = get_example_info(vid_path, frames[0], vid_bbox, vid_X)
+			example1 = get_example_info(vid_path, frames[1], vid_bbox, vid_X)
 			
-			I0,joints0,scale0,pos0 = readExampleInfo(example0)
-			I1,joints1,scale1,pos1 = readExampleInfo(example1)
+			I0,joints0,scale0,pos0 = read_example_info(example0)
+			I1,joints1,scale1,pos1 = read_example_info(example1)
 			#X_class[i,0] = vid_class
 
 			#pos = pos0		
@@ -174,8 +171,8 @@ def transferExampleGenerator(examples0,examples1,param):
 				while(example0[-1] == example1[-1]):
 					example1 = examples1[np.random.randint(0,len(examples1))] 
 
-				I0,joints0,scale0,pos0 = readExampleInfo(example0[:32])
-				I1,joints1,scale1,pos1 = readExampleInfo(example1[32:64])
+				I0,joints0,scale0,pos0 = read_example_info(example0[:32])
+				I1,joints1,scale1,pos1 = read_example_info(example1[32:64])
 
 				scale0 = scale_factor/example0[31]
 				scale1 = scale_factor/example1[31]
@@ -458,57 +455,3 @@ def getLimbTransforms(joints1,joints2):
 		Ms[:,:,i] = np.array([[tform[1],-tform[3],tform[0]],[tform[3],tform[1],tform[2]]])
 
 	return Ms
-
-
-
-#if(i == 6):
-#	mask_i = makeGaussianMap(img_width,img_height,joints[10,:],17**2,17**2,0)
-#	mask[:,:,i] = np.maximum(mask[:,:,i], mask_i/(np.amax(mask_i) + 1e-6))
-#if(i == 8):
-#	mask_i = makeGaussianMap(img_width,img_height,joints[13,:],17**2,17**2,0)
-#	mask[:,:,i] = np.maximum(mask[:,:,i], mask_i/(np.amax(mask_i) + 1e-6))
-
-'''
-def poseExampleGenerator(examples,param):
-    
-	img_width = param['IMG_WIDTH']
-	img_height = param['IMG_HEIGHT']
-	pose_dn = param['posemap_downsample']
-	sigma_joint = param['sigma_joint']
-	n_joints = param['n_joints']
-	scale_factor = param['obj_scale_factor']	
-	batch_size = param['batch_size']
-
-	while True:
-
-		X_src = np.zeros((batch_size,img_height,img_width,3))
-		X_mask = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,1))
-		Y = np.zeros((batch_size,img_height/pose_dn,img_width/pose_dn,n_joints))
-
-		for i in xrange(batch_size):
-			example = examples[np.random.randint(0,len(examples))]	
-			I = readImage(example[0])
-
-			joints = np.reshape(np.array(example[1:29]), (14,2))
-			pos = np.array(example[29:31])	
-			scale = 1.15/(example[31])
-
-			I,joints = centerAndScaleImage(I,img_width,img_height,pos,scale,joints)
-
-			rscale,rshift,rdegree,rsat = randAugmentations(param)
-	
-			I,joints = augment(I,joints,rscale,rshift,rdegree,rsat,img_height,img_width)	
-
-			posemap = makeJointHeatmaps(img_height,img_width,joints,sigma_joint,pose_dn)
-		
-			fg_mask = makeGaussianMap(img_width/pose_dn,img_height/pose_dn,
-									np.array([img_width/(2.0*pose_dn),img_height/(2.0*pose_dn)]),
-									   21.0**2,21**2,0.0)
-			
-			X_src[i,:,:,:] = I
-			X_mask[i,:,:,0] = fg_mask
-			
-			Y[i,:,:,:] = posemap
-
-		yield ([X_src,X_mask],Y)
-'''

@@ -51,8 +51,8 @@ def train(model_name,gpu_id):
 			discriminator = networks.discriminator(params)
 			discriminator.compile(loss='binary_crossentropy', optimizer=Adam(lr=disc_lr))
 			gan = networks.gan(generator,discriminator,params,vgg_model,response_weights,disc_loss,gan_lr)
-			gan.compile(optimizer=Adam(lr=gan_lr),loss=[networks.vggLoss(vgg_model,response_weights), 'binary_crossentropy'], 
-						loss_weights=[1.0,disc_loss])
+			gan.compile(optimizer=Adam(lr=gan_lr), loss=[networks.vgg_loss(vgg_model, response_weights), 'binary_crossentropy'],
+                        loss_weights=[1.0,disc_loss])
 
 		for step in xrange(10001):
 
