@@ -3,19 +3,19 @@ import numpy as np
 import cv2
 import transformations
 import scipy.io as sio
+import glob
 
 
-def make_vid_info_list(vid_list_file):
-    f = open(vid_list_file)
-    vids = f.read().splitlines()
-    f.close()
+def make_vid_info_list(data_dir):
+
+    vids = glob.glob(data_dir + '/frames/*')
     n_vids = len(vids)
 
     vid_info = []
 
     for i in range(n_vids):
         path, vid_name = os.path.split(vids[i])
-        info_name = path[:-6] + 'info/' + vid_name + '.mat'
+        info_name = data_dir + '/info/' + vid_name + '.mat'
         info = sio.loadmat(info_name)
 
         box = info['data']['bbox'][0][0]
@@ -134,8 +134,8 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
         yield (out, Y)
 
 
-def create_feed(params, vid_file, do_augment=True, return_pose_vectors=False, transfer=False):
-    vid_info_list = make_vid_info_list(vid_file)
+def create_feed(params, data_dir, do_augment=True, return_pose_vectors=False, transfer=False):
+    vid_info_list = make_vid_info_list(data_dir)
 
     if transfer:
         feed = transfer_example_generator(ex_list, ex_list, params)
