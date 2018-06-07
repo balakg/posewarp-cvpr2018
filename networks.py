@@ -329,10 +329,12 @@ def network_posewarp(param):
 def network_unet(param):
     n_joints = param['n_joints']
     pose_dn = param['posemap_downsample']
+    img_h = param['IMG_HEIGHT']
+    img_w = param['IMG_WIDTH']
 
-    src_in = Input(shape=(IMG_HEIGHT, IMG_WIDTH, 3))
-    pose_src = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, n_joints))
-    pose_tgt = Input(shape=(IMG_HEIGHT / pose_dn, IMG_WIDTH / pose_dn, n_joints))
+    src_in = Input(shape=(img_h, img_w, 3))
+    pose_src = Input(shape=(img_h / pose_dn, img_w / pose_dn, n_joints))
+    pose_tgt = Input(shape=(img_h / pose_dn, img_w / pose_dn, n_joints))
 
     x = unet(src_in, concatenate([pose_src, pose_tgt]), [64] + [128] * 3 + [256] * 7,
              [256, 256, 256, 128, 64])
