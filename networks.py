@@ -120,7 +120,7 @@ def gan(gen_model, disc_model, param):
     return gan_model
 
 
-def _repeat(x, n_repeats):
+def repeat(x, n_repeats):
     rep = tf.transpose(
         tf.expand_dims(tf.ones(shape=tf.stack([n_repeats, ])), 1), [1, 0])
     rep = tf.cast(rep, dtype='int32')
@@ -128,7 +128,7 @@ def _repeat(x, n_repeats):
     return tf.reshape(x, [-1])
 
 
-def _meshgrid(height, width):
+def meshgrid(height, width):
     x_t = tf.matmul(tf.ones(shape=tf.stack([height, 1])),
                     tf.transpose(tf.expand_dims(tf.linspace(0.0,
                                     tf.cast(width, tf.float32) - 1.0, width), 1), [1, 0]))
@@ -168,7 +168,7 @@ def interpolate(inputs):
 
     dim2 = width
     dim1 = width * height
-    base = _repeat(tf.range(num_batch) * dim1, (height - 2) * (width - 2))
+    base = repeat(tf.range(num_batch) * dim1, (height - 2) * (width - 2))
 
     base_y0 = base + y0 * dim2
     base_y1 = base + y1 * dim2
@@ -210,7 +210,7 @@ def affine_warp(im, theta):
     height = tf.shape(im)[1]
     width = tf.shape(im)[2]
 
-    x_t, y_t = _meshgrid(height, width)
+    x_t, y_t = meshgrid(height, width)
     x_t_flat = tf.reshape(x_t, (1, -1))
     y_t_flat = tf.reshape(y_t, (1, -1))
     ones = tf.ones_like(x_t_flat)
