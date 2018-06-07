@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import sys
 import os
-import datageneration
+import data_generation
 import scipy.io as sio
 import param
 import util
@@ -16,7 +16,7 @@ def main(gpu_id):
     n_layers = 12
     n_steps = 2000
 
-    train_feed = datageneration.create_feed(params, "train_vids.txt")
+    train_feed = data_generation.create_feed(params, "train_vids.txt")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
     config = tf.ConfigProto()

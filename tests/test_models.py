@@ -4,7 +4,7 @@ import numpy as np
 import sys
 import cv2
 import datareader
-import datageneration
+import data_generation
 import paDataReader
 import networks
 import scipy.io as sio
@@ -23,7 +23,7 @@ def train(gpu_id):
 
 	_,test = datareader.makeWarpExampleList(test_params,0,200,2,0)
 
-	feed = datageneration.warp_example_generator(test, params, do_augment=False, draw_skeleton=False, skel_color=(0, 0, 255))
+	feed = data_generation.warp_example_generator(test, params, do_augment=False, draw_skeleton=False, skel_color=(0, 0, 255))
 	
 
 	config = tf.ConfigProto()

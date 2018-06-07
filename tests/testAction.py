@@ -3,7 +3,7 @@ import os
 import numpy as np
 import sys
 import datareader
-import datageneration
+import data_generation
 import networks
 import scipy.io as sio
 import param
@@ -48,7 +48,7 @@ def train(dataset,gpu_id):
 
 
 	test = datareader.makeActionExampleList('test_vids.txt',1)
-	feed = datageneration.warp_example_generator(test, params, do_augment=False, return_pose_vectors=True)
+	feed = data_generation.warp_example_generator(test, params, do_augment=False, return_pose_vectors=True)
 
 	
 	n_frames = len(test)

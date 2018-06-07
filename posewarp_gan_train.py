@@ -2,7 +2,7 @@ import tensorflow as tf
 import os
 import numpy as np
 import sys
-import datageneration
+import data_generation
 import networks
 import scipy.io as sio
 import param
@@ -19,7 +19,7 @@ def train(model_name, gpu_id):
         os.mkdir(network_dir)
 
     data_dir = '/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train'
-    train_feed = datageneration.create_feed(params, data_dir)
+    train_feed = data_generation.create_feed(params, data_dir)
 
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)

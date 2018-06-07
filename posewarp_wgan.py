@@ -2,7 +2,7 @@ import tensorflow as tf
 import os
 import numpy as np
 import sys
-import datageneration
+import data_generation
 import networks
 import scipy.io as sio
 import param
@@ -22,8 +22,8 @@ def train(model_name,gpu_id):
 	if not os.path.isdir(network_dir):
 		os.mkdir(network_dir)
 
-	train_feed=datageneration.create_feed(params, "train_vids.txt", 50000)
-	test_feed=datageneration.create_feed(params, "test_vids.txt", 5000)
+	train_feed=data_generation.create_feed(params, "train_vids.txt", 50000)
+	test_feed=data_generation.create_feed(params, "test_vids.txt", 5000)
 	
 	batch_size = params['batch_size']
 

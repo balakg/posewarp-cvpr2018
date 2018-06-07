@@ -4,7 +4,7 @@ import numpy as np
 import sys
 import cv2
 import datareader
-import datageneration
+import data_generation
 import networks
 import scipy.io as sio
 import param
@@ -21,7 +21,7 @@ def train(dataset,gpu_id):
 	gpu = '/gpu:' + str(gpu_id)
 
 	np.random.seed(17)
-	feed = datageneration.create_feed(params, 'test_vids.txt', False, True)
+	feed = data_generation.create_feed(params, 'test_vids.txt', False, True)
 	
 	config = tf.ConfigProto()
 	config.gpu_options.allow_growth = True
