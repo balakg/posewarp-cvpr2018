@@ -27,21 +27,21 @@ def main(gpu_id):
     vgg_model = truncated_vgg.vgg_norm()
 
     n_layers = len(vgg_model.outputs)
-    n_steps = 2000
+    n_batches = 2000
 
     # First, calculate mean activation of each layer
     mean_response = []
     num_elements = []
-    for step in range(n_steps):
-        print step
+    for batch in range(n_batches):
+        print batch
         x, y = next(train_feed)
-        pred_step = vgg_model.predict(util.vgg_preprocess(x[0]))
+        pred_batch = vgg_model.predict(util.vgg_preprocess(x[0]))
 
-        for i in range(len(pred_step)):
-            sum_i = np.sum(pred_step[i], axis=(0, 1, 2))
-            n_elt = np.prod(pred_step[i].shape[0:3])
+        for i in range(n_layers):
+            sum_i = np.sum(pred_batch[i], axis=(0, 1, 2))
+            n_elt = np.prod(pred_batch[i].shape[0:3])
 
-            if step == 0 :
+            if batch == 0:
                 mean_response.append(sum_i)
                 num_elements.append(n_elt)
             else:
@@ -53,17 +53,17 @@ def main(gpu_id):
 
     # Now calculate std. dev. of each channel
     std_response = []
-    for step in range(n_steps):
-        print step
+    for batch in range(n_batches):
+        print batch
         x, y = next(train_feed)
-        pred_step = vgg_model.predict(util.vgg_preprocess(x[0]))
+        pred_batch = vgg_model.predict(util.vgg_preprocess(x[0]))
 
-        for i in xrange(len(pred_step)):
+        for i in xrange(len(pred_batch)):
             mean_response_i = np.reshape(mean_response[i], (1, 1, 1, -1))
-            mean_response_i = np.tile(mean_response_i, (pred_step[i].shape[0:3]) + (1,))
+            mean_response_i = np.tile(mean_response_i, (pred_batch[i].shape[0:3]) + (1,))
 
-            d = np.sum((pred_step[i] - mean_response_i) ** 2, axis=(0, 1, 2))
-            if step == 0:
+            d = np.sum((pred_batch[i] - mean_response_i) ** 2, axis=(0, 1, 2))
+            if batch == 0:
                 std_response.append(d)
             else:
                 std_response[i] += d
