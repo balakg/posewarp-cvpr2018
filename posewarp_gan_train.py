@@ -18,9 +18,7 @@ def train(model_name, gpu_id):
     if not os.path.isdir(network_dir):
         os.mkdir(network_dir)
 
-    data_dir = '/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train'
-    train_feed = data_generation.create_feed(params, data_dir)
-
+    train_feed = data_generation.create_feed(params, params['data_dir'])
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
     config = tf.ConfigProto()
@@ -39,7 +37,7 @@ def train(model_name, gpu_id):
 
     vgg_model = truncated_vgg.vgg_norm()
     networks.make_trainable(vgg_model, False)
-    response_weights = sio.loadmat('vgg_activation_distribution_train.mat')
+    response_weights = sio.loadmat('vgg_train_statistics.mat')
 
     gan = networks.gan(generator, discriminator, params)
     gan.compile(optimizer=Adam(lr=gan_lr),

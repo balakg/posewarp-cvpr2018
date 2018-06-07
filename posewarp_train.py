@@ -11,8 +11,6 @@ from keras.backend.tensorflow_backend import set_session
 from keras.optimizers import Adam
 
 
-
-
 def train(model_name, gpu_id):
     params = param.getGeneralParams()
 
@@ -21,8 +19,7 @@ def train(model_name, gpu_id):
     if not os.path.isdir(network_dir):
         os.mkdir(network_dir)
 
-    data_dir = '/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train'
-    train_feed = data_generation.create_feed(params, data_dir)
+    train_feed = data_generation.create_feed(params, params['data_dir'])
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
     config = tf.ConfigProto()

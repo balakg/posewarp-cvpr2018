@@ -18,7 +18,7 @@ def getGeneralParams():
     param['test_interval'] = 500
     param['model_save_interval'] = 5000
     param['project_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/pose2image'
-
+    param['data_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train'
     param['batch_size'] = 4
     param['seq_len'] = 2
     return param
