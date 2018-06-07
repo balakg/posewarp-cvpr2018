@@ -12,7 +12,7 @@ from keras.optimizers import Adam
 
 
 def train(model_name, gpu_id):
-    params = param.getGeneralParams()
+    params = param.get_general_params()
 
     network_dir = params['model_save_dir'] + '/' + model_name
 

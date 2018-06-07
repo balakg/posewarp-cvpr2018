@@ -9,14 +9,14 @@ import util
 import truncated_vgg
 from keras.backend.tensorflow_backend import set_session
 
-'''
+"""
 Saves mean and std. dev. for each channel of each layer of 
 vgg network over training data.
-'''
+"""
 
 
 def main(gpu_id):
-    params = param.getGeneralParams()
+    params = param.get_general_params()
 
     train_feed = data_generation.create_feed(params, params['data_dir'])
 
@@ -37,7 +37,7 @@ def main(gpu_id):
         print batch
         x, y = next(train_feed)
         pred_batch = vgg_model.predict(util.vgg_preprocess(x[0]))
-        
+
         for i in range(n_layers):
             sum_i = np.sum(pred_batch[i], axis=(0, 1, 2))
             n_elt = np.prod(pred_batch[i].shape[0:3])
@@ -48,7 +48,7 @@ def main(gpu_id):
             else:
                 mean_response[i] += sum_i
                 num_elements[i] += n_elt
-    
+
     for i in range(n_layers):
         mean_response[i] /= (1.0 * num_elements[i])
 

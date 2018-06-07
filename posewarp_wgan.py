@@ -14,7 +14,7 @@ from keras.backend.tensorflow_backend import set_session
 
 def train(model_name,gpu_id):	
 
-	params = param.getGeneralParams()
+	params = param.get_general_params()
 	gpu = '/gpu:' + str(gpu_id)
 
 	network_dir = params['project_dir'] + '/results/networks/' + model_name

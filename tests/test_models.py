@@ -16,7 +16,7 @@ import truncated_vgg
 
 def train(gpu_id):	
 
-	params = param.getGeneralParams()
+	params = param.get_general_params()
 	gpu = '/gpu:' + str(gpu_id)
 
 	test_params = param.getDatasetParams('test-aux')

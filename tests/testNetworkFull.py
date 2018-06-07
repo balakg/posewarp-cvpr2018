@@ -17,7 +17,7 @@ from keras.backend.tensorflow_backend import set_session
 
 def train(dataset,gpu_id):	
 
-	params = param.getGeneralParams()
+	params = param.get_general_params()
 	gpu = '/gpu:' + str(gpu_id)
 
 	np.random.seed(17)

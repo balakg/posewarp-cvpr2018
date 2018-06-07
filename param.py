@@ -1,19 +1,25 @@
-def getGeneralParams():
+"""
+Various important parameters of our model and training procedure.
+"""
+
+
+def get_general_params():
     param = {}
-    dn = 1
+    dn = 1 # Downsample images by this factor
     param['IMG_HEIGHT'] = 256/dn
     param['IMG_WIDTH'] = 256/dn
     param['obj_scale_factor'] = 1.14/dn
-    param['scale_max'] = 1.05
+    param['scale_max'] = 1.05  # Augmentation scaling
     param['scale_min'] = 0.90
-    param['max_rotate_degree'] = 5
-    param['max_sat_factor'] = 0.05
-    param['max_px_shift'] = 10
-    param['posemap_downsample'] = 2
-    param['sigma_joint'] = 7/4.0
+    param['max_rotate_degree'] = 5 # Augmentation rotation
+    param['max_sat_factor'] = 0.05 # Augmentation saturation
+    param['max_px_shift'] = 10 # Augmentation translation
+    param['posemap_downsample'] = 2 # Factor to downsample pose images (to reduce memory)
+    param['sigma_joint'] = 7/4.0 # Sigma of gaussian bump in pose heatmaps
     param['n_joints'] = 14
     param['n_limbs'] = 10
-    param['limbs'] = [[0, 1], [2, 3], [3, 4], [5, 6], [6, 7], [8, 9], [9, 10], [11, 12], [12, 13], [2, 5, 8, 11]]
+    param['limbs'] = [[0, 1], [2, 3], [3, 4], [5, 6], [6, 7], [8, 9],
+                      [9, 10], [11, 12], [12, 13], [2, 5, 8, 11]]
 
     param['test_interval'] = 500
     param['model_save_interval'] = 5000
@@ -21,6 +27,6 @@ def getGeneralParams():
     param['model_save_dir'] = param['project_dir'] + '/models'
     param['data_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train'
     param['batch_size'] = 4
-    param['seq_len'] = 2
+
     return param
 
