@@ -111,11 +111,12 @@ def gan(gen_model, disc_model, param):
     mask_in = Input(shape=(img_h, img_w, n_limbs+1))
     trans_in = Input(shape=(2, 3, n_limbs+1))
 
-    make_trainable(discriminator, False)
+    make_trainable(disc_model, False)
     y_gen = gen_model([src_in, pose_src, pose_tgt, mask_in, trans_in])
     y_class = disc_model([y_gen, pose_src, pose_tgt])
 
-    gan_model = Model(inputs=[src_in, pose_src, pose_tgt], outputs=[y_gen, y_class], name='gan')
+    gan_model = Model(inputs=[src_in, pose_src, pose_tgt, mask_in, trans_in],
+                      outputs=[y_gen, y_class], name='gan')
 
     return gan_model
 
