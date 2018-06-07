@@ -14,7 +14,7 @@ from keras.optimizers import Adam
 def train(model_name, gpu_id):
     params = param.getGeneralParams()
 
-    network_dir = params['project_dir'] + '/models/' + model_name
+    network_dir = params['model_save_dir'] + '/' + model_name
 
     if not os.path.isdir(network_dir):
         os.mkdir(network_dir)
