@@ -33,8 +33,9 @@ def train(model_name, gpu_id):
     model.compile(optimizer=Adam(lr=1e-4), loss=[networks.vgg_loss(vgg_model, response_weights)])
 
     # model.summary()
+    n_iters = params['n_training_iter']
 
-    for step in xrange(0, 200000):
+    for step in range(0, n_iters):
         x, y = next(train_feed)
 
         train_loss = model.train_on_batch(x, y)
