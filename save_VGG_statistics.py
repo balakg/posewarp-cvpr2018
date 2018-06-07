@@ -10,7 +10,8 @@ import truncated_vgg
 from keras.backend.tensorflow_backend import set_session
 
 '''
-Saves mean and std. dev. for each layer of vgg network over training data.
+Saves mean and std. dev. for each channel of each layer of 
+vgg network over training data.
 '''
 
 
@@ -29,14 +30,14 @@ def main(gpu_id):
     n_layers = len(vgg_model.outputs)
     n_batches = 2000
 
-    # First, calculate mean activation of each layer
+    # First, calculate mean activation of each channel
     mean_response = []
     num_elements = []
     for batch in range(n_batches):
         print batch
         x, y = next(train_feed)
         pred_batch = vgg_model.predict(util.vgg_preprocess(x[0]))
-
+        
         for i in range(n_layers):
             sum_i = np.sum(pred_batch[i], axis=(0, 1, 2))
             n_elt = np.prod(pred_batch[i].shape[0:3])
@@ -47,8 +48,8 @@ def main(gpu_id):
             else:
                 mean_response[i] += sum_i
                 num_elements[i] += n_elt
-
-    for i in range(len(mean_response)):
+    
+    for i in range(n_layers):
         mean_response[i] /= (1.0 * num_elements[i])
 
     # Now calculate std. dev. of each channel
