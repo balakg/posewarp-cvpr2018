@@ -58,17 +58,18 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
     scale_factor = param['obj_scale_factor']
     batch_size = param['batch_size']
     limbs = param['limbs']
+    n_limbs = param['n_limbs']
 
     while True:
 
-        X_src = np.zeros((batch_size, img_height, img_width, 3))
-        X_mask_src = np.zeros((batch_size, img_height, img_width, len(limbs) + 1))
-        X_pose_src = np.zeros((batch_size, img_height / pose_dn, img_width / pose_dn, 14))
-        X_pose_tgt = np.zeros((batch_size, img_height / pose_dn, img_width / pose_dn, 14))
-        X_trans = np.zeros((batch_size, 2, 3, 11))
-        X_posevec_src = np.zeros((batch_size, n_joints * 2))
-        X_posevec_tgt = np.zeros((batch_size, n_joints * 2))
-        Y = np.zeros((batch_size, img_height, img_width, 3))
+        x_src = np.zeros((batch_size, img_height, img_width, 3))
+        x_mask_src = np.zeros((batch_size, img_height, img_width, n_limbs + 1))
+        x_pose_src = np.zeros((batch_size, img_height / pose_dn, img_width / pose_dn, n_joints))
+        x_pose_tgt = np.zeros((batch_size, img_height / pose_dn, img_width / pose_dn, n_joints))
+        x_trans = np.zeros((batch_size, 2, 3, n_limbs+1))
+        x_posevec_src = np.zeros((batch_size, n_joints * 2))
+        x_posevec_tgt = np.zeros((batch_size, n_joints * 2))
+        y = np.zeros((batch_size, img_height, img_width, 3))
 
         for i in xrange(batch_size):
 
@@ -113,25 +114,25 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
             src_bg_mask = np.expand_dims(1.0 - np.amax(src_limb_masks, axis=2), 2)
             src_masks = np.log(np.concatenate((src_bg_mask, src_limb_masks), axis=2) + 1e-10)
 
-            X_src[i, :, :, :] = I0
-            X_pose_src[i, :, :, :] = posemap0
-            X_pose_tgt[i, :, :, :] = posemap1
-            X_mask_src[i, :, :, :] = src_masks
-            X_trans[i, :, :, 0] = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
-            X_trans[i, :, :, 1:] = get_limb_transforms(limbs, joints0, joints1)
+            x_src[i, :, :, :] = I0
+            x_pose_src[i, :, :, :] = posemap0
+            x_pose_tgt[i, :, :, :] = posemap1
+            x_mask_src[i, :, :, :] = src_masks
+            x_trans[i, :, :, 0] = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+            x_trans[i, :, :, 1:] = get_limb_transforms(limbs, joints0, joints1)
 
-            X_posevec_src[i, :] = joints0.flatten()
-            X_posevec_tgt[i, :] = joints1.flatten()
+            x_posevec_src[i, :] = joints0.flatten()
+            x_posevec_tgt[i, :] = joints1.flatten()
 
-            Y[i, :, :, :] = I1
+            y[i, :, :, :] = I1
 
-        out = [X_src, X_pose_src, X_pose_tgt, X_mask_src, X_trans]
+        out = [x_src, x_pose_src, x_pose_tgt, x_mask_src, x_trans]
 
-        if (return_pose_vectors):
-            out.append(X_posevec_src)
-            out.append(X_posevec_tgt)
+        if return_pose_vectors:
+            out.append(x_posevec_src)
+            out.append(x_posevec_tgt)
 
-        yield (out, Y)
+        yield (out, y)
 
 
 def create_feed(params, data_dir, do_augment=True, return_pose_vectors=False, transfer=False):
@@ -144,7 +145,7 @@ def create_feed(params, data_dir, do_augment=True, return_pose_vectors=False, tr
 
     return feed
 
-
+'''
 def transfer_example_generator(examples0, examples1, param):
     img_width = param['IMG_WIDTH']
     img_height = param['IMG_HEIGHT']
@@ -208,7 +209,6 @@ def transfer_example_generator(examples0, examples1, param):
             yield ([X_src, X_pose_src, X_pose_tgt, X_mask_src, X_trans], Y)
 
 
-'''
 def actionExampleGenerator(examples,param,return_pose_vectors=False):
     
 	img_width = param['IMG_WIDTH']

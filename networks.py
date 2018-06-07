@@ -1,17 +1,15 @@
 import tensorflow as tf
 from keras import backend as K
 from keras.models import Model
-from keras.layers import Conv2D, Dense, Activation, Input, UpSampling2D, Dropout
+from keras.layers import Conv2D, Dense, Activation, Input, UpSampling2D
 from keras.layers import concatenate, Flatten, Reshape, Lambda
 from keras.layers import LeakyReLU, MaxPooling2D
 import keras
 
 
-def my_conv(x_in, nf, ks=3, strides=1, activation='lrelu', ki='he_normal', name=None, dropout=False):
-    x_out = Conv2D(nf, kernel_size=ks, padding='same', kernel_initializer=ki, strides=strides)(x_in)
-
-    if dropout:
-        x_out = Dropout(0.2)(x_out)
+def my_conv(x_in, nf, ks=3, strides=1, activation='lrelu', name=None):
+    x_out = Conv2D(nf, kernel_size=ks, padding='same',
+                   kernel_initializer=ki, strides=strides)(x_in)
 
     if activation == 'lrelu':
         x_out = LeakyReLU(0.2, name=name)(x_out)
@@ -235,18 +233,15 @@ def make_warped_stack(args):
     src_in = args[1]
     trans_in = args[2]
 
-    ctr = 0
-    for i in xrange(11):
+    for i in range(11):
         mask_i = K.repeat_elements(tf.expand_dims(mask[:, :, :, i], 3), 3, 3)
         src_masked = tf.multiply(mask_i, src_in)
 
         if i == 0:
             warps = src_masked
         else:
-            warp_i = affine_warp(src_masked, trans_in[:, :, :, ctr])
+            warp_i = affine_warp(src_masked, trans_in[:, :, :, i])
             warps = tf.concat([warps, warp_i], 3)
-
-        ctr += 1
 
     return warps
 
@@ -274,15 +269,10 @@ def unet(x_in, pose_in, nf_enc, nf_dec):
     x = my_conv(x10, nf_enc[10])
 
     skips = [x9, x7, x5, x3, x0]
-    for i in xrange(5):
+    for i in range(5):
         x = UpSampling2D()(x)
         x = concatenate([x, skips[i]])
-
-        do_dropout = False
-        if i < 2:
-            do_dropout = True
-
-        x = my_conv(x, nf_dec[i], dropout=do_dropout)
+        x = my_conv(x, nf_dec[i])
 
     return x
 
