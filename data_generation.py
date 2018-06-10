@@ -27,12 +27,13 @@ def make_vid_info_list(data_dir):
 
 
 def get_person_scale(joints):
-    torso_size = (-joints[0][1] + (joints[8][1] + joints[11][1]) / 2.0)
-    peak_to_peak = np.ptp(joints, axis=0)[1]
+    upper_body_size = (-joints[0][1] + (joints[8][1] + joints[11][1]) / 2.0)
+    #peak_to_peak = np.ptp(joints, axis=0)[1]
     rcalf_size = np.sqrt((joints[9][1] - joints[10][1]) ** 2 + (joints[9][0] - joints[10][0]) ** 2)
     lcalf_size = np.sqrt((joints[12][1] - joints[13][1]) ** 2 + (joints[12][0] - joints[13][0]) ** 2)
     calf_size = (lcalf_size + rcalf_size) / 2.0
-    size = np.max([2.5 * torso_size, 5.0 * calf_size, peak_to_peak * 1.1])
+
+    size = np.max([2.5 * upper_body_size, 5.0 * calf_size])
     return size / 200.0
 
 
@@ -45,7 +46,10 @@ def read_frame(vid_name, frame_num, box, x):
     joints = x[:, :, frame_num] - 1.0
     box_frame = box[frame_num, :]
     scale = get_person_scale(joints)
-    pos = [(box_frame[0] + box_frame[2] / 2.0), (box_frame[1] + box_frame[3] / 2.0)]
+    pos = np.zeros(2)
+    pos[0] = (box_frame[0] + box_frame[2] / 2.0)
+    pos[1] = (box_frame[1] + box_frame[3] / 2.0)
+
     return img, joints, scale, pos
 
 
@@ -61,17 +65,16 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
     n_limbs = param['n_limbs']
 
     while True:
-
         x_src = np.zeros((batch_size, img_height, img_width, 3))
         x_mask_src = np.zeros((batch_size, img_height, img_width, n_limbs + 1))
-        x_pose_src = np.zeros((batch_size, img_height / pose_dn, img_width / pose_dn, n_joints))
-        x_pose_tgt = np.zeros((batch_size, img_height / pose_dn, img_width / pose_dn, n_joints))
+        x_pose_src = np.zeros((batch_size, int(img_height / pose_dn), int(img_width / pose_dn), n_joints))
+        x_pose_tgt = np.zeros((batch_size, int(img_height / pose_dn), int(img_width / pose_dn), n_joints))
         x_trans = np.zeros((batch_size, 2, 3, n_limbs+1))
         x_posevec_src = np.zeros((batch_size, n_joints * 2))
         x_posevec_tgt = np.zeros((batch_size, n_joints * 2))
         y = np.zeros((batch_size, img_height, img_width, 3))
 
-        for i in xrange(batch_size):
+        for i in range(batch_size):
 
             # 1. choose random video.
             vid = np.random.choice(len(vid_info_list), 1)[0]
@@ -90,11 +93,11 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
             I1, joints1, scale1, pos1 = read_frame(vid_path, frames[1], vid_bbox, vid_x)
 
             if scale0 > scale1:
-                pos = pos0
                 scale = scale_factor / scale0
             else:
-                pos = pos1
                 scale = scale_factor / scale1
+
+            pos = (pos0+pos1)/2.0
 
             I0, joints0 = center_and_scale_image(I0, img_width, img_height, pos, scale, joints0)
             I1, joints1 = center_and_scale_image(I1, img_width, img_height, pos, scale, joints1)
@@ -229,7 +232,7 @@ def actionExampleGenerator(examples,param,return_pose_vectors=False):
 		bg_mask = np.expand_dims(1.0 - np.amax(src_limb_masks,axis=2),2)
 		src_masks = np.log(np.concatenate((bg_mask,src_limb_masks),axis=2)+1e-10)
 	
-		for i in xrange(1,len(examples)):	
+		for i in range(1,len(examples)):	
 			I1,joints1,scale1,pos1 = readExampleInfo(examples[i])
 			I1,joints1 = centerAndScaleImage(I1,img_width,img_height,pos0,scale,joints1)
 			posemap1 = makeJointHeatmaps(img_height,img_width,joints1,sigma_joint,pose_dn)
@@ -324,7 +327,7 @@ def aug_flip(I, rflip, joints):
     right = [2, 3, 4, 8, 9, 10]
     left = [5, 6, 7, 11, 12, 13]
 
-    for i in xrange(6):
+    for i in range(6):
         tmp = np.copy(joints[right[i], :])
         joints[right[i], :] = np.copy(joints[left[i], :])
         joints[left[i], :] = tmp
@@ -346,7 +349,7 @@ def aug_rotate(I, img_width, img_height, degree_rand, joints):
     R = cv2.getRotationMatrix2D(center, degree_rand, 1)
     I = cv2.warpAffine(I, R, (img_width, img_height))
 
-    for i in xrange(joints.shape[0]):
+    for i in range(joints.shape[0]):
         joints[i, :] = rotate_point(joints[i, :], R)
 
     return I, joints
@@ -378,15 +381,15 @@ def aug_saturation(I, rsat):
 
 
 def make_joint_heatmaps(height, width, joints, sigma, pose_dn):
-    height = height / pose_dn
-    width = width / pose_dn
+    height = int(height / pose_dn)
+    width = int(width / pose_dn)
     n_joints = joints.shape[0]
     var = sigma ** 2
     joints = joints / pose_dn
 
     H = np.zeros((height, width, n_joints))
 
-    for i in xrange(n_joints):
+    for i in range(n_joints):
         if (joints[i, 0] <= 0 or joints[i, 1] <= 0 or joints[i, 0] >= width - 1 or
                 joints[i, 1] >= height - 1):
             continue
@@ -416,11 +419,11 @@ def make_limb_masks(limbs, joints, img_width, img_height):
     # Gaussian sigma perpendicular to the limb axis.
     sigma_perp = np.array([11, 11, 11, 11, 11, 11, 11, 11, 11, 13]) ** 2
 
-    for i in xrange(n_limbs):
+    for i in range(n_limbs):
         n_joints_for_limb = len(limbs[i])
         p = np.zeros((n_joints_for_limb, 2))
 
-        for j in xrange(n_joints_for_limb):
+        for j in range(n_joints_for_limb):
             p[j, :] = [joints[limbs[i][j], 0], joints[limbs[i][j], 1]]
 
         if n_joints_for_limb == 4:
@@ -444,12 +447,12 @@ def get_limb_transforms(limbs, joints1, joints2):
 
     Ms = np.zeros((2, 3, n_limbs))
 
-    for i in xrange(n_limbs):
+    for i in range(n_limbs):
         n_joints_for_limb = len(limbs[i])
         p1 = np.zeros((n_joints_for_limb, 2))
         p2 = np.zeros((n_joints_for_limb, 2))
 
-        for j in xrange(n_joints_for_limb):
+        for j in range(n_joints_for_limb):
             p1[j, :] = [joints1[limbs[i][j], 0], joints1[limbs[i][j], 1]]
             p2[j, :] = [joints2[limbs[i][j], 0], joints2[limbs[i][j], 1]]
 
