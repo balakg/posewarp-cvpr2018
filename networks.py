@@ -8,8 +8,7 @@ import keras
 
 
 def my_conv(x_in, nf, ks=3, strides=1, activation='lrelu', name=None):
-    x_out = Conv2D(nf, kernel_size=ks, padding='same',
-                   kernel_initializer=ki, strides=strides)(x_in)
+    x_out = Conv2D(nf, kernel_size=ks, padding='same', strides=strides)(x_in)
 
     if activation == 'lrelu':
         x_out = LeakyReLU(0.2, name=name)(x_out)
@@ -27,15 +26,12 @@ def my_dense(x_in, nf, activation='relu', ki='he_normal', dropout=False):
     return x_out
 
 
-def vgg_loss(feat_net, feat_weights):
+def vgg_loss(feat_net, feat_weights, n_layers, reg=0.1):
     def loss_fcn(y_true, y_pred):
         y_true_feat = feat_net(Lambda(vgg_preprocess)(y_true))
         y_pred_feat = feat_net(Lambda(vgg_preprocess)(y_pred))
 
         loss = []
-        n_layers = 12
-        reg = 0.1
-
         for j in range(n_layers):
 
             std = feat_weights[str(j)][1] + reg
