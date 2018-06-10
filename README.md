@@ -1,5 +1,3 @@
-# pose2image
+# pose warping, cvpr 2018
 
-pose warping, cvpr 2018
-
-See posewarp_train.py to get started. network.py has our architecture.
+See posewarp_train.py to get started. network.py has our architecture. More details coming soon!

@@ -19,7 +19,7 @@ def convert(I):
 
 def train(dataset,gpu_id):	
 
-	params = param.getGeneralParams()
+	params = param.get_general_params()
 	gpu = '/gpu:' + str(gpu_id)
 	
 	config = tf.ConfigProto()

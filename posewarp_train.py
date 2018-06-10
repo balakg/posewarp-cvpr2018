@@ -12,9 +12,9 @@ from keras.optimizers import Adam
 
 
 def train(model_name, gpu_id):
-    params = param.getGeneralParams()
+    params = param.get_general_params()
 
-    network_dir = params['project_dir'] + '/models/' + model_name
+    network_dir = params['model_save_dir'] + '/' + model_name
 
     if not os.path.isdir(network_dir):
         os.mkdir(network_dir)
@@ -33,8 +33,9 @@ def train(model_name, gpu_id):
     model.compile(optimizer=Adam(lr=1e-4), loss=[networks.vgg_loss(vgg_model, response_weights, 12)])
 
     # model.summary()
+    n_iters = params['n_training_iter']
 
-    for step in xrange(0, 200000):
+    for step in range(0, n_iters):
         x, y = next(train_feed)
 
         train_loss = model.train_on_batch(x, y)

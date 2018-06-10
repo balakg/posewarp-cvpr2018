@@ -45,7 +45,7 @@ def vggError(pred_vgg,true_vgg,feat_weights):
 
 def train(dataset,gpu_id):	
 
-	params = param.getGeneralParams()
+	params = param.get_general_params()
 	gpu = '/gpu:' + str(gpu_id)
 
 	np.random.seed(17)
