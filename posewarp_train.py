@@ -48,6 +48,6 @@ def train(model_name, gpu_id):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print "Need model name and gpu id as command line arguments."
+        print("Need model name and gpu id as command line arguments.")
     else:
         train(sys.argv[1], sys.argv[2])

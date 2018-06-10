@@ -37,7 +37,7 @@ def vgg_norm():
     model = Model(inputs=[img_input], outputs=[x1, x2, x4, x5, x7, x8, x9, x10, x12, x13, x14, x15])
     model_orig = VGG19(weights='imagenet', input_shape=(256, 256, 3), include_top=False)
 
-    for i in xrange(len(model.layers)):
+    for i in range(len(model.layers)):
         weights = model_orig.layers[i].get_weights()
         model.layers[i].set_weights(weights)
 

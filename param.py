@@ -14,10 +14,10 @@ def get_general_params():
     param['max_rotate_degree'] = 5
     param['max_sat_factor'] = 0.05
     param['max_px_shift'] = 10
-    param['posemap_downsample'] = int(2)
+    param['posemap_downsample'] = 2
     param['sigma_joint'] = 7/4.0
-    param['n_joints'] = int(14)
-    param['n_limbs'] = int(10)
+    param['n_joints'] = 14
+    param['n_limbs'] = 10
     param['limbs'] = [[0, 1], [2, 3], [3, 4], [5, 6], [6, 7], [8, 9], [9, 10], [11, 12], [12, 13], [2, 5, 8, 11]]
 
     param['n_training_iter'] = 200000
