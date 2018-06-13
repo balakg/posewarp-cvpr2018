@@ -28,7 +28,7 @@ def get_general_params():
     param['model_save_interval'] = 1000
     param['project_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/pose2image'
     param['model_save_dir'] = param['project_dir'] + '/models'
-    param['data_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp/train'
+    param['data_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp'
     param['batch_size'] = 4
     return param
 

@@ -136,8 +136,8 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
         yield (out, y)
 
 
-def create_feed(params, data_dir, do_augment=True, return_pose_vectors=False, transfer=False):
-    vid_info_list = make_vid_info_list(data_dir)
+def create_feed(params, data_dir, mode, do_augment=True, return_pose_vectors=False, transfer=False):
+    vid_info_list = make_vid_info_list(data_dir + '/' + mode)
 
     if transfer:
         feed = transfer_example_generator(ex_list, ex_list, params)

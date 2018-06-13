@@ -19,7 +19,7 @@ def train(model_name, gpu_id):
     if not os.path.isdir(network_dir):
         os.mkdir(network_dir)
 
-    train_feed = data_generation.create_feed(params, params['data_dir'])
+    train_feed = data_generation.create_feed(params, params['data_dir'], 'train')
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
     config = tf.ConfigProto()

@@ -18,11 +18,6 @@ def my_conv(x_in, nf, ks=3, strides=1, activation='lrelu', name=None):
     return x_out
 
 
-def my_dense(x_in, nf, activation='relu', ki='he_normal'):
-    x_out = Dense(nf, activation=activation, kernel_initializer=ki)(x_in)
-    return x_out
-
-
 def vgg_loss(feat_net, feat_weights, n_layers, reg=0.1):
     def loss_fcn(y_true, y_pred):
         y_true_feat = feat_net(Lambda(vgg_preprocess)(y_true))
@@ -84,9 +79,9 @@ def discriminator(param):
 
     x = Flatten()(x)
 
-    x = my_dense(x, 256)
-    x = my_dense(x, 256)
-    y = my_dense(x, 1, activation='sigmoid')
+    x = Dense(256, activation='relu')(x)
+    x = Dense(256, activation='relu')(x)
+    y = Dense(1, activation='sigmoid')(x)
 
     model = Model(inputs=[x_tgt, x_src_pose, x_tgt_pose], outputs=y, name='discriminator')
     return model
