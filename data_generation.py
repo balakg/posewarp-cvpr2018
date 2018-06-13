@@ -7,7 +7,6 @@ import glob
 
 
 def make_vid_info_list(data_dir):
-
     vids = glob.glob(data_dir + '/frames/*')
     n_vids = len(vids)
 
@@ -28,7 +27,6 @@ def make_vid_info_list(data_dir):
 
 def get_person_scale(joints):
     upper_body_size = (-joints[0][1] + (joints[8][1] + joints[11][1]) / 2.0)
-    #peak_to_peak = np.ptp(joints, axis=0)[1]
     rcalf_size = np.sqrt((joints[9][1] - joints[10][1]) ** 2 + (joints[9][0] - joints[10][0]) ** 2)
     lcalf_size = np.sqrt((joints[12][1] - joints[13][1]) ** 2 + (joints[12][0] - joints[13][0]) ** 2)
     calf_size = (lcalf_size + rcalf_size) / 2.0
@@ -69,7 +67,7 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
         x_mask_src = np.zeros((batch_size, img_height, img_width, n_limbs + 1))
         x_pose_src = np.zeros((batch_size, int(img_height / pose_dn), int(img_width / pose_dn), n_joints))
         x_pose_tgt = np.zeros((batch_size, int(img_height / pose_dn), int(img_width / pose_dn), n_joints))
-        x_trans = np.zeros((batch_size, 2, 3, n_limbs+1))
+        x_trans = np.zeros((batch_size, 2, 3, n_limbs + 1))
         x_posevec_src = np.zeros((batch_size, n_joints * 2))
         x_posevec_tgt = np.zeros((batch_size, n_joints * 2))
         y = np.zeros((batch_size, img_height, img_width, 3))
@@ -97,7 +95,7 @@ def warp_example_generator(vid_info_list, param, do_augment=True, return_pose_ve
             else:
                 scale = scale_factor / scale1
 
-            pos = (pos0+pos1)/2.0
+            pos = (pos0 + pos1) / 2.0
 
             I0, joints0 = center_and_scale_image(I0, img_width, img_height, pos, scale, joints0)
             I1, joints1 = center_and_scale_image(I1, img_width, img_height, pos, scale, joints1)
@@ -147,6 +145,7 @@ def create_feed(params, data_dir, do_augment=True, return_pose_vectors=False, tr
         feed = warp_example_generator(vid_info_list, params, do_augment, return_pose_vectors)
 
     return feed
+
 
 '''
 def transfer_example_generator(examples0, examples1, param):

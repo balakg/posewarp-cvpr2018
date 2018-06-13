@@ -18,10 +18,7 @@ def my_conv(x_in, nf, ks=3, strides=1, activation='lrelu', name=None):
     return x_out
 
 
-def my_dense(x_in, nf, activation='relu', ki='he_normal', dropout=False):
-    if dropout:
-        x_in = Dropout(0.5)(x_in)
-
+def my_dense(x_in, nf, activation='relu', ki='he_normal'):
     x_out = Dense(nf, activation=activation, kernel_initializer=ki)(x_in)
     return x_out
 
@@ -46,6 +43,14 @@ def vgg_loss(feat_net, feat_weights, n_layers, reg=0.1):
         return loss / (n_layers * 1.0)
 
     return loss_fcn
+
+
+def vgg_preprocess(arg):
+    z = 255.0 * (arg + 1.0) / 2.0
+    r = z[:, :, :, 0] - 103.939
+    g = z[:, :, :, 1] - 116.779
+    b = z[:, :, :, 2] - 123.68
+    return tf.stack([r, g, b], axis=3)
 
 
 def make_trainable(net, val):
@@ -242,14 +247,6 @@ def make_warped_stack(args):
     return warps
 
 
-def vgg_preprocess(arg):
-    z = 255.0 * (arg + 1.0) / 2.0
-    r = z[:, :, :, 0] - 103.939
-    g = z[:, :, :, 1] - 116.779
-    b = z[:, :, :, 2] - 123.68
-    return tf.stack([r, g, b], axis=3)
-
-
 def unet(x_in, pose_in, nf_enc, nf_dec):
     x0 = my_conv(x_in, nf_enc[0], ks=7)  # 256
     x1 = my_conv(x0, nf_enc[1], strides=2)  # 128
@@ -305,8 +302,9 @@ def network_posewarp(param):
     x = unet(concatenate([bg_src, bg_src_mask]), pose_src, [64]*2 + [128]*9, [128]*4 + [64])
     bg_tgt = my_conv(x, 3, activation='tanh', name='bg_tgt')
 
-    x = unet(fg_stack, pose_tgt, [64]*2 + [128]*9, [128]*4 + [64])
-    #[64] + [128] * 3 + [256] * 7, [256, 256, 256, 128, 64])
+    # x = unet(fg_stack, pose_tgt, [64]*2 + [128]*9, [128]*4 + [64])
+    x = unet(fg_stack, pose_tgt, [64] + [128] * 3 + [256] * 7, [256, 256, 256, 128, 64])
+
     fg_tgt = my_conv(x, 3, activation='tanh', name='fg_tgt')
 
     fg_mask = my_conv(x, 1, activation='sigmoid', name='fg_mask_tgt')
