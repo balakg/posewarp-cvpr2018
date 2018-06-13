@@ -18,7 +18,7 @@ def train(model_name, gpu_id):
     if not os.path.isdir(network_dir):
         os.mkdir(network_dir)
 
-    train_feed = data_generation.create_feed(params, params['data_dir'])
+    train_feed = data_generation.create_feed(params, params['data_dir'], 'train')
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
     config = tf.ConfigProto()
@@ -37,11 +37,11 @@ def train(model_name, gpu_id):
 
     vgg_model = truncated_vgg.vgg_norm()
     networks.make_trainable(vgg_model, False)
-    response_weights = sio.loadmat('vgg_train_statistics.mat')
+    response_weights = sio.loadmat('../data/vgg_activation_distribution_train.mat')
 
     gan = networks.gan(generator, discriminator, params)
     gan.compile(optimizer=Adam(lr=gan_lr),
-                loss=[networks.vgg_loss(vgg_model, response_weights), 'binary_crossentropy'],
+                loss=[networks.vgg_loss(vgg_model, response_weights, 12), 'binary_crossentropy'],
                 loss_weights=[1.0, disc_loss])
 
     n_iters = 10000
@@ -82,6 +82,6 @@ def train(model_name, gpu_id):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print "Need model name and gpu id as command line arguments."
+        print("Need model name and gpu id as command line arguments.")
     else:
         train(sys.argv[1], sys.argv[2])
