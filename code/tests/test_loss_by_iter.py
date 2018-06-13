@@ -21,7 +21,7 @@ def run(gpu_id):
 
     vgg_model = truncated_vgg.vgg_norm()
     networks.make_trainable(vgg_model, False)
-    response_weights = sio.loadmat('../vgg_activation_distribution_train.mat')
+    response_weights = sio.loadmat('../../data/vgg_activation_distribution_train.mat')
     model = networks.network_posewarp(params)
     model.compile(optimizer=Adam(), loss=[networks.vgg_loss(vgg_model, response_weights, 12)])
     iterations = range(1000, 185001, 1000)
@@ -30,7 +30,7 @@ def run(gpu_id):
     losses = []
     for i in iterations:
         print(i)
-        model.load_weights('../../models/posewarp_vgg/' + str(i) + '.h5')
+        model.load_weights('../../models/posewarp_vgg2/' + str(i) + '.h5')
 
         np.random.seed(11)
         feed = data_generation.create_feed(params, params['data_dir'], 'test')
@@ -38,10 +38,10 @@ def run(gpu_id):
         loss = 0
         for batch in range(n_batches):
             x, y = next(feed)
-            loss += model.evaluate(x, y)
+            loss += model.evaluate(x, y, verbose=False)
         loss /= (n_batches*1.0)
         losses.append(loss)
-        sio.savemat('losses_by_iter.mat', {'losses': losses, 'iterations': iterations})
+        sio.savemat('losses_by_iter2.mat', {'losses': losses, 'iterations': iterations})
 
 
 if __name__ == "__main__":
