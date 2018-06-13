@@ -1,5 +1,6 @@
 import tensorflow as tf
 from keras.backend.tensorflow_backend import set_session
+from keras.optimizers import Adam
 import os
 import scipy.io as sio
 import numpy as np
@@ -8,7 +9,7 @@ sys.path.append('../')
 import data_generation
 import networks
 import param
-
+import truncated_vgg
 
 def run(gpu_id):
     params = param.get_general_params()
@@ -18,9 +19,12 @@ def run(gpu_id):
     config.gpu_options.allow_growth = True
     set_session(tf.Session(config=config))
 
+    vgg_model = truncated_vgg.vgg_norm()
+    networks.make_trainable(vgg_model, False)
+    response_weights = sio.loadmat('../vgg_activation_distribution_train.mat')
     model = networks.network_posewarp(params)
-
-    iterations = range(0, 185001, 1000)
+    model.compile(optimizer=Adam(), loss=[networks.vgg_loss(vgg_model, response_weights, 12)])
+    iterations = range(1000, 185001, 1000)
 
     n_batches = 25
     losses = []
