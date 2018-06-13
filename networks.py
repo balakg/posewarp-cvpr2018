@@ -305,7 +305,8 @@ def network_posewarp(param):
     x = unet(concatenate([bg_src, bg_src_mask]), pose_src, [64]*2 + [128]*9, [128]*4 + [64])
     bg_tgt = my_conv(x, 3, activation='tanh', name='bg_tgt')
 
-    x = unet(fg_stack, pose_tgt, [64] + [128] * 3 + [256] * 7, [256, 256, 256, 128, 64])
+    x = unet(fg_stack, pose_tgt, [64]*2 + [128]*9, [128]*4 + [64])
+    #[64] + [128] * 3 + [256] * 7, [256, 256, 256, 128, 64])
     fg_tgt = my_conv(x, 3, activation='tanh', name='fg_tgt')
 
     fg_mask = my_conv(x, 1, activation='sigmoid', name='fg_mask_tgt')

@@ -32,7 +32,7 @@ def train(model_name, gpu_id):
     model = networks.network_posewarp(params)
     model.compile(optimizer=Adam(lr=1e-4), loss=[networks.vgg_loss(vgg_model, response_weights, 12)])
 
-    # model.summary()
+    #model.summary()
     n_iters = params['n_training_iter']
 
     for step in range(0, n_iters):
