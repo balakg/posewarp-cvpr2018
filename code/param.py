@@ -26,9 +26,9 @@ def get_general_params():
     param['n_training_iter'] = 200000
     param['test_interval'] = 500
     param['model_save_interval'] = 1000
-    param['project_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/pose2image/repo'
+    param['project_dir'] = '/path/to/posewarp-cvpr2018'
     param['model_save_dir'] = param['project_dir'] + '/models'
-    param['data_dir'] = '/afs/csail.mit.edu/u/b/balakg/pose/datasets/posewarp'
+    param['data_dir'] = '/path/to/dataset'
     param['batch_size'] = 4
     return param
 
