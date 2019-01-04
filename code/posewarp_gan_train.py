@@ -77,7 +77,7 @@ def train(model_name, gpu_id):
         util.printProgress(step, 0, [g_loss[1], d_loss])
 
         if step % params['model_save_interval'] == 0 and step > 0:
-            gan.save(network_dir + '/' + str(step) + '.h5')
+            generator.save(network_dir + '/' + str(step) + '.h5')
 
 
 if __name__ == "__main__":
