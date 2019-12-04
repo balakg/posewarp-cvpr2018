@@ -9,4 +9,8 @@ Then, run posewarp_gan_train.py to refine the model weights further.
 network.py has our architecture. 
 
 One train and test video is provided in the data folder
-as an example of the data format used by our code. More details coming soon!
+as an example of the data format used by our code.
+
+NEW:
+You may download our training and testing data files here:
+http://people.csail.mit.edu/balakg/posewarp_data.tgz
