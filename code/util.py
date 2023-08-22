@@ -14,8 +14,7 @@ def printProgress(step,test,train_loss,time=None):
 	s = str(step) + "," + str(test)
 
 	if(isinstance(train_loss,list) or isinstance(train_loss,np.ndarray)):
-		for i in range(len(train_loss)):
-			s += "," + str(train_loss[i])
+		s += "," + ",".join([str(t) for t in train_loss])
 	else:
 		s += "," + str(train_loss)
 
